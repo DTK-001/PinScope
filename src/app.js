@@ -22,6 +22,8 @@ const CRANHAM_PHOTO_KEY = "local-loop-golf:cranham-topdown-photo:v1";
 const CRANHAM_PHOTO_EDIT_KEY = "local-loop-golf:cranham-photo-edits:v1";
 const PHOTO_COURSE_IDS = [CRANHAM_COURSE_ID, BELHUS_COURSE_ID];
 const PHOTO_ZOOM_LEVELS = [1, 1.35, 1.7, 2.1];
+const PHOTO_MIN_ZOOM = 1;
+const PHOTO_MAX_ZOOM = 2.6;
 const BELHUS_PHOTO_GEO_BOUNDS = {
   north: 51.515,
   south: 51.5046,
@@ -38,6 +40,7 @@ let photoRenderId = 0;
 let photoEditMode = false;
 let photoDrag = null;
 let suppressPhotoPlanningClick = false;
+let photoPointers = new Map();
 let photoShotPlans = {};
 let photoZoomLevels = {};
 let photoPanOffsets = {};
@@ -78,6 +81,7 @@ function getViewFromHash() {
 }
 
 function render() {
+  document.body.classList.toggle("score-card-open", scoreCardOpen);
   app.innerHTML = `
     <header class="topbar">
       <div>
@@ -464,7 +468,7 @@ function renderScoreCardOverlay() {
         </div>
         <footer class="score-card-footer">
           <button class="secondary-action" type="button" data-action="hole-prev">Prev</button>
-          <button class="primary-action" type="button" data-action="hole-next">Save & Next</button>
+          <button class="primary-action" type="button" data-action="score-card-next">Save & Next</button>
         </footer>
       </div>
     </section>
@@ -506,7 +510,7 @@ function renderPlayerScoreCard(round, course, hole, player) {
 }
 
 function renderHoleVisual(hole) {
-  if (hole.visual?.photo) {
+  if (hole.visual?.photo && coursePhotoSource(photoCourseId(hole))) {
     return renderPhotoHoleVisual(hole);
   }
   if (hole.visual?.path) {
@@ -1318,6 +1322,11 @@ function handleClick(event) {
     moveHole(1);
   }
 
+  if (action === "score-card-next") {
+    scoreCardOpen = false;
+    moveHole(1);
+  }
+
   if (action === "finish-round") {
     finishRound();
   }
@@ -1510,6 +1519,10 @@ function beginPhotoPlanOrPanDrag(event) {
   }
   const courseId = canvas.dataset.photoCourseId || "";
   const holeNumber = String(canvas.dataset.photoHole || "");
+  trackPhotoPointer(event, panel, canvas, courseId, holeNumber);
+  if (beginPhotoPinchIfReady(event, panel, canvas, courseId, holeNumber)) {
+    return;
+  }
   const course = getCourse(state, courseId);
   const hole = course?.holes?.find((item) => item.number === Number(holeNumber));
   if (!hole) {
@@ -1566,7 +1579,12 @@ function beginPhotoPanDrag(event, panel, canvas, courseId, holeNumber) {
 }
 
 function handlePhotoPointerMove(event) {
+  updateTrackedPhotoPointer(event);
   if (!photoDrag) {
+    return;
+  }
+  if (photoDrag.type === "pinch") {
+    movePhotoPinch(event);
     return;
   }
   if (photoDrag.type === "pan") {
@@ -1582,7 +1600,13 @@ function handlePhotoPointerMove(event) {
 }
 
 function handlePhotoPointerEnd(event) {
+  const endedPointer = photoPointers.get(event.pointerId);
+  photoPointers.delete(event.pointerId);
   if (!photoDrag) {
+    return;
+  }
+  if (photoDrag.type === "pinch") {
+    finishPhotoPinchDrag(event, endedPointer);
     return;
   }
   if (photoDrag.type === "pan") {
@@ -1713,6 +1737,135 @@ function finishPhotoPanDrag(event) {
   window.setTimeout(() => {
     suppressPhotoPlanningClick = false;
   }, 250);
+}
+
+function trackPhotoPointer(event, panel, canvas, courseId, holeNumber) {
+  if (event.pointerType !== "touch") {
+    return;
+  }
+  photoPointers.set(event.pointerId, {
+    pointerId: event.pointerId,
+    x: event.clientX,
+    y: event.clientY,
+    panel,
+    canvas,
+    courseId,
+    holeNumber
+  });
+}
+
+function updateTrackedPhotoPointer(event) {
+  const pointer = photoPointers.get(event.pointerId);
+  if (!pointer) {
+    return;
+  }
+  photoPointers.set(event.pointerId, {
+    ...pointer,
+    x: event.clientX,
+    y: event.clientY
+  });
+}
+
+function beginPhotoPinchIfReady(event, panel, canvas, courseId, holeNumber) {
+  const pointers = activePhotoPointers(panel);
+  if (pointers.length < 2) {
+    return false;
+  }
+  event.preventDefault();
+  suppressPhotoPlanningClick = true;
+  const pair = pointers.slice(0, 2);
+  const metrics = photoPointerPairMetrics(pair);
+  const zoom = photoZoomLevel(courseId, holeNumber);
+  panel.setPointerCapture?.(pair[0].pointerId);
+  panel.setPointerCapture?.(pair[1].pointerId);
+  panel.classList.remove("panning-photo");
+  photoDrag = {
+    type: "pinch",
+    courseId,
+    holeNumber,
+    panel,
+    canvas,
+    startDistance: metrics.distance,
+    startCenter: metrics.center,
+    startZoom: zoom,
+    latestZoom: zoom,
+    startPan: photoPanOffset(courseId, holeNumber, zoom),
+    latestPan: photoPanOffset(courseId, holeNumber, zoom),
+    moved: false
+  };
+  panel.classList.add("pinching-photo");
+  return true;
+}
+
+function movePhotoPinch(event) {
+  const pointers = activePhotoPointers(photoDrag.panel);
+  if (pointers.length < 2) {
+    return;
+  }
+  event.preventDefault();
+  const metrics = photoPointerPairMetrics(pointers.slice(0, 2));
+  const rect = photoDrag.panel.getBoundingClientRect();
+  if (!rect.width || !rect.height || !photoDrag.startDistance) {
+    return;
+  }
+  const zoom = Number(clamp(photoDrag.startZoom * (metrics.distance / photoDrag.startDistance), PHOTO_MIN_ZOOM, PHOTO_MAX_ZOOM).toFixed(2));
+  const nextPan = clampPhotoPan({
+    x: photoDrag.startPan.x + ((metrics.center.x - photoDrag.startCenter.x) / rect.width) * 100,
+    y: photoDrag.startPan.y + ((metrics.center.y - photoDrag.startCenter.y) / rect.height) * 100
+  }, zoom);
+  photoDrag.latestZoom = zoom;
+  photoDrag.latestPan = nextPan;
+  photoDrag.moved = true;
+  setPhotoLayerTransforms(photoDrag.panel, zoom, nextPan);
+}
+
+function finishPhotoPinchDrag(event) {
+  if (activePhotoPointers(photoDrag.panel).length >= 2) {
+    return;
+  }
+  event.preventDefault();
+  const drag = photoDrag;
+  photoDrag = null;
+  drag.panel.classList.remove("pinching-photo");
+  const key = photoZoomKey(drag.courseId, drag.holeNumber);
+  photoZoomLevels = {
+    ...photoZoomLevels,
+    [key]: drag.latestZoom
+  };
+  photoPanOffsets = {
+    ...photoPanOffsets,
+    [key]: drag.latestZoom > 1 ? clampPhotoPan(drag.latestPan, drag.latestZoom) : { x: 0, y: 0 }
+  };
+  window.setTimeout(() => {
+    suppressPhotoPlanningClick = false;
+  }, 250);
+  render();
+}
+
+function activePhotoPointers(panel) {
+  return Array.from(photoPointers.values()).filter((pointer) => pointer.panel === panel);
+}
+
+function photoPointerPairMetrics(pair) {
+  const [a, b] = pair;
+  return {
+    distance: Math.max(1, Math.hypot(b.x - a.x, b.y - a.y)),
+    center: {
+      x: (a.x + b.x) / 2,
+      y: (a.y + b.y) / 2
+    }
+  };
+}
+
+function setPhotoLayerTransforms(panel, zoom, pan) {
+  const panLayer = panel.querySelector(".photo-pan-layer");
+  const zoomLayer = panel.querySelector(".photo-zoom-layer");
+  if (panLayer) {
+    panLayer.style.transform = photoPanTransform(pan);
+  }
+  if (zoomLayer) {
+    zoomLayer.style.transform = `scale(${zoom})`;
+  }
 }
 
 function hitTestPhotoPlanPoint(canvas, shotPlan, event) {
@@ -2343,7 +2496,7 @@ function photoZoomKey(courseId, holeNumber) {
 
 function photoZoomLevel(courseId, holeNumber) {
   const value = Number(photoZoomLevels[photoZoomKey(courseId, holeNumber)] || 1);
-  return PHOTO_ZOOM_LEVELS.includes(value) ? value : 1;
+  return Number(clamp(Number.isFinite(value) ? value : 1, PHOTO_MIN_ZOOM, PHOTO_MAX_ZOOM).toFixed(2));
 }
 
 function updatePhotoZoom(button) {
@@ -2353,9 +2506,9 @@ function updatePhotoZoom(button) {
 function updatePhotoZoomValue(courseId, holeNumber, direction) {
   const key = photoZoomKey(courseId, holeNumber);
   const current = photoZoomLevel(courseId, holeNumber);
-  const index = Math.max(0, PHOTO_ZOOM_LEVELS.indexOf(current));
-  const nextIndex = clamp(index + direction, 0, PHOTO_ZOOM_LEVELS.length - 1);
-  const nextZoom = PHOTO_ZOOM_LEVELS[nextIndex];
+  const nextZoom = direction > 0
+    ? PHOTO_ZOOM_LEVELS.find((value) => value > current + 0.01) || PHOTO_ZOOM_LEVELS[PHOTO_ZOOM_LEVELS.length - 1]
+    : [...PHOTO_ZOOM_LEVELS].reverse().find((value) => value < current - 0.01) || PHOTO_ZOOM_LEVELS[0];
   if (nextZoom === current) {
     return;
   }
