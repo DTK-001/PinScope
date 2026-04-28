@@ -80,6 +80,7 @@ export const verifiedCourses = [
     phone: "+44 1708 221177",
     location: { lat: 51.555764, lng: 0.282267 },
     attribution: "Identity from Cranham Golf Course official website. Hole geometry from OpenStreetMap contributors under ODbL.",
+    photoSource: cranhamPhotoCropSource,
     verification: {
       status: "verified",
       updated: "2026-04-26",

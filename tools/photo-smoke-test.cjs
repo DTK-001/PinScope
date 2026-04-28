@@ -1,20 +1,5 @@
 const { chromium } = require('playwright');
 
-const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1210" height="1204" viewBox="0 0 1210 1204">
-  <rect width="1210" height="1204" fill="#244f35"/>
-  <path d="M610 40 C530 230 660 390 560 560 C450 760 330 900 210 1120" fill="none" stroke="#79b667" stroke-width="90" stroke-linecap="round"/>
-  <path d="M1020 60 C980 240 970 430 1090 610" fill="none" stroke="#78b46a" stroke-width="80" stroke-linecap="round"/>
-  <ellipse cx="556" cy="499" rx="48" ry="32" fill="#b8dc7c"/>
-  <ellipse cx="444" cy="861" rx="42" ry="28" fill="#b8dc7c"/>
-  <ellipse cx="524" cy="321" rx="38" ry="28" fill="#b8dc7c"/>
-  <ellipse cx="760" cy="560" rx="46" ry="30" fill="#b8dc7c"/>
-  <ellipse cx="990" cy="143" rx="44" ry="30" fill="#b8dc7c"/>
-  <ellipse cx="1092" cy="575" rx="42" ry="30" fill="#b8dc7c"/>
-  <ellipse cx="120" cy="980" rx="82" ry="46" fill="#3d93ad"/>
-  <ellipse cx="528" cy="335" rx="70" ry="42" fill="#2f768d"/>
-</svg>`;
-const photo = `data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}`;
-
 (async () => {
   const browser = await chromium.launch({
     executablePath: 'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe',
@@ -26,13 +11,15 @@ const photo = `data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}`
   page.on('console', (message) => {
     if (message.type() === 'error') errors.push(message.text());
   });
-  await page.addInitScript((value) => {
-    localStorage.setItem('local-loop-golf:cranham-topdown-photo:v1', value);
-  }, photo);
   await page.goto('http://localhost:5173/#play', { waitUntil: 'networkidle' });
   await page.getByRole('button', { name: 'Start Group Round' }).click();
   await page.waitForSelector('canvas.photo-hole-canvas');
-  await page.waitForTimeout(500);
+  await page.waitForFunction(() => {
+    const canvas = document.querySelector('canvas.photo-hole-canvas');
+    if (!canvas || canvas.width < 500 || canvas.height < 700) return false;
+    const data = canvas.getContext('2d').getImageData(Math.floor(canvas.width / 2), Math.floor(canvas.height / 2), 1, 1).data;
+    return data[3] > 0;
+  }, null, { timeout: 10000 });
   const box = await page.locator('canvas.photo-hole-canvas').boundingBox();
   await page.mouse.click(box.x + box.width * 0.52, box.y + box.height * 0.48);
   await page.waitForSelector('.photo-yardage-card');
@@ -60,8 +47,11 @@ const photo = `data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}`
       planText: document.querySelector('.photo-yardage-card')?.textContent.replace(/\s+/g, ' ').trim(),
       clubText: document.querySelector('.photo-club-panel')?.textContent.replace(/\s+/g, ' ').trim(),
       clubWhiteSpace: getComputedStyle(document.querySelector('.photo-club-panel strong')).whiteSpace,
+      clubBackground: getComputedStyle(document.querySelector('.photo-club-panel')).backgroundColor,
       zoomText: document.querySelector('.photo-zoom-toolbar')?.textContent.replace(/\s+/g, ' ').trim(),
       panTransform: document.querySelector('.photo-pan-layer')?.style.transform || '',
+      courseId: canvas.dataset.photoCourseId,
+      storedCranhamPhoto: localStorage.getItem('local-loop-golf:cranham-topdown-photo:v1'),
       firstPoint: {
         x: Number(firstPoint?.getAttribute('cx') || 0),
         y: Number(firstPoint?.getAttribute('cy') || 0)
@@ -78,9 +68,55 @@ const photo = `data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}`
     hasGuideRoute: Boolean(document.querySelector('.photo-guide-route')),
     hasHint: Boolean(document.querySelector('.photo-tap-hint'))
   }));
+  const pinch = await page.evaluate(async () => {
+    const panel = document.querySelector('.photo-hole');
+    const canvas = document.querySelector('canvas.photo-hole-canvas');
+    const rect = panel.getBoundingClientRect();
+    const pointer = (type, id, x, y, target = window) => {
+      target.dispatchEvent(new PointerEvent(type, {
+        bubbles: true,
+        cancelable: true,
+        pointerId: id,
+        pointerType: 'touch',
+        isPrimary: id === 41,
+        clientX: x,
+        clientY: y,
+        button: 0,
+        buttons: type === 'pointerup' ? 0 : 1
+      }));
+    };
+    const leftStart = { x: rect.left + rect.width * 0.44, y: rect.top + rect.height * 0.48 };
+    const rightStart = { x: rect.left + rect.width * 0.56, y: rect.top + rect.height * 0.48 };
+    const leftEnd = { x: rect.left + rect.width * 0.32, y: rect.top + rect.height * 0.40 };
+    const rightEnd = { x: rect.left + rect.width * 0.72, y: rect.top + rect.height * 0.56 };
+    pointer('pointerdown', 41, leftStart.x, leftStart.y, canvas);
+    pointer('pointerdown', 42, rightStart.x, rightStart.y, canvas);
+    pointer('pointermove', 41, leftEnd.x, leftEnd.y);
+    pointer('pointermove', 42, rightEnd.x, rightEnd.y);
+    pointer('pointerup', 41, leftEnd.x, leftEnd.y);
+    pointer('pointerup', 42, rightEnd.x, rightEnd.y);
+    await new Promise((resolve) => setTimeout(resolve, 350));
+    return {
+      zoomText: document.querySelector('.photo-zoom-toolbar')?.textContent.replace(/\s+/g, ' ').trim(),
+      panTransform: document.querySelector('.photo-pan-layer')?.style.transform || ''
+    };
+  });
+  await page.getByRole('button', { name: 'Enter Scores' }).click();
+  await page.waitForSelector('.score-card-backdrop');
+  const scoreOpen = await page.evaluate(() => document.body.classList.contains('score-card-open'));
+  await page.getByRole('button', { name: 'Save & Next' }).click();
+  await page.waitForSelector('.score-card-backdrop', { state: 'detached' });
+  const scoreNext = await page.evaluate(() => ({
+    bodyFrozen: document.body.classList.contains('score-card-open'),
+    holeTitle: document.querySelector('.round-header h2')?.textContent.trim() || '',
+    overlay: Boolean(document.querySelector('.score-card-backdrop'))
+  }));
   await browser.close();
   if (errors.length) {
     throw new Error(errors.join('\n'));
+  }
+  if (planned.courseId !== 'osm-way-23454278' || planned.storedCranhamPhoto) {
+    throw new Error(`Cranham did not use the built-in photo source: ${JSON.stringify(planned)}`);
   }
   if (planned.planPoints !== 2 || !planned.hasPlanRoute || planned.hasGuideRoute) {
     throw new Error(`Shot plan did not render correctly: ${JSON.stringify(planned)}`);
@@ -94,8 +130,17 @@ const photo = `data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}`
   if (planned.clubWhiteSpace !== 'normal') {
     throw new Error(`Club panel text is not wrapping: ${planned.clubWhiteSpace}`);
   }
+  if (planned.clubBackground !== 'rgba(0, 0, 0, 0)') {
+    throw new Error(`Club panel still has a background: ${planned.clubBackground}`);
+  }
   if (cleared.hasPlanRoute || !cleared.hasGuideRoute || !cleared.hasHint) {
     throw new Error(`Shot plan clear did not reset correctly: ${JSON.stringify(cleared)}`);
   }
-  console.log(JSON.stringify({ errors, result: { planned, cleared } }, null, 2));
+  if (!pinch.zoomText || pinch.zoomText.includes('1.0x')) {
+    throw new Error(`Pinch zoom did not update: ${JSON.stringify(pinch)}`);
+  }
+  if (!scoreOpen || scoreNext.bodyFrozen || scoreNext.overlay || scoreNext.holeTitle !== 'Hole 2') {
+    throw new Error(`Score card did not close and advance correctly: ${JSON.stringify({ scoreOpen, scoreNext })}`);
+  }
+  console.log(JSON.stringify({ errors, result: { planned, cleared, pinch, scoreOpen, scoreNext } }, null, 2));
 })();

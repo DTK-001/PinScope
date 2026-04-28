@@ -3,7 +3,8 @@ export const cranhamPhotoCropSource = {
   width: 1210,
   height: 1204,
   label: "User supplied top-down course image",
-  matchedFrom: "Cranham tee and green coordinates"
+  matchedFrom: "Cranham tee and green coordinates",
+  url: "./assets/courses/cranham.png"
 };
 
 export const cranhamPhotoClips = [

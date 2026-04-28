@@ -124,6 +124,16 @@ try {
       $bytes = [System.IO.File]::ReadAllBytes($fullPath)
       Send-Response $stream 200 "OK" $contentType $bytes $headOnly
     }
+    catch {
+      try {
+        if ($stream) {
+          Send-Text $stream 400 "Bad Request" "Bad request" $false
+        }
+      }
+      catch {
+        # Some clients close speculative connections before sending a request.
+      }
+    }
     finally {
       $client.Close()
     }

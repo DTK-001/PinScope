@@ -1492,7 +1492,7 @@ function handlePhotoPointerDown(event) {
     return;
   }
   event.preventDefault();
-  handle.setPointerCapture?.(event.pointerId);
+  capturePhotoPointer(handle, event.pointerId);
   photoDrag = {
     field: handle.dataset.photoHandle,
     hole: String(handle.dataset.hole || ""),
@@ -1541,7 +1541,7 @@ function beginPhotoPlanOrPanDrag(event) {
 
 function beginPhotoShotDrag(event, panel, canvas, courseId, holeNumber, hole, shotPlan, hit) {
   event.preventDefault();
-  panel.setPointerCapture?.(event.pointerId);
+  capturePhotoPointer(panel, event.pointerId);
   suppressPhotoPlanningClick = true;
   photoDrag = {
     type: "shot",
@@ -1562,7 +1562,7 @@ function beginPhotoPanDrag(event, panel, canvas, courseId, holeNumber) {
   if (Number(event.button || 0) !== 0 || photoZoomLevel(courseId, holeNumber) <= 1) {
     return;
   }
-  panel.setPointerCapture?.(event.pointerId);
+  capturePhotoPointer(panel, event.pointerId);
   photoDrag = {
     type: "pan",
     courseId,
@@ -1739,6 +1739,14 @@ function finishPhotoPanDrag(event) {
   }, 250);
 }
 
+function capturePhotoPointer(element, pointerId) {
+  try {
+    element.setPointerCapture?.(pointerId);
+  } catch {
+    // Some browsers release touch pointers before synthetic or interrupted events finish.
+  }
+}
+
 function trackPhotoPointer(event, panel, canvas, courseId, holeNumber) {
   if (event.pointerType !== "touch") {
     return;
@@ -1776,8 +1784,8 @@ function beginPhotoPinchIfReady(event, panel, canvas, courseId, holeNumber) {
   const pair = pointers.slice(0, 2);
   const metrics = photoPointerPairMetrics(pair);
   const zoom = photoZoomLevel(courseId, holeNumber);
-  panel.setPointerCapture?.(pair[0].pointerId);
-  panel.setPointerCapture?.(pair[1].pointerId);
+  capturePhotoPointer(panel, pair[0].pointerId);
+  capturePhotoPointer(panel, pair[1].pointerId);
   panel.classList.remove("panning-photo");
   photoDrag = {
     type: "pinch",
