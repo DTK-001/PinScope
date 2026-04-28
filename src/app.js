@@ -560,9 +560,10 @@ function renderPhotoHoleVisual(hole) {
   const zoom = photoEditMode ? 1 : photoZoomLevel(courseId, hole.number);
   const pan = photoPanOffset(courseId, hole.number, zoom);
   const zoomClass = zoom > 1 ? " zoomed" : "";
+  const gpsMarker = photoEditMode ? null : photoGpsMarker(hole, courseId);
 
   return `
-    <section class="hole-visual photo-hole${editClass}${planningClass}${zoomClass}" aria-label="Cranham focused top-down cut-out for hole ${hole.number}">
+    <section class="hole-visual photo-hole${editClass}${planningClass}${zoomClass}" aria-label="${escapeAttribute(course?.name || "Course")} focused top-down cut-out for hole ${hole.number}">
       <div class="photo-pan-layer" style="transform:translate3d(${pan.x}%, ${pan.y}%, 0);">
         <div class="photo-zoom-layer" style="transform:scale(${zoom});">
           <canvas class="photo-hole-canvas"
@@ -584,6 +585,7 @@ function renderPhotoHoleVisual(hole) {
             ${shotPlan ? "" : renderPhotoGuideRoute(marker)}
             ${renderPhotoGreenLayer(marker, hole.par)}
             ${renderPhotoPlanRoute(marker, shotPlan, hole.number)}
+            ${renderPhotoGpsMarker(gpsMarker)}
             <circle class="photo-tee-marker" cx="${marker.tee[0]}" cy="${marker.tee[1]}" r="2.3"></circle>
           </svg>
         </div>
@@ -647,6 +649,18 @@ function renderPhotoPlanRoute(marker, shotPlan, holeNumber) {
       <circle class="photo-plan-point" data-photo-plan-point="${index}" cx="${point.x}" cy="${point.y}" r="1.9"></circle>
       <path class="photo-plan-cross" data-photo-plan-cross="${index}" d="M ${point.x - 1.4} ${point.y} L ${point.x + 1.4} ${point.y} M ${point.x} ${point.y - 1.4} L ${point.x} ${point.y + 1.4}"></path>
     `).join("")}
+  `;
+}
+
+function renderPhotoGpsMarker(marker) {
+  if (!marker) {
+    return "";
+  }
+  return `
+    <g class="photo-gps-marker" transform="translate(${marker.x} ${marker.y})">
+      <circle class="photo-gps-pulse" r="4.8"></circle>
+      <circle class="photo-gps-dot" r="1.65"></circle>
+    </g>
   `;
 }
 
@@ -741,6 +755,18 @@ function gpsTargetForHole(hole) {
   return null;
 }
 
+function photoGpsMarker(hole, courseId) {
+  if (gps.status !== "ready" || !gps.position) {
+    return null;
+  }
+  const sourcePoint = photoGeoToSourcePoint(courseId, gps.position);
+  const marker = sourcePoint ? photoSourceToTargetPoint(hole, sourcePoint) : null;
+  if (!marker || marker.x < -8 || marker.x > 108 || marker.y < -8 || marker.y > 108) {
+    return null;
+  }
+  return marker;
+}
+
 function photoPointToGeo(courseId, point) {
   if (courseId !== BELHUS_COURSE_ID || !Array.isArray(point)) {
     return null;
@@ -750,6 +776,23 @@ function photoPointToGeo(courseId, point) {
   const lng = BELHUS_PHOTO_GEO_BOUNDS.west +
     ((BELHUS_PHOTO_GEO_BOUNDS.east - BELHUS_PHOTO_GEO_BOUNDS.west) * point[0]) / 100;
   return { lat: Number(lat.toFixed(6)), lng: Number(lng.toFixed(6)) };
+}
+
+function photoGeoToSourcePoint(courseId, position) {
+  if (courseId !== BELHUS_COURSE_ID || !position) {
+    return null;
+  }
+  const lat = Number(position.lat);
+  const lng = Number(position.lng);
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+    return null;
+  }
+  const x = ((lng - BELHUS_PHOTO_GEO_BOUNDS.west) / (BELHUS_PHOTO_GEO_BOUNDS.east - BELHUS_PHOTO_GEO_BOUNDS.west)) * 100;
+  const y = ((BELHUS_PHOTO_GEO_BOUNDS.north - lat) / (BELHUS_PHOTO_GEO_BOUNDS.north - BELHUS_PHOTO_GEO_BOUNDS.south)) * 100;
+  if (x < -4 || x > 104 || y < -4 || y > 104) {
+    return null;
+  }
+  return [Number(x.toFixed(3)), Number(y.toFixed(3))];
 }
 
 function renderPhotoZoomControls(courseId, holeNumber, zoom) {
@@ -2414,7 +2457,7 @@ function coursePhotoSourceKey(courseId) {
 }
 
 function coursePhotoEditKey(courseId) {
-  return courseId === CRANHAM_COURSE_ID ? CRANHAM_PHOTO_EDIT_KEY : `pinscope:course-photo-edits:${courseId}:v1`;
+  return courseId === CRANHAM_COURSE_ID ? CRANHAM_PHOTO_EDIT_KEY : `pinscope:course-photo-edits:${courseId}:v2`;
 }
 
 function saveCoursePhotoEdits(courseId) {

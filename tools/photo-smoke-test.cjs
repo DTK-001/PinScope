@@ -11,6 +11,26 @@ const { chromium } = require('playwright');
   page.on('console', (message) => {
     if (message.type() === 'error') errors.push(message.text());
   });
+  await page.addInitScript(() => {
+    const coords = {
+      latitude: 51.506501,
+      longitude: 0.262079,
+      accuracy: 4
+    };
+    Object.defineProperty(navigator, 'geolocation', {
+      configurable: true,
+      value: {
+        getCurrentPosition(success) {
+          setTimeout(() => success({ coords }), 0);
+        },
+        watchPosition(success) {
+          setTimeout(() => success({ coords }), 0);
+          return 1;
+        },
+        clearWatch() {}
+      }
+    });
+  });
   await page.goto('http://localhost:5173/#play', { waitUntil: 'networkidle' });
   await page.getByRole('button', { name: 'Start Group Round' }).click();
   await page.waitForSelector('canvas.photo-hole-canvas');
@@ -111,6 +131,18 @@ const { chromium } = require('playwright');
     holeTitle: document.querySelector('.round-header h2')?.textContent.trim() || '',
     overlay: Boolean(document.querySelector('.score-card-backdrop'))
   }));
+  await page.goto('http://localhost:5173/#courses', { waitUntil: 'networkidle' });
+  await page.locator('.course-card', { hasText: 'Belhus Park Golf Club' }).getByRole('button', { name: 'Start Round' }).click();
+  await page.getByRole('button', { name: 'Start Group Round' }).click();
+  await page.waitForSelector('canvas[data-photo-course-id="verified-belhus-park"]');
+  await page.getByRole('button', { name: /^GPS$/ }).click();
+  await page.waitForSelector('.photo-gps-marker');
+  const belhus = await page.evaluate(() => ({
+    source: document.querySelector('canvas.photo-hole-canvas')?.dataset.photoCourseId || '',
+    marker: document.querySelector('.photo-gps-marker')?.getAttribute('transform') || '',
+    editKeyV1: localStorage.getItem('pinscope:course-photo-edits:verified-belhus-park:v1'),
+    editKeyV2: localStorage.getItem('pinscope:course-photo-edits:verified-belhus-park:v2')
+  }));
   await browser.close();
   if (errors.length) {
     throw new Error(errors.join('\n'));
@@ -142,5 +174,8 @@ const { chromium } = require('playwright');
   if (!scoreOpen || scoreNext.bodyFrozen || scoreNext.overlay || scoreNext.holeTitle !== 'Hole 2') {
     throw new Error(`Score card did not close and advance correctly: ${JSON.stringify({ scoreOpen, scoreNext })}`);
   }
-  console.log(JSON.stringify({ errors, result: { planned, cleared, pinch, scoreOpen, scoreNext } }, null, 2));
+  if (belhus.source !== 'verified-belhus-park' || !belhus.marker) {
+    throw new Error(`Belhus GPS marker did not render: ${JSON.stringify(belhus)}`);
+  }
+  console.log(JSON.stringify({ errors, result: { planned, cleared, pinch, scoreOpen, scoreNext, belhus } }, null, 2));
 })();

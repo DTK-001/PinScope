@@ -1,5 +1,5 @@
 export const belhusPhotoCropSource = {
-  id: "belhus-user-topdown",
+  id: "belhus-user-topdown-20260428",
   label: "Belhus top-down course image",
   url: "./assets/belhus.png"
 };

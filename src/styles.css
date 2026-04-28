@@ -692,6 +692,22 @@ select option {
   stroke-linecap: round;
 }
 
+.photo-gps-marker {
+  filter: drop-shadow(0 0 4px rgba(255, 79, 216, 0.92));
+}
+
+.photo-gps-pulse {
+  fill: rgba(255, 79, 216, 0.2);
+  stroke: rgba(248, 243, 255, 0.9);
+  stroke-width: 0.28;
+}
+
+.photo-gps-dot {
+  fill: #ff4fd8;
+  stroke: #f8f3ff;
+  stroke-width: 0.42;
+}
+
 .photo-tee-marker {
   fill: #f8f3ff;
   stroke: rgba(255, 79, 216, 0.78);
