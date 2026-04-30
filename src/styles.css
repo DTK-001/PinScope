@@ -169,6 +169,249 @@ p {
   gap: 14px;
 }
 
+.active-round-view {
+  overflow: hidden;
+  background: #050609;
+}
+
+.active-round-view .app-shell {
+  width: 100%;
+  min-height: 100dvh;
+  padding: 0;
+}
+
+.active-round-view .topbar,
+.active-round-view .bottom-nav {
+  display: none;
+}
+
+.active-round-view .screen {
+  display: block;
+  min-height: 100dvh;
+}
+
+.play-round-screen {
+  position: fixed;
+  inset: 0;
+  isolation: isolate;
+  overflow: hidden;
+  color: #f8fffb;
+  background: #050609;
+  overscroll-behavior: none;
+}
+
+.play-round-screen > .hole-visual {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  border-radius: 0;
+  aspect-ratio: auto;
+  box-shadow: none;
+}
+
+.play-round-screen > .photo-hole::after {
+  background:
+    linear-gradient(180deg, rgba(3, 5, 7, 0.7), transparent 24%, transparent 62%, rgba(3, 5, 7, 0.74)),
+    radial-gradient(circle at 50% 44%, transparent 0 44%, rgba(2, 3, 6, 0.28) 82%);
+}
+
+.play-hud {
+  position: absolute;
+  z-index: 9;
+  color: #f8fffb;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.86);
+}
+
+.play-hole-hud,
+.play-score-hud,
+.play-bottom-hud {
+  padding: 10px 12px;
+  border: 1px solid rgba(248, 255, 251, 0.16);
+  border-radius: var(--radius);
+  background: rgba(5, 7, 10, 0.5);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.24);
+}
+
+.play-hole-hud {
+  top: calc(12px + env(safe-area-inset-top));
+  left: calc(12px + env(safe-area-inset-left));
+  max-width: min(54vw, 320px);
+}
+
+.play-hole-hud .eyebrow {
+  color: #ff9bed;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.play-hole-hud h2 {
+  font-size: 2rem;
+  line-height: 0.98;
+}
+
+.play-meta-line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 9px;
+  margin-top: 8px;
+  color: rgba(248, 255, 251, 0.82);
+  font-size: 0.76rem;
+  font-weight: 850;
+}
+
+.play-score-hud {
+  top: calc(12px + env(safe-area-inset-top));
+  right: calc(12px + env(safe-area-inset-right));
+  display: grid;
+  gap: 8px;
+  justify-items: end;
+  padding: 8px;
+}
+
+.play-score-hud .gps-pill {
+  min-width: 84px;
+  min-height: 36px;
+  padding: 0 10px;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.play-score-hud .score-pill {
+  min-width: 54px;
+  padding: 8px 10px;
+  font-size: 1rem;
+}
+
+.play-bottom-hud {
+  bottom: calc(14px + env(safe-area-inset-bottom));
+  left: calc(12px + env(safe-area-inset-left));
+  display: grid;
+  gap: 8px;
+  width: min(58vw, 360px);
+  max-height: 34vh;
+  overflow: hidden;
+}
+
+.play-distance-hud {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1px;
+  overflow: hidden;
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.play-distance-hud div {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  padding: 8px 6px;
+  background: rgba(8, 10, 14, 0.58);
+  text-align: center;
+}
+
+.play-distance-hud span {
+  color: rgba(248, 255, 251, 0.68);
+  font-size: 0.64rem;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+.play-distance-hud strong {
+  font-size: 1rem;
+}
+
+.play-round-screen .scoreboard-strip {
+  grid-template-columns: repeat(auto-fit, minmax(64px, 1fr));
+  gap: 6px;
+}
+
+.play-round-screen .scoreboard-strip div {
+  gap: 1px;
+  padding: 7px 8px;
+  background: rgba(8, 10, 14, 0.58);
+  box-shadow: inset 0 0 0 1px rgba(248, 255, 251, 0.12);
+}
+
+.play-round-screen .scoreboard-strip span,
+.play-round-screen .scoreboard-strip em {
+  font-size: 0.68rem;
+}
+
+.play-round-screen .scoreboard-strip strong {
+  font-size: 1rem;
+}
+
+.play-finish-button {
+  justify-self: start;
+  min-height: 32px;
+  border: 1px solid rgba(248, 255, 251, 0.2);
+  border-radius: 999px;
+  padding: 0 12px;
+  color: #f8fffb;
+  background: rgba(255, 255, 255, 0.1);
+  cursor: pointer;
+  font-size: 0.72rem;
+  font-weight: 850;
+}
+
+.score-fab {
+  position: absolute;
+  right: calc(16px + env(safe-area-inset-right));
+  bottom: calc(16px + env(safe-area-inset-bottom));
+  z-index: 12;
+  display: grid;
+  width: 78px;
+  height: 78px;
+  place-items: center;
+  overflow: hidden;
+  border: 3px solid rgba(255, 255, 255, 0.92);
+  border-radius: 999px;
+  padding: 0;
+  background:
+    radial-gradient(circle at 36% 28%, rgba(255, 255, 255, 0.98), rgba(236, 231, 242, 0.96));
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.42), 0 0 0 1px rgba(255, 79, 216, 0.3);
+  cursor: pointer;
+}
+
+.score-fab img {
+  display: block;
+  width: 80%;
+  height: 80%;
+  object-fit: contain;
+}
+
+.play-round-screen .photo-info-stack {
+  top: calc(126px + env(safe-area-inset-top));
+  left: calc(12px + env(safe-area-inset-left));
+  right: auto;
+  width: min(42vw, 230px);
+}
+
+.play-round-screen .photo-hole-badge {
+  display: none;
+}
+
+.play-round-screen .photo-club-panel {
+  top: calc(122px + env(safe-area-inset-top));
+  right: calc(12px + env(safe-area-inset-right));
+  width: min(34vw, 180px);
+  max-width: 180px;
+}
+
+.play-round-screen .photo-zoom-toolbar {
+  left: calc(12px + env(safe-area-inset-left));
+  bottom: calc(144px + env(safe-area-inset-bottom));
+}
+
+.play-round-screen .photo-align-toolbar {
+  right: calc(16px + env(safe-area-inset-right));
+  bottom: calc(108px + env(safe-area-inset-bottom));
+}
+
 .course-hero {
   position: relative;
   overflow: hidden;

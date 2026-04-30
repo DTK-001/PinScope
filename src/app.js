@@ -24,6 +24,9 @@ const PHOTO_COURSE_IDS = [CRANHAM_COURSE_ID, BELHUS_COURSE_ID];
 const PHOTO_ZOOM_LEVELS = [1, 1.35, 1.7, 2.1];
 const PHOTO_MIN_ZOOM = 1;
 const PHOTO_MAX_ZOOM = 2.6;
+const SCORE_BUTTON_IMAGE_SRC = "./assets/enter-score.png";
+const HOLE_SWIPE_MIN_DISTANCE = 68;
+const HOLE_SWIPE_VERTICAL_RATIO = 1.25;
 const BELHUS_PHOTO_GEO_BOUNDS = {
   north: 51.515,
   south: 51.5046,
@@ -44,6 +47,8 @@ let photoPointers = new Map();
 let photoShotPlans = {};
 let photoZoomLevels = {};
 let photoPanOffsets = {};
+let holeSwipe = null;
+let wheelHoleNavigationAt = 0;
 let view = getViewFromHash();
 let gps = {
   status: "off",
@@ -65,10 +70,14 @@ window.addEventListener("resize", queuePhotoCanvasRender);
 window.addEventListener("pointermove", handlePhotoPointerMove);
 window.addEventListener("pointerup", handlePhotoPointerEnd);
 window.addEventListener("pointercancel", handlePhotoPointerEnd);
+window.addEventListener("pointermove", handleHoleSwipePointerMove);
+window.addEventListener("pointerup", handleHoleSwipePointerEnd);
+window.addEventListener("pointercancel", cancelHoleSwipe);
 
 app.addEventListener("click", handleClick);
 app.addEventListener("click", handlePhotoPlanningClick);
 app.addEventListener("pointerdown", handlePhotoPointerDown);
+app.addEventListener("pointerdown", handleHoleSwipePointerDown);
 app.addEventListener("wheel", handlePhotoWheel, { passive: false });
 app.addEventListener("submit", handleSubmit);
 app.addEventListener("input", handleInput);
@@ -81,7 +90,9 @@ function getViewFromHash() {
 }
 
 function render() {
+  const activeRoundView = isActiveRoundView();
   document.body.classList.toggle("score-card-open", scoreCardOpen);
+  document.body.classList.toggle("active-round-view", activeRoundView);
   app.innerHTML = `
     <header class="topbar">
       <div>
@@ -104,6 +115,10 @@ function render() {
     </nav>
   `;
   queuePhotoCanvasRender();
+}
+
+function isActiveRoundView() {
+  return view === "play" && Boolean(getActiveRound(state));
 }
 
 function pageTitle() {
@@ -307,38 +322,61 @@ function renderPlay() {
   const hole = course.holes.find((item) => item.number === activeRound.currentHole) || course.holes[0];
   const players = getRoundPlayers(activeRound);
   const leadTotals = roundTotals(activeRound, course, players[0]?.id);
+  const teeInfo = photoPlanningTee(hole);
   return `
-    <section class="round-header">
-      <div>
+    <section class="play-round-screen" data-play-round>
+      ${renderHoleVisual(hole)}
+
+      <div class="play-hud play-hole-hud">
         <p class="eyebrow">${escapeHtml(course.name)}</p>
         <h2>Hole ${hole.number}</h2>
+        <div class="play-meta-line">
+          <span>Par ${hole.par}</span>
+          <span>SI ${hole.strokeIndex}</span>
+          ${teeInfo.totalYards ? `<span>${teeInfo.totalYards} yd</span>` : ""}
+          <span>${hole.number} / ${course.holes.length}</span>
+        </div>
       </div>
-      <div class="score-pill">${formatToPar(leadTotals.toPar)}</div>
-    </section>
 
-    ${renderHoleVisual(hole)}
-    ${renderDistances(hole)}
-    ${renderRoundScoreboard(activeRound, course)}
-
-    <section class="game-card-launch">
-      <div class="hole-facts">
-        <div><span>Par</span><strong>${hole.par}</strong></div>
-        <div><span>SI</span><strong>${hole.strokeIndex}</strong></div>
-        <div><span>Players</span><strong>${players.length}</strong></div>
+      <div class="play-hud play-score-hud">
+        <button class="gps-pill ${gps.status}" type="button" data-action="gps">
+          <span class="gps-dot" aria-hidden="true"></span>
+          <span>${gpsLabel()}</span>
+        </button>
+        <div class="score-pill">${formatToPar(leadTotals.toPar)}</div>
       </div>
-      <div class="score-launch-copy">
-        <h3>Group score card</h3>
-        <p>Enter everyone on this hole, then move on.</p>
-      </div>
-      <button class="primary-action full" type="button" data-action="open-score-card">Enter Scores</button>
-    </section>
 
-    <section class="round-controls">
-      <button class="secondary-action" type="button" data-action="hole-prev">Prev</button>
-      <div>${hole.number} / ${course.holes.length}</div>
-      <button class="secondary-action" type="button" data-action="hole-next">Next</button>
+      <div class="play-hud play-bottom-hud">
+        ${renderPlayDistanceHud(hole)}
+        ${renderRoundScoreboard(activeRound, course)}
+        <button class="play-finish-button" type="button" data-action="finish-round">Finish</button>
+      </div>
+
+      <button class="score-fab" type="button" data-action="open-score-card" aria-label="Enter scores">
+        <img src="${SCORE_BUTTON_IMAGE_SRC}" alt="" aria-hidden="true" />
+      </button>
     </section>
-    <button class="finish-action full" type="button" data-action="finish-round">Finish Round</button>
+  `;
+}
+
+function renderPlayDistanceHud(hole) {
+  const values = gps.status === "ready"
+    ? [
+        yardsBetween(gps.position, hole.greenFront),
+        yardsBetween(gps.position, hole.greenCenter),
+        yardsBetween(gps.position, hole.greenBack)
+      ]
+    : ["-", "-", "-"];
+  const labels = ["Front", "Mid", "Back"];
+  return `
+    <div class="play-distance-hud" aria-label="Green distances">
+      ${labels.map((label, index) => `
+        <div>
+          <span>${label}</span>
+          <strong>${values[index] ?? "-"}</strong>
+        </div>
+      `).join("")}
+    </div>
   `;
 }
 
@@ -1690,6 +1728,9 @@ function handlePhotoPointerEnd(event) {
 }
 
 function handlePhotoWheel(event) {
+  if (handlePlayHorizontalWheel(event)) {
+    return;
+  }
   if (photoEditMode) {
     return;
   }
@@ -1698,12 +1739,110 @@ function handlePhotoWheel(event) {
   if (!panel || !canvas) {
     return;
   }
+  if (Math.abs(event.deltaY) < 1) {
+    return;
+  }
   const direction = event.deltaY < 0 ? 1 : -1;
   if (!direction) {
     return;
   }
   event.preventDefault();
   updatePhotoZoomValue(canvas.dataset.photoCourseId, canvas.dataset.photoHole, direction);
+}
+
+function handleHoleSwipePointerDown(event) {
+  if (!isActiveRoundView() || scoreCardOpen || photoEditMode || event.isPrimary === false) {
+    return;
+  }
+  if (Number(event.button || 0) !== 0) {
+    return;
+  }
+  if (!event.target.closest("[data-play-round]")) {
+    return;
+  }
+  if (event.target.closest("[data-action], button, input, select, label, a, summary, .score-card-backdrop, .photo-align-toolbar, .photo-zoom-toolbar, .photo-yardage-card, .photo-clear-shot, .photo-club-panel")) {
+    return;
+  }
+
+  const photoPanel = event.target.closest(".photo-hole");
+  const canvas = photoPanel?.querySelector(".photo-hole-canvas");
+  if (canvas && photoZoomLevel(canvas.dataset.photoCourseId, canvas.dataset.photoHole) > 1) {
+    return;
+  }
+
+  holeSwipe = {
+    pointerId: event.pointerId,
+    startX: event.clientX,
+    startY: event.clientY,
+    latestX: event.clientX,
+    latestY: event.clientY
+  };
+}
+
+function handleHoleSwipePointerMove(event) {
+  if (!holeSwipe || event.pointerId !== holeSwipe.pointerId) {
+    return;
+  }
+  holeSwipe.latestX = event.clientX;
+  holeSwipe.latestY = event.clientY;
+  const dx = event.clientX - holeSwipe.startX;
+  const dy = event.clientY - holeSwipe.startY;
+  if (Math.abs(dx) > 20 && Math.abs(dx) > Math.abs(dy) * 1.1) {
+    event.preventDefault();
+  }
+}
+
+function handleHoleSwipePointerEnd(event) {
+  if (!holeSwipe || event.pointerId !== holeSwipe.pointerId) {
+    return;
+  }
+  const swipe = holeSwipe;
+  holeSwipe = null;
+
+  if (event.defaultPrevented || photoDrag) {
+    return;
+  }
+
+  const endX = event.clientX || swipe.latestX;
+  const endY = event.clientY || swipe.latestY;
+  const dx = endX - swipe.startX;
+  const dy = endY - swipe.startY;
+  if (Math.abs(dx) < HOLE_SWIPE_MIN_DISTANCE || Math.abs(dx) < Math.abs(dy) * HOLE_SWIPE_VERTICAL_RATIO) {
+    return;
+  }
+
+  event.preventDefault();
+  suppressPhotoPlanningClick = true;
+  moveHole(dx < 0 ? 1 : -1);
+  window.setTimeout(() => {
+    suppressPhotoPlanningClick = false;
+  }, 250);
+}
+
+function cancelHoleSwipe(event) {
+  if (!holeSwipe || !event || event.pointerId === holeSwipe.pointerId) {
+    holeSwipe = null;
+  }
+}
+
+function handlePlayHorizontalWheel(event) {
+  if (!isActiveRoundView() || scoreCardOpen || photoEditMode) {
+    return false;
+  }
+  const absX = Math.abs(event.deltaX);
+  const absY = Math.abs(event.deltaY);
+  if (absX < 24 || absX < absY * 1.2) {
+    return false;
+  }
+
+  event.preventDefault();
+  const now = Date.now();
+  if (now - wheelHoleNavigationAt < 520) {
+    return true;
+  }
+  wheelHoleNavigationAt = now;
+  moveHole(event.deltaX > 0 ? 1 : -1);
+  return true;
 }
 
 function finishPhotoPlanDrag(event) {
