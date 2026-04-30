@@ -180,8 +180,7 @@ p {
   padding: 0;
 }
 
-.active-round-view .topbar,
-.active-round-view .bottom-nav {
+.active-round-view .topbar {
   display: none;
 }
 
@@ -290,7 +289,7 @@ p {
 }
 
 .play-bottom-hud {
-  bottom: calc(14px + env(safe-area-inset-bottom));
+  bottom: calc(92px + env(safe-area-inset-bottom));
   left: calc(12px + env(safe-area-inset-left));
   display: grid;
   gap: 10px;
@@ -333,11 +332,17 @@ p {
   font-weight: 850;
 }
 
+.play-clear-shot {
+  min-height: 30px;
+  padding: 0 12px;
+  background: rgba(7, 7, 13, 0.28);
+}
+
 .score-fab {
   position: absolute;
   right: calc(16px + env(safe-area-inset-right));
-  bottom: calc(16px + env(safe-area-inset-bottom));
-  z-index: 12;
+  bottom: calc(92px + env(safe-area-inset-bottom));
+  z-index: 22;
   display: grid;
   width: 78px;
   height: 78px;
@@ -377,14 +382,9 @@ p {
   max-width: 180px;
 }
 
-.play-round-screen .photo-zoom-toolbar {
-  left: calc(12px + env(safe-area-inset-left));
-  bottom: calc(144px + env(safe-area-inset-bottom));
-}
-
 .play-round-screen .photo-align-toolbar {
   right: calc(16px + env(safe-area-inset-right));
-  bottom: calc(108px + env(safe-area-inset-bottom));
+  bottom: calc(184px + env(safe-area-inset-bottom));
 }
 
 .course-hero {

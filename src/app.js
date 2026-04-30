@@ -347,6 +347,7 @@ function renderPlay() {
 
       <div class="play-hud play-bottom-hud">
         ${renderPlayDistanceHud(hole)}
+        ${renderPlayShotClear(hole, teeInfo)}
         <button class="play-finish-button" type="button" data-action="finish-round">Finish Round</button>
       </div>
 
@@ -385,6 +386,18 @@ function renderPlayDistanceHud(hole) {
       `).join("")}
     </div>
   `;
+}
+
+function renderPlayShotClear(hole, teeInfo) {
+  if (photoEditMode || !hole.visual?.photo) {
+    return "";
+  }
+  const shotPlan = resolvePhotoShotPlan(hole, teeInfo);
+  if (!shotPlan) {
+    return "";
+  }
+  const courseId = photoCourseId(hole);
+  return `<button class="photo-clear-shot play-clear-shot" type="button" data-action="clear-shot-plan" data-course-id="${courseId}" data-hole="${hole.number}" aria-label="Clear shot path">Clear</button>`;
 }
 
 function savedHomeCourseCount() {
@@ -651,7 +664,6 @@ function renderPhotoHoleVisual(hole) {
         ${photoEditMode ? "" : renderPhotoShotInfo(shotPlan, teeInfo, courseId, hole.number)}
       </div>
       ${photoEditMode ? "" : renderPhotoClubPanel(hole, shotPlan)}
-      ${photoEditMode ? "" : renderPhotoZoomControls(courseId, hole.number, zoom)}
       <div class="photo-align-toolbar">
         <button class="photo-tool-button" type="button" data-action="toggle-photo-edit">${photoEditMode ? "Done" : "Adjust"}</button>
         ${photoEditMode && edited ? `<button class="photo-tool-button" type="button" data-action="reset-hole-photo-alignment" data-course-id="${courseId}" data-hole="${hole.number}">Reset</button>` : ""}
@@ -722,7 +734,6 @@ function renderPhotoShotInfo(shotPlan, teeInfo, courseId, holeNumber) {
           <strong>${segment.yards}<small>yd</small></strong>
         </div>
       `).join("")}
-      <button class="photo-clear-shot" type="button" data-action="clear-shot-plan" data-course-id="${courseId}" data-hole="${holeNumber}" aria-label="Clear shot path">Clear</button>
     </div>
   `;
 }
@@ -2445,7 +2456,7 @@ function drawPhotoCanvas(canvas, image) {
   const rotation = -Math.PI / 2 - Math.atan2(vector.y, vector.x);
   const focusWidth = cssWidth * (par === 3 ? 0.62 : par === 5 ? 0.76 : 0.68);
 
-  drawTransformedPhoto(context, image, tee, target, rotation, scale, "blur(6px) brightness(58%) saturate(78%)");
+  drawTransformedPhoto(context, image, tee, target, rotation, scale, "brightness(66%) saturate(88%)");
   context.save();
   createHoleFocusPath(context, cssWidth, cssHeight, target, focusWidth);
   context.clip();
