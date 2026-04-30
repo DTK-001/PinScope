@@ -332,12 +332,6 @@ p {
   font-weight: 850;
 }
 
-.play-clear-shot {
-  min-height: 30px;
-  padding: 0 12px;
-  background: rgba(7, 7, 13, 0.28);
-}
-
 .score-fab {
   position: absolute;
   right: calc(16px + env(safe-area-inset-right));
@@ -741,6 +735,18 @@ select {
   color: var(--ink);
   background: rgba(255, 255, 255, 0.07);
   color-scheme: dark;
+}
+
+.course-search {
+  display: grid;
+  gap: 7px;
+}
+
+.course-search span {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
 }
 
 select option {

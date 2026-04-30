@@ -51,6 +51,7 @@ let photoZoomLevels = {};
 let photoPanOffsets = {};
 let holeSwipe = null;
 let wheelHoleNavigationAt = 0;
+let courseSearchQuery = "";
 let view = getViewFromHash();
 let gps = {
   status: "off",
@@ -162,6 +163,7 @@ function renderView() {
 
 function renderCourses() {
   const featuredCourse = getCourse(state, CRANHAM_COURSE_ID);
+  const filteredCourses = filteredCourseList();
   return `
     ${featuredCourse ? renderFeaturedCourse(featuredCourse) : ""}
 
@@ -181,6 +183,11 @@ function renderCourses() {
       </div>
       <button class="secondary-action" type="button" data-action="import-home-area">Refresh Local</button>
     </section>
+
+    <label class="course-search">
+      <span>Search courses</span>
+      <input type="search" value="${escapeAttribute(courseSearchQuery)}" placeholder="Search by course or area" data-action="course-search" autocomplete="off" />
+    </label>
 
     <details class="tool-panel">
       <summary>Add Course</summary>
@@ -205,13 +212,28 @@ function renderCourses() {
     </details>
 
     <section class="course-list">
-      ${state.courses.map(renderCourseCard).join("")}
+      ${filteredCourses.length ? filteredCourses.map(renderCourseCard).join("") : `<p class="empty-copy">No courses match that search.</p>`}
     </section>
     <p class="source-note">OpenStreetMap imports require ODbL attribution. Imported shells are saved locally on this device.</p>
   `;
 }
 
+function filteredCourseList() {
+  const query = courseSearchQuery.trim().toLowerCase();
+  if (!query) {
+    return state.courses;
+  }
+  return state.courses.filter((course) => [
+    course.name,
+    course.town,
+    course.postcode,
+    course.country,
+    course.source
+  ].some((value) => String(value || "").toLowerCase().includes(query)));
+}
+
 function renderFeaturedCourse(course) {
+  const selected = state.selectedCourseId === course.id;
   return `
     <section class="course-hero">
       <div class="hero-orbit" aria-hidden="true">
@@ -223,7 +245,7 @@ function renderFeaturedCourse(course) {
         <p>${courseLocationLine(course)}</p>
       </div>
       <div class="hero-actions">
-        <button class="primary-action" type="button" data-action="quick-start" data-course-id="${course.id}">Setup Round</button>
+        ${selected ? `<button class="primary-action" type="button" data-action="quick-start" data-course-id="${course.id}">Setup Round</button>` : ""}
         <button class="secondary-action" type="button" data-action="select-course" data-course-id="${course.id}">Select</button>
       </div>
       ${courseHasPhotoVisual(course) ? renderPhotoSourceControl(course, "hero") : ""}
@@ -272,7 +294,8 @@ function renderMiniCourseSignal(course) {
 }
 
 function renderCourseCard(course) {
-  const selected = state.selectedCourseId === course.id ? "selected" : "";
+  const isSelected = state.selectedCourseId === course.id;
+  const selected = isSelected ? "selected" : "";
   const source = course.source === "verified" ? "Verified" : course.source === "osm" ? "OSM" : course.source === "manual" ? "Manual" : "Demo";
   return `
     <article class="course-card ${selected}">
@@ -292,7 +315,7 @@ function renderCourseCard(course) {
         ${course.phone ? `<a href="tel:${escapeAttribute(course.phone)}">Call</a>` : "<span>Phone pending</span>"}
       </div>
       ${course.verification ? renderTeeSummary(course) : ""}
-      <button class="secondary-action full" type="button" data-action="quick-start" data-course-id="${course.id}">Start Round</button>
+      ${isSelected ? `<button class="secondary-action full" type="button" data-action="quick-start" data-course-id="${course.id}">Start Round</button>` : ""}
     </article>
   `;
 }
@@ -347,7 +370,6 @@ function renderPlay() {
 
       <div class="play-hud play-bottom-hud">
         ${renderPlayDistanceHud(hole)}
-        ${renderPlayShotClear(hole, teeInfo)}
         <button class="play-finish-button" type="button" data-action="finish-round">Finish Round</button>
       </div>
 
@@ -386,18 +408,6 @@ function renderPlayDistanceHud(hole) {
       `).join("")}
     </div>
   `;
-}
-
-function renderPlayShotClear(hole, teeInfo) {
-  if (photoEditMode || !hole.visual?.photo) {
-    return "";
-  }
-  const shotPlan = resolvePhotoShotPlan(hole, teeInfo);
-  if (!shotPlan) {
-    return "";
-  }
-  const courseId = photoCourseId(hole);
-  return `<button class="photo-clear-shot play-clear-shot" type="button" data-action="clear-shot-plan" data-course-id="${courseId}" data-hole="${hole.number}" aria-label="Clear shot path">Clear</button>`;
 }
 
 function savedHomeCourseCount() {
@@ -734,6 +744,7 @@ function renderPhotoShotInfo(shotPlan, teeInfo, courseId, holeNumber) {
           <strong>${segment.yards}<small>yd</small></strong>
         </div>
       `).join("")}
+      <button class="photo-clear-shot" type="button" data-action="clear-shot-plan" data-course-id="${courseId}" data-hole="${holeNumber}" aria-label="Clear shot path">Clear</button>
     </div>
   `;
 }
@@ -1513,6 +1524,19 @@ function handleSubmit(event) {
 }
 
 function handleInput(event) {
+  if (event.target.matches("[data-action='course-search']")) {
+    const cursor = event.target.selectionStart;
+    courseSearchQuery = event.target.value;
+    render();
+    window.requestAnimationFrame(() => {
+      const input = document.querySelector("[data-action='course-search']");
+      input?.focus();
+      if (typeof cursor === "number") {
+        input?.setSelectionRange(cursor, cursor);
+      }
+    });
+    return;
+  }
   if (event.target.matches("[data-action='club-select']")) {
     updateClub(event.target);
   }
