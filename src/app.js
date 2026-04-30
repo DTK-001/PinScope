@@ -25,6 +25,8 @@ const PHOTO_ZOOM_LEVELS = [1, 1.35, 1.7, 2.1];
 const PHOTO_MIN_ZOOM = 1;
 const PHOTO_MAX_ZOOM = 2.6;
 const SCORE_BUTTON_IMAGE_SRC = "./assets/enter-score.png";
+const GPS_PINK_IMAGE_SRC = "./assets/gps-pink.png";
+const GPS_GREY_IMAGE_SRC = "./assets/gps-grey.png";
 const HOLE_SWIPE_MIN_DISTANCE = 68;
 const HOLE_SWIPE_VERTICAL_RATIO = 1.25;
 const BELHUS_PHOTO_GEO_BOUNDS = {
@@ -339,23 +341,28 @@ function renderPlay() {
       </div>
 
       <div class="play-hud play-score-hud">
-        <button class="gps-pill ${gps.status}" type="button" data-action="gps">
-          <span class="gps-dot" aria-hidden="true"></span>
-          <span>${gpsLabel()}</span>
-        </button>
+        ${renderPlayGpsButton()}
         <div class="score-pill">${formatToPar(leadTotals.toPar)}</div>
       </div>
 
       <div class="play-hud play-bottom-hud">
         ${renderPlayDistanceHud(hole)}
-        ${renderRoundScoreboard(activeRound, course)}
-        <button class="play-finish-button" type="button" data-action="finish-round">Finish</button>
+        <button class="play-finish-button" type="button" data-action="finish-round">Finish Round</button>
       </div>
 
       <button class="score-fab" type="button" data-action="open-score-card" aria-label="Enter scores">
         <img src="${SCORE_BUTTON_IMAGE_SRC}" alt="" aria-hidden="true" />
       </button>
     </section>
+  `;
+}
+
+function renderPlayGpsButton() {
+  const connected = gps.status === "ready";
+  return `
+    <button class="play-gps-button ${connected ? "connected" : ""}" type="button" data-action="gps" aria-label="${connected ? "GPS connected" : "Start GPS"}">
+      <img src="${connected ? GPS_PINK_IMAGE_SRC : GPS_GREY_IMAGE_SRC}" alt="" aria-hidden="true" />
+    </button>
   `;
 }
 

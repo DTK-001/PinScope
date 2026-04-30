@@ -1,4 +1,4 @@
-const CACHE_NAME = "local-loop-golf-v18";
+const CACHE_NAME = "local-loop-golf-v19";
 
 const APP_SHELL = [
   "./",
@@ -6,6 +6,8 @@ const APP_SHELL = [
   "./manifest.webmanifest",
   "./assets/belhus.png",
   "./assets/enter-score.png",
+  "./assets/gps-grey.png",
+  "./assets/gps-pink.png",
   "./assets/courses/cranham.png",
   "./assets/icon.svg",
   "./src/app.js",
