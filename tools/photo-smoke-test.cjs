@@ -1,7 +1,62 @@
 const { chromium } = require('playwright');
+const fs = require('fs');
+const http = require('http');
+const path = require('path');
+
+const root = path.resolve(__dirname, '..');
+const mimeTypes = {
+  '.html': 'text/html; charset=utf-8',
+  '.css': 'text/css; charset=utf-8',
+  '.js': 'text/javascript; charset=utf-8',
+  '.json': 'application/json; charset=utf-8',
+  '.webmanifest': 'application/manifest+json; charset=utf-8',
+  '.svg': 'image/svg+xml',
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg'
+};
+
+function startStaticServer() {
+  const server = http.createServer((request, response) => {
+    try {
+      const target = new URL(request.url, 'http://127.0.0.1');
+      const requestPath = decodeURIComponent(target.pathname === '/' ? '/index.html' : target.pathname);
+      const filePath = path.resolve(root, requestPath.slice(1));
+      if (!filePath.startsWith(root) || !fs.existsSync(filePath) || !fs.statSync(filePath).isFile()) {
+        response.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
+        response.end('Not found');
+        return;
+      }
+      response.writeHead(200, {
+        'Content-Type': mimeTypes[path.extname(filePath).toLowerCase()] || 'application/octet-stream'
+      });
+      fs.createReadStream(filePath).pipe(response);
+    } catch (error) {
+      response.writeHead(500, { 'Content-Type': 'text/plain; charset=utf-8' });
+      response.end(error.message);
+    }
+  });
+  return new Promise((resolve) => {
+    server.listen(0, '127.0.0.1', () => {
+      resolve({
+        origin: `http://127.0.0.1:${server.address().port}`,
+        server
+      });
+    });
+  });
+}
+
+function stopStaticServer(server) {
+  return new Promise((resolve, reject) => {
+    server.close((error) => error ? reject(error) : resolve());
+  });
+}
 
 (async () => {
-  const browser = await chromium.launch({
+  const staticServer = await startStaticServer();
+  let browser;
+  try {
+  browser = await chromium.launch({
     executablePath: 'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe',
     headless: true
   });
@@ -31,7 +86,7 @@ const { chromium } = require('playwright');
       }
     });
   });
-  await page.goto('http://localhost:5173/#play', { waitUntil: 'networkidle' });
+  await page.goto(`${staticServer.origin}/#play`, { waitUntil: 'networkidle' });
   await page.getByRole('button', { name: 'Start Group Round' }).click();
   await page.waitForSelector('canvas.photo-hole-canvas');
   await page.waitForFunction(() => {
@@ -128,14 +183,16 @@ const { chromium } = require('playwright');
   await page.waitForSelector('.score-card-backdrop', { state: 'detached' });
   const scoreNext = await page.evaluate(() => ({
     bodyFrozen: document.body.classList.contains('score-card-open'),
-    holeTitle: document.querySelector('.round-header h2')?.textContent.trim() || '',
+    holeTitle: document.querySelector('.round-header h2, .play-hole-hud h2')?.textContent.trim() || '',
     overlay: Boolean(document.querySelector('.score-card-backdrop'))
   }));
-  await page.goto('http://localhost:5173/#courses', { waitUntil: 'networkidle' });
-  await page.locator('.course-card', { hasText: 'Belhus Park Golf Club' }).getByRole('button', { name: 'Start Round' }).click();
+  await page.goto(`${staticServer.origin}/#courses`, { waitUntil: 'networkidle' });
+  const belhusCard = page.locator('.course-card', { hasText: 'Belhus Park Golf Club' });
+  await belhusCard.getByRole('button', { name: 'Select' }).click();
+  await belhusCard.getByRole('button', { name: 'Start Round' }).click();
   await page.getByRole('button', { name: 'Start Group Round' }).click();
   await page.waitForSelector('canvas[data-photo-course-id="verified-belhus-park"]');
-  await page.getByRole('button', { name: /^GPS$/ }).click();
+  await page.locator('.play-gps-button[data-action="gps"]').click();
   await page.waitForSelector('.photo-gps-marker');
   const belhus = await page.evaluate(() => ({
     source: document.querySelector('canvas.photo-hole-canvas')?.dataset.photoCourseId || '',
@@ -143,7 +200,53 @@ const { chromium } = require('playwright');
     editKeyV1: localStorage.getItem('pinscope:course-photo-edits:verified-belhus-park:v1'),
     editKeyV2: localStorage.getItem('pinscope:course-photo-edits:verified-belhus-park:v2')
   }));
+  await page.getByRole('button', { name: 'Adjust' }).click();
+  const dragPhotoHandle = async (selector, xPct, yPct) => {
+    await page.waitForSelector(selector);
+    const panel = await page.locator('.photo-hole').boundingBox();
+    const handle = await page.locator(selector).boundingBox();
+    await page.mouse.move(handle.x + handle.width / 2, handle.y + handle.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(panel.x + panel.width * xPct, panel.y + panel.height * yPct, { steps: 8 });
+    await page.mouse.up();
+    await page.waitForTimeout(300);
+  };
+  await dragPhotoHandle('.photo-drag-handle.tee', 0.56, 0.78);
+  await dragPhotoHandle('.photo-drag-handle.green', 0.46, 0.20);
+  await page.waitForFunction(() => {
+    try {
+      return Boolean(JSON.parse(localStorage.getItem('pinscope:course-photo-edits:verified-belhus-park:v2') || '{}').__courseCalibration);
+    } catch {
+      return false;
+    }
+  });
+  await page.getByRole('button', { name: 'Done' }).click();
+  await page.getByRole('button', { name: /Enter Scores/i }).click();
+  await page.waitForSelector('.score-card-backdrop');
+  await page.getByRole('button', { name: 'Save & Next' }).click();
+  await page.waitForSelector('canvas[data-photo-course-id="verified-belhus-park"][data-photo-hole="2"]');
+  const belhusCalibration = await page.evaluate(() => {
+    const edits = JSON.parse(localStorage.getItem('pinscope:course-photo-edits:verified-belhus-park:v2') || '{}');
+    const canvas = document.querySelector('canvas[data-photo-course-id="verified-belhus-park"][data-photo-hole="2"]');
+    const generatedKeys = Object.keys(edits).filter((key) => edits[key]?.courseCalibrationGenerated);
+    return {
+      calibration: edits.__courseCalibration || null,
+      holeOneEdit: edits['1'] || null,
+      editedHoleKeys: Object.keys(edits).filter((key) => key !== '__courseCalibration'),
+      generatedKeys,
+      holeTwoEdit: edits['2'] || null,
+      badge: document.querySelector('.photo-hole-badge')?.textContent.replace(/\s+/g, ' ').trim() || '',
+      resetCourseButton: Boolean(document.querySelector('[data-action="reset-course-photo-calibration"]')),
+      holeTwo: {
+        teeX: Number(canvas?.dataset.teeX || 0),
+        teeY: Number(canvas?.dataset.teeY || 0),
+        greenX: Number(canvas?.dataset.greenX || 0),
+        greenY: Number(canvas?.dataset.greenY || 0)
+      }
+    };
+  });
   await browser.close();
+  browser = null;
   if (errors.length) {
     throw new Error(errors.join('\n'));
   }
@@ -177,5 +280,23 @@ const { chromium } = require('playwright');
   if (belhus.source !== 'verified-belhus-park' || !belhus.marker) {
     throw new Error(`Belhus GPS marker did not render: ${JSON.stringify(belhus)}`);
   }
-  console.log(JSON.stringify({ errors, result: { planned, cleared, pinch, scoreOpen, scoreNext, belhus } }, null, 2));
+  if (!belhusCalibration.calibration || belhusCalibration.calibration.sourceHole !== 1 || !belhusCalibration.holeOneEdit?.tee || !belhusCalibration.holeOneEdit?.green) {
+    throw new Error(`Belhus course calibration was not stored: ${JSON.stringify(belhusCalibration)}`);
+  }
+  if (belhusCalibration.editedHoleKeys.length !== 18 || belhusCalibration.generatedKeys.length !== 17 || !belhusCalibration.holeTwoEdit?.courseCalibrationGenerated) {
+    throw new Error(`Belhus course calibration did not write every hole: ${JSON.stringify(belhusCalibration)}`);
+  }
+  if (!belhusCalibration.badge.includes('Course aligned')) {
+    throw new Error(`Belhus course alignment badge missing on hole 2: ${JSON.stringify(belhusCalibration)}`);
+  }
+  if (Math.abs(belhusCalibration.holeTwo.teeX - 38.579) < 0.05 && Math.abs(belhusCalibration.holeTwo.greenX - 36.077) < 0.05) {
+    throw new Error(`Belhus hole 2 did not inherit course calibration: ${JSON.stringify(belhusCalibration)}`);
+  }
+  console.log(JSON.stringify({ errors, result: { planned, cleared, pinch, scoreOpen, scoreNext, belhus, belhusCalibration } }, null, 2));
+  } finally {
+    if (browser) {
+      await browser.close().catch(() => {});
+    }
+    await stopStaticServer(staticServer.server);
+  }
 })();

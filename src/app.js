@@ -21,6 +21,7 @@ const BELHUS_COURSE_ID = "verified-belhus-park";
 const CRANHAM_PHOTO_KEY = "local-loop-golf:cranham-topdown-photo:v1";
 const CRANHAM_PHOTO_EDIT_KEY = "local-loop-golf:cranham-photo-edits:v1";
 const PHOTO_COURSE_IDS = [CRANHAM_COURSE_ID, BELHUS_COURSE_ID];
+const PHOTO_COURSE_CALIBRATION_KEY = "__courseCalibration";
 const PHOTO_ZOOM_LEVELS = [1, 1.35, 1.7, 2.1];
 const PHOTO_MIN_ZOOM = 1;
 const PHOTO_MAX_ZOOM = 2.6;
@@ -620,7 +621,14 @@ function renderPhotoHoleVisual(hole) {
   const teeSource = sourcePoints.tee;
   const greenSource = sourcePoints.green;
   const marker = photoTargetMarkers(hole.par);
-  const edited = Boolean(courseHolePhotoEdits(courseId)[String(hole.number)]);
+  const edited = hasManualHolePhotoEdit(courseId, hole.number);
+  const generated = hasGeneratedHolePhotoEdit(courseId, hole.number);
+  const courseAligned = Boolean(photoCourseCalibration(courseId));
+  const alignmentBadge = edited
+    ? "<em>Aligned</em>"
+    : generated || courseAligned
+      ? "<em>Course aligned</em>"
+      : "";
   const editClass = photoEditMode ? " editing" : "";
   const teeInfo = photoPlanningTee(hole);
   const shotPlan = photoEditMode ? null : resolvePhotoShotPlan(hole, teeInfo);
@@ -669,14 +677,16 @@ function renderPhotoHoleVisual(hole) {
           <strong>Par ${hole.par}</strong>
           ${teeInfo.totalYards ? `<span>${teeInfo.totalYards} yd</span>` : ""}
           <span>SI ${hole.strokeIndex}</span>
-          ${edited ? "<em>Aligned</em>" : ""}
+          ${alignmentBadge}
         </div>
         ${photoEditMode ? "" : renderPhotoShotInfo(shotPlan, teeInfo, courseId, hole.number)}
       </div>
       ${photoEditMode ? "" : renderPhotoClubPanel(hole, shotPlan)}
+      ${photoEditMode ? "" : renderPhotoZoomControls(courseId, hole.number, zoom)}
       <div class="photo-align-toolbar">
         <button class="photo-tool-button" type="button" data-action="toggle-photo-edit">${photoEditMode ? "Done" : "Adjust"}</button>
-        ${photoEditMode && edited ? `<button class="photo-tool-button" type="button" data-action="reset-hole-photo-alignment" data-course-id="${courseId}" data-hole="${hole.number}">Reset</button>` : ""}
+        ${photoEditMode && (edited || generated) ? `<button class="photo-tool-button" type="button" data-action="reset-hole-photo-alignment" data-course-id="${courseId}" data-hole="${hole.number}">Reset Hole</button>` : ""}
+        ${photoEditMode && courseAligned ? `<button class="photo-tool-button" type="button" data-action="reset-course-photo-calibration" data-course-id="${courseId}">Reset Course</button>` : ""}
         <label class="photo-tool-button" aria-label="Replace course top-down image">
           Replace
           <input type="file" accept="image/*" data-action="course-photo-file" data-course-id="${courseId}" />
@@ -838,10 +848,11 @@ function photoPointToGeo(courseId, point) {
   if (courseId !== BELHUS_COURSE_ID || !Array.isArray(point)) {
     return null;
   }
+  const sourcePoint = uncalibrateCoursePhotoPoint(courseId, point);
   const lat = BELHUS_PHOTO_GEO_BOUNDS.north -
-    ((BELHUS_PHOTO_GEO_BOUNDS.north - BELHUS_PHOTO_GEO_BOUNDS.south) * point[1]) / 100;
+    ((BELHUS_PHOTO_GEO_BOUNDS.north - BELHUS_PHOTO_GEO_BOUNDS.south) * sourcePoint[1]) / 100;
   const lng = BELHUS_PHOTO_GEO_BOUNDS.west +
-    ((BELHUS_PHOTO_GEO_BOUNDS.east - BELHUS_PHOTO_GEO_BOUNDS.west) * point[0]) / 100;
+    ((BELHUS_PHOTO_GEO_BOUNDS.east - BELHUS_PHOTO_GEO_BOUNDS.west) * sourcePoint[0]) / 100;
   return { lat: Number(lat.toFixed(6)), lng: Number(lng.toFixed(6)) };
 }
 
@@ -859,7 +870,7 @@ function photoGeoToSourcePoint(courseId, position) {
   if (x < -4 || x > 104 || y < -4 || y > 104) {
     return null;
   }
-  return [Number(x.toFixed(3)), Number(y.toFixed(3))];
+  return calibrateCoursePhotoPoint(courseId, [Number(x.toFixed(3)), Number(y.toFixed(3))]);
 }
 
 function renderPhotoZoomControls(courseId, holeNumber, zoom) {
@@ -1039,15 +1050,24 @@ function teeIdLabel(teeId) {
 }
 
 function photoSourcePoints(hole) {
+  const base = basePhotoSourcePoints(hole);
+  const courseId = photoCourseId(hole);
+  const calibrated = {
+    tee: calibrateCoursePhotoPoint(courseId, base.tee),
+    green: calibrateCoursePhotoPoint(courseId, base.green)
+  };
+  const edit = courseHolePhotoEdits(courseId)[String(hole.number)] || {};
+  return {
+    tee: normalizedPhotoPoint(edit.tee) || calibrated.tee,
+    green: normalizedPhotoPoint(edit.green) || calibrated.green
+  };
+}
+
+function basePhotoSourcePoints(hole) {
   const photo = hole.visual.photo;
-  const base = {
+  return {
     tee: sourcePhotoPoint(photo.crop, photo.tee),
     green: sourcePhotoPoint(photo.crop, photo.green)
-  };
-  const edit = courseHolePhotoEdits(photoCourseId(hole))[String(hole.number)] || {};
-  return {
-    tee: Array.isArray(edit.tee) ? edit.tee : base.tee,
-    green: Array.isArray(edit.green) ? edit.green : base.green
   };
 }
 
@@ -1060,6 +1080,92 @@ function sourcePhotoPoint(crop, point) {
     Number((crop.x + (crop.w * point[0]) / 100).toFixed(3)),
     Number((crop.y + (crop.h * point[1]) / 100).toFixed(3))
   ];
+}
+
+function normalizedPhotoPoint(point) {
+  if (!Array.isArray(point) || point.length < 2) {
+    return null;
+  }
+  const x = Number(point[0]);
+  const y = Number(point[1]);
+  if (!Number.isFinite(x) || !Number.isFinite(y)) {
+    return null;
+  }
+  return [Number(clamp(x, 0, 100).toFixed(3)), Number(clamp(y, 0, 100).toFixed(3))];
+}
+
+function hasManualHolePhotoEdit(courseId, holeNumber) {
+  const edit = courseHolePhotoEdits(courseId)[String(holeNumber || "")] || {};
+  return !edit.courseCalibrationGenerated && Boolean(normalizedPhotoPoint(edit.tee) || normalizedPhotoPoint(edit.green));
+}
+
+function hasGeneratedHolePhotoEdit(courseId, holeNumber) {
+  const edit = courseHolePhotoEdits(courseId)[String(holeNumber || "")] || {};
+  return Boolean(edit.courseCalibrationGenerated && normalizedPhotoPoint(edit.tee) && normalizedPhotoPoint(edit.green));
+}
+
+function photoCourseCalibration(courseId) {
+  const calibration = courseHolePhotoEdits(courseId)[PHOTO_COURSE_CALIBRATION_KEY];
+  const transform = calibration?.transform;
+  if (!transform) {
+    return null;
+  }
+  const values = [transform.a, transform.b, transform.tx, transform.ty].map(Number);
+  if (!values.every(Number.isFinite)) {
+    return null;
+  }
+  return {
+    ...calibration,
+    sourceHole: Number(calibration.sourceHole || 0),
+    transform: {
+      a: values[0],
+      b: values[1],
+      tx: values[2],
+      ty: values[3]
+    }
+  };
+}
+
+function calibrateCoursePhotoPoint(courseId, point) {
+  const sourcePoint = normalizedPhotoPoint(point);
+  if (!sourcePoint) {
+    return [50, 50];
+  }
+  const calibration = photoCourseCalibration(courseId);
+  if (!calibration) {
+    return sourcePoint;
+  }
+  return transformPhotoPoint(calibration.transform, sourcePoint);
+}
+
+function uncalibrateCoursePhotoPoint(courseId, point) {
+  const sourcePoint = normalizedPhotoPoint(point);
+  if (!sourcePoint) {
+    return [50, 50];
+  }
+  const calibration = photoCourseCalibration(courseId);
+  if (!calibration) {
+    return sourcePoint;
+  }
+  return inverseTransformPhotoPoint(calibration.transform, sourcePoint);
+}
+
+function transformPhotoPoint(transform, point) {
+  const x = transform.a * point[0] - transform.b * point[1] + transform.tx;
+  const y = transform.b * point[0] + transform.a * point[1] + transform.ty;
+  return normalizedPhotoPoint([x, y]);
+}
+
+function inverseTransformPhotoPoint(transform, point) {
+  const det = transform.a * transform.a + transform.b * transform.b;
+  if (!det) {
+    return normalizedPhotoPoint(point);
+  }
+  const dx = point[0] - transform.tx;
+  const dy = point[1] - transform.ty;
+  const x = (transform.a * dx + transform.b * dy) / det;
+  const y = (-transform.b * dx + transform.a * dy) / det;
+  return normalizedPhotoPoint([x, y]);
 }
 
 function photoTargetMarkers(par) {
@@ -1464,6 +1570,10 @@ function handleClick(event) {
     resetCourseHoleAlignment(button.dataset.courseId, button.dataset.hole);
   }
 
+  if (action === "reset-course-photo-calibration") {
+    resetCoursePhotoCalibration(button.dataset.courseId);
+  }
+
   if (action === "clear-shot-plan") {
     clearPhotoShotPlan(button.dataset.courseId, button.dataset.hole);
   }
@@ -1753,20 +1863,10 @@ function handlePhotoPointerEnd(event) {
     return;
   }
 
-  const edits = courseHolePhotoEdits(courseId);
-  const next = {
-    ...(edits[hole] || {}),
-    [field]: sourcePoint
-  };
-  coursePhotoEdits = {
-    ...coursePhotoEdits,
-    [courseId]: {
-      ...edits,
-      [hole]: next
-    }
-  };
-  saveCoursePhotoEdits(courseId);
-  flash(`${field === "green" ? "Green" : "Tee"} aligned.`);
+  const courseCalibrated = setHolePhotoAlignment(courseId, hole, field, sourcePoint);
+  flash(courseCalibrated
+    ? `Course aligned from Hole ${hole}.`
+    : `${field === "green" ? "Green" : "Tee"} aligned.`);
 }
 
 function handlePhotoWheel(event) {
@@ -2649,20 +2749,160 @@ function saveCoursePhotoEdits(courseId) {
   }
 }
 
+function setHolePhotoAlignment(courseId, holeNumber, field, sourcePoint) {
+  const key = String(holeNumber || "");
+  const point = normalizedPhotoPoint(sourcePoint);
+  if (!courseId || !key || !point || !["tee", "green"].includes(field)) {
+    return false;
+  }
+  const edits = courseHolePhotoEdits(courseId);
+  const course = getCourse(state, courseId);
+  const hole = course?.holes?.find((item) => item.number === Number(key));
+  const currentPoints = hole?.visual?.photo ? photoSourcePoints(hole) : null;
+  const nextHoleEdit = {
+    ...(edits[key] || {}),
+    tee: currentPoints?.tee,
+    green: currentPoints?.green,
+    courseCalibrationGenerated: false,
+    [field]: point
+  };
+  const nextEdits = { [key]: nextHoleEdit };
+  const calibration = createCoursePhotoCalibration(courseId, key, nextHoleEdit);
+  if (calibration) {
+    Object.assign(nextEdits, coursePhotoAlignmentEdits(course, key, calibration, nextHoleEdit));
+  } else {
+    Object.keys(edits).forEach((editKey) => {
+      if (editKey !== key && editKey !== PHOTO_COURSE_CALIBRATION_KEY) {
+        nextEdits[editKey] = edits[editKey];
+      }
+    });
+  }
+  coursePhotoEdits = {
+    ...coursePhotoEdits,
+    [courseId]: nextEdits
+  };
+  saveCoursePhotoEdits(courseId);
+  return Boolean(calibration);
+}
+
+function coursePhotoAlignmentEdits(course, sourceHoleKey, calibration, sourceHoleEdit) {
+  const nextEdits = {
+    [PHOTO_COURSE_CALIBRATION_KEY]: calibration,
+    [sourceHoleKey]: {
+      ...sourceHoleEdit,
+      courseCalibrationGenerated: false
+    }
+  };
+  (course?.holes || []).forEach((hole) => {
+    const key = String(hole.number || "");
+    if (!key || key === sourceHoleKey || !hole.visual?.photo) {
+      return;
+    }
+    const base = basePhotoSourcePoints(hole);
+    nextEdits[key] = {
+      tee: transformPhotoPoint(calibration.transform, base.tee),
+      green: transformPhotoPoint(calibration.transform, base.green),
+      courseCalibrationGenerated: true,
+      courseCalibrationSourceHole: Number(sourceHoleKey)
+    };
+  });
+  return nextEdits;
+}
+
+function createCoursePhotoCalibration(courseId, holeNumber, holeEdit) {
+  const tee = normalizedPhotoPoint(holeEdit?.tee);
+  const green = normalizedPhotoPoint(holeEdit?.green);
+  if (!tee || !green) {
+    return null;
+  }
+  const course = getCourse(state, courseId);
+  const hole = course?.holes?.find((item) => item.number === Number(holeNumber));
+  if (!hole?.visual?.photo) {
+    return null;
+  }
+  const base = basePhotoSourcePoints(hole);
+  const transform = photoSimilarityTransform(base, { tee, green });
+  if (!transform) {
+    return null;
+  }
+  return {
+    version: 1,
+    sourceHole: Number(holeNumber),
+    transform,
+    base,
+    target: { tee, green },
+    updatedAt: new Date().toISOString()
+  };
+}
+
+function photoSimilarityTransform(source, target) {
+  const sourceTee = normalizedPhotoPoint(source?.tee);
+  const sourceGreen = normalizedPhotoPoint(source?.green);
+  const targetTee = normalizedPhotoPoint(target?.tee);
+  const targetGreen = normalizedPhotoPoint(target?.green);
+  if (!sourceTee || !sourceGreen || !targetTee || !targetGreen) {
+    return null;
+  }
+  const sx = sourceGreen[0] - sourceTee[0];
+  const sy = sourceGreen[1] - sourceTee[1];
+  const tx = targetGreen[0] - targetTee[0];
+  const ty = targetGreen[1] - targetTee[1];
+  const sourceLengthSquared = sx * sx + sy * sy;
+  const targetLength = Math.hypot(tx, ty);
+  if (sourceLengthSquared < 0.01 || targetLength < 0.1) {
+    return null;
+  }
+  const a = (tx * sx + ty * sy) / sourceLengthSquared;
+  const b = (ty * sx - tx * sy) / sourceLengthSquared;
+  const originX = targetTee[0] - (a * sourceTee[0] - b * sourceTee[1]);
+  const originY = targetTee[1] - (b * sourceTee[0] + a * sourceTee[1]);
+  return {
+    a: Number(a.toFixed(8)),
+    b: Number(b.toFixed(8)),
+    tx: Number(originX.toFixed(8)),
+    ty: Number(originY.toFixed(8))
+  };
+}
+
 function resetCourseHoleAlignment(courseId, holeNumber) {
   const key = String(holeNumber || "");
   const edits = courseHolePhotoEdits(courseId);
-  if (!courseId || !key || !edits[key]) {
+  const calibration = photoCourseCalibration(courseId);
+  const removesCourseCalibration = calibration?.sourceHole === Number(key);
+  if (!courseId || !key || (!edits[key] && !removesCourseCalibration)) {
     return;
   }
   const next = { ...edits };
   delete next[key];
+  if (removesCourseCalibration) {
+    delete next[PHOTO_COURSE_CALIBRATION_KEY];
+  }
   coursePhotoEdits = {
     ...coursePhotoEdits,
     [courseId]: next
   };
   saveCoursePhotoEdits(courseId);
-  flash("Alignment reset.");
+  flash(removesCourseCalibration ? "Hole and course alignment reset." : "Alignment reset.");
+}
+
+function resetCoursePhotoCalibration(courseId) {
+  const edits = courseHolePhotoEdits(courseId);
+  if (!courseId || !edits[PHOTO_COURSE_CALIBRATION_KEY]) {
+    return;
+  }
+  const next = { ...edits };
+  delete next[PHOTO_COURSE_CALIBRATION_KEY];
+  Object.keys(next).forEach((key) => {
+    if (next[key]?.courseCalibrationGenerated) {
+      delete next[key];
+    }
+  });
+  coursePhotoEdits = {
+    ...coursePhotoEdits,
+    [courseId]: next
+  };
+  saveCoursePhotoEdits(courseId);
+  flash("Course alignment reset.");
 }
 
 function clearPhotoShotPlan(courseId, holeNumber) {
