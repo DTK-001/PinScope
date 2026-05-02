@@ -30,6 +30,7 @@ const GPS_PINK_IMAGE_SRC = "./assets/gps-pink.png";
 const GPS_GREY_IMAGE_SRC = "./assets/gps-grey.png";
 const HOLE_SWIPE_MIN_DISTANCE = 68;
 const HOLE_SWIPE_VERTICAL_RATIO = 1.25;
+const GPS_TEST_QUERY_KEY = "gpsTest";
 const BELHUS_PHOTO_GEO_BOUNDS = {
   north: 51.515,
   south: 51.5046,
@@ -637,6 +638,7 @@ function renderPhotoHoleVisual(hole) {
   const pan = photoPanOffset(courseId, hole.number, zoom);
   const zoomClass = zoom > 1 ? " zoomed" : "";
   const gpsMarker = photoEditMode ? null : photoGpsMarker(hole, courseId);
+  const teeMarkerClass = gpsMarker ? "photo-tee-marker reference" : "photo-tee-marker";
 
   return `
     <section class="hole-visual photo-hole${editClass}${planningClass}${zoomClass}" aria-label="${escapeAttribute(course?.name || "Course")} focused top-down cut-out for hole ${hole.number}">
@@ -662,7 +664,7 @@ function renderPhotoHoleVisual(hole) {
             ${renderPhotoGreenLayer(marker, hole.par)}
             ${renderPhotoPlanRoute(marker, shotPlan, hole.number)}
             ${renderPhotoGpsMarker(gpsMarker)}
-            <circle class="photo-tee-marker" cx="${marker.tee[0]}" cy="${marker.tee[1]}" r="2.3"></circle>
+            <circle class="${teeMarkerClass}" cx="${marker.tee[0]}" cy="${marker.tee[1]}" r="${gpsMarker ? "1.45" : "2.3"}"></circle>
           </svg>
         </div>
       </div>
@@ -682,6 +684,7 @@ function renderPhotoHoleVisual(hole) {
         ${photoEditMode ? "" : renderPhotoShotInfo(shotPlan, teeInfo, courseId, hole.number)}
       </div>
       ${photoEditMode ? "" : renderPhotoClubPanel(hole, shotPlan)}
+      ${photoEditMode ? "" : renderGpsTestControls(hole, courseId)}
       ${photoEditMode ? "" : renderPhotoZoomControls(courseId, hole.number, zoom)}
       <div class="photo-align-toolbar">
         <button class="photo-tool-button" type="button" data-action="toggle-photo-edit">${photoEditMode ? "Done" : "Adjust"}</button>
@@ -738,6 +741,20 @@ function renderPhotoGpsMarker(marker) {
       <circle class="photo-gps-pulse" r="4.8"></circle>
       <circle class="photo-gps-dot" r="1.65"></circle>
     </g>
+  `;
+}
+
+function renderGpsTestControls(hole, courseId) {
+  if (!gpsTestEnabled() || !hole) {
+    return "";
+  }
+  return `
+    <div class="gps-test-toolbar" aria-label="GPS test positions">
+      <span>GPS Test</span>
+      <button type="button" data-action="gps-test-position" data-course-id="${courseId}" data-hole="${hole.number}" data-point="tee">Tee</button>
+      <button type="button" data-action="gps-test-position" data-course-id="${courseId}" data-hole="${hole.number}" data-point="middle">Fairway</button>
+      <button type="button" data-action="gps-test-position" data-course-id="${courseId}" data-hole="${hole.number}" data-point="green">Green</button>
+    </div>
   `;
 }
 
@@ -836,12 +853,70 @@ function photoGpsMarker(hole, courseId) {
   if (gps.status !== "ready" || !gps.position) {
     return null;
   }
-  const sourcePoint = photoGeoToSourcePoint(courseId, gps.position);
+  const sourcePoint = photoGeoToSourcePoint(courseId, gps.position) || photoHoleGeoToSourcePoint(hole, gps.position);
   const marker = sourcePoint ? photoSourceToTargetPoint(hole, sourcePoint) : null;
   if (!marker || marker.x < -8 || marker.x > 108 || marker.y < -8 || marker.y > 108) {
     return null;
   }
   return marker;
+}
+
+function photoHoleGeoToSourcePoint(hole, position) {
+  if (!hole?.tee || !hole?.greenCenter || !position) {
+    return null;
+  }
+  const tee = geoToLocalMeters(positionReferencePoint(hole.tee), hole.tee);
+  const green = geoToLocalMeters(positionReferencePoint(hole.tee), hole.greenCenter);
+  const current = geoToLocalMeters(positionReferencePoint(hole.tee), position);
+  const fairway = { x: green.x - tee.x, y: green.y - tee.y };
+  const currentVector = { x: current.x - tee.x, y: current.y - tee.y };
+  const lengthSquared = fairway.x * fairway.x + fairway.y * fairway.y;
+  if (lengthSquared < 1) {
+    return null;
+  }
+  const progress = (currentVector.x * fairway.x + currentVector.y * fairway.y) / lengthSquared;
+  const crossMeters = ((currentVector.x * fairway.y) - (currentVector.y * fairway.x)) / Math.sqrt(lengthSquared);
+  if (progress < -0.25 || progress > 1.25 || Math.abs(crossMeters) > 90) {
+    return null;
+  }
+  const sourcePoints = photoSourcePoints(hole);
+  const sourceVector = {
+    x: sourcePoints.green[0] - sourcePoints.tee[0],
+    y: sourcePoints.green[1] - sourcePoints.tee[1]
+  };
+  const geoLength = Math.sqrt(lengthSquared);
+  const sourceLength = Math.hypot(sourceVector.x, sourceVector.y);
+  const crossScale = geoLength ? sourceLength / geoLength : 0;
+  const sourcePerp = sourceLength
+    ? { x: -sourceVector.y / sourceLength, y: sourceVector.x / sourceLength }
+    : { x: 0, y: 0 };
+  return normalizedPhotoPoint([
+    sourcePoints.tee[0] + sourceVector.x * progress + sourcePerp.x * crossMeters * crossScale,
+    sourcePoints.tee[1] + sourceVector.y * progress + sourcePerp.y * crossMeters * crossScale
+  ]);
+}
+
+function positionReferencePoint(position) {
+  return {
+    lat: Number(position.lat),
+    lng: Number(position.lng)
+  };
+}
+
+function geoToLocalMeters(origin, position) {
+  const lat = Number(position.lat);
+  const lng = Number(position.lng);
+  const originLat = Number(origin.lat);
+  const originLng = Number(origin.lng);
+  if (![lat, lng, originLat, originLng].every(Number.isFinite)) {
+    return { x: 0, y: 0 };
+  }
+  const metersPerDegreeLat = 111320;
+  const metersPerDegreeLng = metersPerDegreeLat * Math.cos((originLat * Math.PI) / 180);
+  return {
+    x: (lng - originLng) * metersPerDegreeLng,
+    y: (lat - originLat) * metersPerDegreeLat
+  };
 }
 
 function photoPointToGeo(courseId, point) {
@@ -1503,6 +1578,10 @@ function handleClick(event) {
 
   if (action === "gps") {
     startGps();
+  }
+
+  if (action === "gps-test-position") {
+    setGpsTestPosition(button);
   }
 
   if (action === "find-nearby") {
@@ -2288,7 +2367,7 @@ function updateEntryStep(button) {
   const min = Number(button.dataset.min);
   const max = Number(button.dataset.max);
   playerEntry[field] = clamp(Number(playerEntry[field] || 0) + delta, min, max);
-  persist();
+  persistScoreEntry();
 }
 
 function updateEntryValue(button) {
@@ -2301,7 +2380,7 @@ function updateEntryValue(button) {
     ? getPlayerEntry(round, Number(button.dataset.hole), button.dataset.playerId)
     : entry;
   playerEntry[button.dataset.field] = button.dataset.value;
-  persist();
+  persistScoreEntry();
 }
 
 function updateEntryCheck(input) {
@@ -2314,7 +2393,7 @@ function updateEntryCheck(input) {
     ? getPlayerEntry(round, Number(input.dataset.hole), input.dataset.playerId)
     : entry;
   playerEntry[input.dataset.field] = input.checked;
-  persist();
+  persistScoreEntry();
 }
 
 function updateClub(select) {
@@ -2327,7 +2406,7 @@ function updateClub(select) {
     ? getPlayerEntry(round, Number(select.dataset.hole), select.dataset.playerId)
     : entry;
   playerEntry.teeClubId = select.value;
-  persist();
+  persistScoreEntry();
 }
 
 function moveHole(delta) {
@@ -2414,6 +2493,17 @@ function compareCourses(a, b) {
 }
 
 function startGps() {
+  if (gpsTestEnabled()) {
+    const round = getActiveRound(state);
+    const course = round ? getCourse(state, round.courseId) : getCourse(state, state.selectedCourseId);
+    const hole = course?.holes?.find((item) => item.number === round?.currentHole) || course?.holes?.[0];
+    const position = gpsTestPositionForHole(hole, course?.id, "tee");
+    if (position) {
+      applyGpsPosition(position, 3, true);
+      flash("GPS test mode: spoofed to tee.");
+      return;
+    }
+  }
   if (!navigator.geolocation) {
     gps = { ...gps, status: "error", error: "GPS unavailable" };
     render();
@@ -2427,13 +2517,10 @@ function startGps() {
   render();
   gps.watchId = navigator.geolocation.watchPosition(
     (position) => {
-      gps.status = "ready";
-      gps.position = {
+      applyGpsPosition({
         lat: position.coords.latitude,
-        lng: position.coords.longitude,
-        accuracy: position.coords.accuracy
-      };
-      render();
+        lng: position.coords.longitude
+      }, position.coords.accuracy);
     },
     (error) => {
       gps.status = "error";
@@ -2448,6 +2535,75 @@ function startGps() {
   );
 }
 
+function applyGpsPosition(position, accuracy = 0, spoofed = false) {
+  gps.status = "ready";
+  gps.position = {
+    lat: position.lat,
+    lng: position.lng,
+    accuracy,
+    spoofed
+  };
+  render();
+}
+
+function gpsTestEnabled() {
+  return new URLSearchParams(window.location.search).get(GPS_TEST_QUERY_KEY) === "1";
+}
+
+function setGpsTestPosition(button) {
+  if (!gpsTestEnabled()) {
+    return;
+  }
+  const course = getCourse(state, button.dataset.courseId);
+  const hole = course?.holes?.find((item) => item.number === Number(button.dataset.hole));
+  const position = gpsTestPositionForHole(hole, course?.id, button.dataset.point);
+  if (!position) {
+    flash("No GPS test point for this hole.");
+    return;
+  }
+  applyGpsPosition(position, 3, true);
+}
+
+function gpsTestPositionForHole(hole, courseId, point) {
+  if (!hole) {
+    return null;
+  }
+  if (hole.visual?.photo && courseId) {
+    const source = gpsTestPhotoSourcePoint(hole, point);
+    const photoPosition = source ? photoPointToGeo(courseId, source) : null;
+    if (photoPosition) {
+      return photoPosition;
+    }
+  }
+  if (point === "tee" && hole.tee) {
+    return hole.tee;
+  }
+  if (point === "green" && hole.greenCenter) {
+    return hole.greenCenter;
+  }
+  if (hole.tee && hole.greenCenter) {
+    return {
+      lat: Number(((hole.tee.lat + hole.greenCenter.lat) / 2).toFixed(6)),
+      lng: Number(((hole.tee.lng + hole.greenCenter.lng) / 2).toFixed(6))
+    };
+  }
+  return hole.greenCenter || hole.tee || null;
+}
+
+function gpsTestPhotoSourcePoint(hole, point) {
+  const sourcePoints = photoSourcePoints(hole);
+  if (point === "tee") {
+    return sourcePoints.tee;
+  }
+  if (point === "green") {
+    return sourcePoints.green;
+  }
+  return [
+    Number(((sourcePoints.tee[0] + sourcePoints.green[0]) / 2).toFixed(3)),
+    Number(((sourcePoints.tee[1] + sourcePoints.green[1]) / 2).toFixed(3))
+  ];
+}
+
 function getCurrentPosition() {
   return new Promise((resolve, reject) => {
     navigator.geolocation.getCurrentPosition(resolve, reject, {
@@ -2460,6 +2616,9 @@ function getCurrentPosition() {
 
 function gpsLabel() {
   if (gps.status === "ready") {
+    if (gps.position?.spoofed) {
+      return "GPS test";
+    }
     return gps.position?.accuracy ? `GPS ${Math.round(gps.position.accuracy)}m` : "GPS ready";
   }
   if (gps.status === "watching") {
@@ -3077,6 +3236,21 @@ function persist(message = "") {
   } else {
     render();
   }
+}
+
+function persistScoreEntry() {
+  const scrollTop = document.querySelector(".score-card-players")?.scrollTop ?? null;
+  saveState(state);
+  render();
+  if (scrollTop === null) {
+    return;
+  }
+  window.requestAnimationFrame(() => {
+    const players = document.querySelector(".score-card-players");
+    if (players) {
+      players.scrollTop = scrollTop;
+    }
+  });
 }
 
 function flash(message) {

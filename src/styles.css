@@ -940,6 +940,12 @@ select option {
   filter: drop-shadow(0 0 2px rgba(255, 79, 216, 0.62));
 }
 
+.photo-tee-marker.reference {
+  opacity: 0.38;
+  stroke: rgba(248, 243, 255, 0.72);
+  filter: none;
+}
+
 .photo-green-marker {
   fill: rgba(174, 241, 126, 0.16);
   stroke: rgba(248, 243, 255, 0.88);
@@ -1644,18 +1650,18 @@ select option {
   background: rgba(5, 5, 10, 0.68);
   backdrop-filter: blur(10px);
   overscroll-behavior: contain;
-  touch-action: none;
+  touch-action: pan-y;
 }
 
 .score-card-sheet {
   display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
   gap: 12px;
   width: min(100%, 720px);
   max-height: calc(100vh - 28px - env(safe-area-inset-top));
   margin: 0 auto;
-  overflow: auto;
+  overflow: hidden;
   overscroll-behavior: contain;
-  touch-action: pan-y;
   padding: 14px;
   border: 1px solid rgba(255, 79, 216, 0.28);
   border-radius: var(--radius);
@@ -1672,6 +1678,10 @@ select option {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+}
+
+.score-card-footer {
+  padding-top: 4px;
 }
 
 .score-card-head h2,
@@ -1735,8 +1745,46 @@ select option {
   background: rgba(255, 255, 255, 0.06);
 }
 
+.score-card-players {
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding-right: 2px;
+  touch-action: pan-y;
+}
+
 .score-card-footer button {
   flex: 1;
+}
+
+.gps-test-toolbar {
+  position: absolute;
+  right: 14px;
+  bottom: calc(80px + env(safe-area-inset-bottom));
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px;
+  border: 1px solid rgba(248, 243, 255, 0.18);
+  border-radius: var(--radius);
+  color: #f8f3ff;
+  background: rgba(8, 9, 17, 0.76);
+  backdrop-filter: blur(12px);
+}
+
+.gps-test-toolbar span,
+.gps-test-toolbar button {
+  font-size: 0.72rem;
+  font-weight: 850;
+}
+
+.gps-test-toolbar button {
+  min-height: 32px;
+  border: 1px solid rgba(255, 79, 216, 0.42);
+  border-radius: var(--radius);
+  color: #fff;
+  background: rgba(255, 79, 216, 0.18);
 }
 
 .player-score-card {
