@@ -35,7 +35,7 @@ const AZURE_MAPS_KEY_STORAGE = "pinscope:azure-maps-key:v1";
 const AZURE_MAPS_ENABLED_STORAGE = "pinscope:azure-maps-enabled:v1";
 const AZURE_MAPS_QUERY_KEY = "azureMapsKey";
 const AZURE_MAPS_QUERY_ENABLED = "azureMaps";
-const AZURE_MAPS_TILE_SIZE = 512;
+const AZURE_MAPS_TILE_SIZE = 256;
 const AZURE_MAPS_ZOOM = 17;
 const BELHUS_PHOTO_GEO_BOUNDS = {
   north: 51.515,
@@ -82,6 +82,8 @@ window.addEventListener("hashchange", () => {
   render();
 });
 window.addEventListener("resize", queuePhotoCanvasRender);
+app.addEventListener("load", handleAzureTileLoad, true);
+app.addEventListener("error", handleAzureTileError, true);
 window.addEventListener("pointermove", handlePhotoPointerMove);
 window.addEventListener("pointerup", handlePhotoPointerEnd);
 window.addEventListener("pointercancel", handlePhotoPointerEnd);
@@ -639,8 +641,9 @@ function renderAzureHoleVisual(hole, course) {
   const guide = shotPlan ? "" : `<line class="photo-guide-route" x1="${start.x}" y1="${start.y}" x2="${green.x}" y2="${green.y}"></line>`;
   return `
     <section class="hole-visual photo-hole azure-hole${shotPlan ? " planning" : ""}" data-azure-hole="${hole.number}" data-azure-course-id="${courseId}" aria-label="${escapeAttribute(course?.name || "Course")} Azure satellite hole ${hole.number}">
-      <div class="azure-tile-layer">
+      <div class="azure-tile-layer" data-azure-tile-layer>
         ${renderAzureTiles(map)}
+        <div class="azure-map-status" data-azure-map-status>Loading satellite</div>
       </div>
       <svg class="photo-hole-overlay" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
         <defs>
@@ -682,7 +685,7 @@ function renderAzureHoleVisual(hole, course) {
 
 function renderAzureTiles(map) {
   return map.tiles.map((tile) => `
-    <img class="azure-map-tile" src="${azureTileUrl(tile.x, tile.y, map.zoom)}" alt="" aria-hidden="true" style="left:${tile.left}%; top:${tile.top}%; width:${tile.width}%; height:${tile.height}%;" />
+    <img class="azure-map-tile" src="${azureTileUrl(tile.x, tile.y, map.zoom)}" alt="" aria-hidden="true" referrerpolicy="no-referrer" data-azure-tile style="left:${tile.left}%; top:${tile.top}%; width:${tile.width}%; height:${tile.height}%;" />
   `).join("");
 }
 
@@ -1038,7 +1041,7 @@ function azureMapViewForHole(anchors) {
   const maxY = Math.max(tee.y, green.y);
   const routeWidth = Math.max(1, maxX - minX);
   const routeHeight = Math.max(1, maxY - minY);
-  const width = Math.max(routeWidth * 2.1, 520);
+  const width = Math.max(routeWidth * 2.1, 260);
   const height = Math.max(routeHeight * 1.55, width * (13 / 9));
   const center = {
     x: (tee.x + green.x) / 2,
@@ -2238,6 +2241,39 @@ function handleChange(event) {
       storeCoursePhotoSource(file, event.target.dataset.courseId);
       event.target.value = "";
     }
+  }
+}
+
+function handleAzureTileLoad(event) {
+  const tile = event.target.closest?.("[data-azure-tile]");
+  if (!tile) {
+    return;
+  }
+  tile.dataset.loaded = "1";
+  updateAzureTileStatus(tile.closest("[data-azure-tile-layer]"));
+}
+
+function handleAzureTileError(event) {
+  const tile = event.target.closest?.("[data-azure-tile]");
+  if (!tile) {
+    return;
+  }
+  tile.dataset.error = "1";
+  updateAzureTileStatus(tile.closest("[data-azure-tile-layer]"));
+}
+
+function updateAzureTileStatus(layer) {
+  if (!layer) {
+    return;
+  }
+  const tiles = Array.from(layer.querySelectorAll("[data-azure-tile]"));
+  const loaded = tiles.filter((tile) => tile.dataset.loaded === "1").length;
+  const failed = tiles.filter((tile) => tile.dataset.error === "1").length;
+  const status = layer.querySelector("[data-azure-map-status]");
+  layer.classList.toggle("loaded", loaded > 0);
+  layer.classList.toggle("failed", !loaded && failed > 0 && failed === tiles.length);
+  if (status) {
+    status.textContent = !loaded && failed > 0 ? "Satellite unavailable" : "Loading satellite";
   }
 }
 

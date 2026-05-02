@@ -871,13 +871,44 @@ select option {
   inset: 0;
   z-index: 0;
   overflow: hidden;
-  background: #06100f;
+  background:
+    linear-gradient(135deg, rgba(20, 59, 51, 0.28), rgba(9, 16, 15, 0.88)),
+    #06100f;
 }
 
 .azure-map-tile {
   position: absolute;
   display: block;
   object-fit: cover;
+  opacity: 0;
+  transition: opacity 180ms ease;
+}
+
+.azure-map-tile[data-loaded="1"] {
+  opacity: 1;
+}
+
+.azure-map-status {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  color: rgba(248, 243, 255, 0.82);
+  background: rgba(5, 8, 8, 0.68);
+  text-align: center;
+  font-size: 0.86rem;
+  font-weight: 850;
+}
+
+.azure-tile-layer.loaded .azure-map-status {
+  display: none;
+}
+
+.azure-tile-layer.failed .azure-map-status {
+  color: #fff;
+  background: rgba(86, 12, 45, 0.76);
 }
 
 .photo-hole::after {
