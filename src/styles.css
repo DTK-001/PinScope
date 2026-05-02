@@ -882,7 +882,7 @@ select option {
   z-index: 2;
   width: 100%;
   height: 100%;
-  pointer-events: none;
+  pointer-events: auto;
 }
 
 .photo-guide-route {
@@ -919,6 +919,20 @@ select option {
 
 .photo-gps-marker {
   filter: drop-shadow(0 0 4px rgba(255, 79, 216, 0.92));
+}
+
+.photo-gps-marker.draggable {
+  cursor: grab;
+  pointer-events: all;
+}
+
+.photo-hole.dragging-gps-test .photo-gps-marker.draggable {
+  cursor: grabbing;
+}
+
+.photo-gps-hit {
+  fill: transparent;
+  pointer-events: all;
 }
 
 .photo-gps-pulse {
@@ -1785,6 +1799,12 @@ select option {
   border-radius: var(--radius);
   color: #fff;
   background: rgba(255, 79, 216, 0.18);
+}
+
+.gps-test-toolbar button.active {
+  border-color: rgba(174, 241, 126, 0.78);
+  color: #07110b;
+  background: #aff17e;
 }
 
 .player-score-card {

@@ -54,6 +54,7 @@ let photoPanOffsets = {};
 let holeSwipe = null;
 let wheelHoleNavigationAt = 0;
 let courseSearchQuery = "";
+let gpsTestMoveMode = false;
 let view = getViewFromHash();
 let gps = {
   status: "off",
@@ -75,6 +76,10 @@ window.addEventListener("resize", queuePhotoCanvasRender);
 window.addEventListener("pointermove", handlePhotoPointerMove);
 window.addEventListener("pointerup", handlePhotoPointerEnd);
 window.addEventListener("pointercancel", handlePhotoPointerEnd);
+window.addEventListener("pointerdown", handleGpsTestPointerDown, true);
+window.addEventListener("mousedown", handleGpsTestMouseDown, true);
+window.addEventListener("mousemove", handlePhotoPointerMove);
+window.addEventListener("mouseup", handlePhotoPointerEnd);
 window.addEventListener("pointermove", handleHoleSwipePointerMove);
 window.addEventListener("pointerup", handleHoleSwipePointerEnd);
 window.addEventListener("pointercancel", cancelHoleSwipe);
@@ -638,6 +643,7 @@ function renderPhotoHoleVisual(hole) {
   const pan = photoPanOffset(courseId, hole.number, zoom);
   const zoomClass = zoom > 1 ? " zoomed" : "";
   const gpsMarker = photoEditMode ? null : photoGpsMarker(hole, courseId);
+  const shotStartMarker = gpsMarker || { x: marker.tee[0], y: marker.tee[1] };
   const teeMarkerClass = gpsMarker ? "photo-tee-marker reference" : "photo-tee-marker";
 
   return `
@@ -660,11 +666,11 @@ function renderPhotoHoleVisual(hole) {
                 <stop offset="1" stop-color="#8d5cff"></stop>
               </linearGradient>
             </defs>
-            ${shotPlan ? "" : renderPhotoGuideRoute(marker)}
+            ${shotPlan ? "" : renderPhotoGuideRoute(marker, shotStartMarker)}
             ${renderPhotoGreenLayer(marker, hole.par)}
             ${renderPhotoPlanRoute(marker, shotPlan, hole.number)}
-            ${renderPhotoGpsMarker(gpsMarker)}
             <circle class="${teeMarkerClass}" cx="${marker.tee[0]}" cy="${marker.tee[1]}" r="${gpsMarker ? "1.45" : "2.3"}"></circle>
+            ${renderPhotoGpsMarker(gpsMarker)}
           </svg>
         </div>
       </div>
@@ -699,9 +705,10 @@ function renderPhotoHoleVisual(hole) {
   `;
 }
 
-function renderPhotoGuideRoute(marker) {
+function renderPhotoGuideRoute(marker, start = null) {
+  const from = start || { x: marker.tee[0], y: marker.tee[1] };
   return `
-    <line class="photo-guide-route" x1="${marker.tee[0]}" y1="${marker.tee[1]}" x2="${marker.green[0]}" y2="${marker.green[1]}"></line>
+    <line class="photo-guide-route" x1="${from.x}" y1="${from.y}" x2="${marker.green[0]}" y2="${marker.green[1]}"></line>
   `;
 }
 
@@ -718,8 +725,9 @@ function renderPhotoPlanRoute(marker, shotPlan, holeNumber) {
     return "";
   }
   const viewPoints = shotPlan.viewPoints || [];
+  const start = shotPlan.startViewPoint || { x: marker.tee[0], y: marker.tee[1] };
   const points = [
-    `${marker.tee[0]},${marker.tee[1]}`,
+    `${start.x},${start.y}`,
     ...viewPoints.map((point) => `${point.x},${point.y}`),
     `${marker.green[0]},${marker.green[1]}`
   ].join(" ");
@@ -736,8 +744,12 @@ function renderPhotoGpsMarker(marker) {
   if (!marker) {
     return "";
   }
+  const dragAttributes = gpsTestEnabled()
+    ? ` data-gps-test-marker="true" role="button" tabindex="0" aria-label="Drag GPS test marker"`
+    : "";
   return `
-    <g class="photo-gps-marker" transform="translate(${marker.x} ${marker.y})">
+    <g class="photo-gps-marker${gpsTestEnabled() ? " draggable" : ""}" transform="translate(${marker.x} ${marker.y})"${dragAttributes}>
+      <circle class="photo-gps-hit" r="7.4"></circle>
       <circle class="photo-gps-pulse" r="4.8"></circle>
       <circle class="photo-gps-dot" r="1.65"></circle>
     </g>
@@ -751,6 +763,7 @@ function renderGpsTestControls(hole, courseId) {
   return `
     <div class="gps-test-toolbar" aria-label="GPS test positions">
       <span>GPS Test</span>
+      <button class="${gpsTestMoveMode ? "active" : ""}" type="button" data-action="toggle-gps-test-move">${gpsTestMoveMode ? "Moving" : "Move"}</button>
       <button type="button" data-action="gps-test-position" data-course-id="${courseId}" data-hole="${hole.number}" data-point="tee">Tee</button>
       <button type="button" data-action="gps-test-position" data-course-id="${courseId}" data-hole="${hole.number}" data-point="middle">Fairway</button>
       <button type="button" data-action="gps-test-position" data-course-id="${courseId}" data-hole="${hole.number}" data-point="green">Green</button>
@@ -853,7 +866,9 @@ function photoGpsMarker(hole, courseId) {
   if (gps.status !== "ready" || !gps.position) {
     return null;
   }
-  const sourcePoint = photoGeoToSourcePoint(courseId, gps.position) || photoHoleGeoToSourcePoint(hole, gps.position);
+  const sourcePoint = gpsTestSourcePoint(hole, courseId) ||
+    photoGeoToSourcePoint(courseId, gps.position) ||
+    photoHoleGeoToSourcePoint(hole, gps.position);
   const marker = sourcePoint ? photoSourceToTargetPoint(hole, sourcePoint) : null;
   if (!marker || marker.x < -8 || marker.x > 108 || marker.y < -8 || marker.y > 108) {
     return null;
@@ -919,6 +934,25 @@ function geoToLocalMeters(origin, position) {
   };
 }
 
+function localMetersToGeo(origin, point) {
+  const originLat = Number(origin.lat);
+  const originLng = Number(origin.lng);
+  const x = Number(point.x);
+  const y = Number(point.y);
+  if (![originLat, originLng, x, y].every(Number.isFinite)) {
+    return null;
+  }
+  const metersPerDegreeLat = 111320;
+  const metersPerDegreeLng = metersPerDegreeLat * Math.cos((originLat * Math.PI) / 180);
+  if (!metersPerDegreeLng) {
+    return null;
+  }
+  return {
+    lat: Number((originLat + y / metersPerDegreeLat).toFixed(6)),
+    lng: Number((originLng + x / metersPerDegreeLng).toFixed(6))
+  };
+}
+
 function photoPointToGeo(courseId, point) {
   if (courseId !== BELHUS_COURSE_ID || !Array.isArray(point)) {
     return null;
@@ -929,6 +963,52 @@ function photoPointToGeo(courseId, point) {
   const lng = BELHUS_PHOTO_GEO_BOUNDS.west +
     ((BELHUS_PHOTO_GEO_BOUNDS.east - BELHUS_PHOTO_GEO_BOUNDS.west) * sourcePoint[0]) / 100;
   return { lat: Number(lat.toFixed(6)), lng: Number(lng.toFixed(6)) };
+}
+
+function photoSourcePointToGeo(courseId, hole, point) {
+  return photoPointToGeo(courseId, point) || photoHoleSourcePointToGeo(hole, point);
+}
+
+function photoHoleSourcePointToGeo(hole, point) {
+  const sourcePoint = normalizedPhotoPoint(point);
+  if (!hole?.tee || !hole?.greenCenter || !sourcePoint) {
+    return null;
+  }
+  const sourcePoints = photoSourcePoints(hole);
+  const sourceVector = {
+    x: sourcePoints.green[0] - sourcePoints.tee[0],
+    y: sourcePoints.green[1] - sourcePoints.tee[1]
+  };
+  const sourceLengthSquared = sourceVector.x * sourceVector.x + sourceVector.y * sourceVector.y;
+  const sourceLength = Math.sqrt(sourceLengthSquared);
+  if (sourceLength < 0.01) {
+    return null;
+  }
+  const sourceDelta = {
+    x: sourcePoint[0] - sourcePoints.tee[0],
+    y: sourcePoint[1] - sourcePoints.tee[1]
+  };
+  const progress = (sourceDelta.x * sourceVector.x + sourceDelta.y * sourceVector.y) / sourceLengthSquared;
+  const sourcePerp = {
+    x: -sourceVector.y / sourceLength,
+    y: sourceVector.x / sourceLength
+  };
+  const sourceCross = sourceDelta.x * sourcePerp.x + sourceDelta.y * sourcePerp.y;
+  const green = geoToLocalMeters(hole.tee, hole.greenCenter);
+  const fairway = { x: green.x, y: green.y };
+  const geoLength = Math.hypot(fairway.x, fairway.y);
+  if (geoLength < 1) {
+    return null;
+  }
+  const crossMeters = sourceCross * (geoLength / sourceLength);
+  const geoPerp = {
+    x: fairway.y / geoLength,
+    y: -fairway.x / geoLength
+  };
+  return localMetersToGeo(hole.tee, {
+    x: fairway.x * progress + geoPerp.x * crossMeters,
+    y: fairway.y * progress + geoPerp.y * crossMeters
+  });
 }
 
 function photoGeoToSourcePoint(courseId, position) {
@@ -979,8 +1059,9 @@ function resolvePhotoShotPlan(hole, teeInfo) {
   if (!sourcePoints.length || !teeInfo.totalYards) {
     return null;
   }
-  const orderedPoints = sortPhotoPlanPoints(hole, sourcePoints);
-  const metrics = photoShotMetrics(hole, orderedPoints, teeInfo.totalYards);
+  const startPoint = photoCurrentShotStartPoint(hole);
+  const orderedPoints = sortPhotoPlanPoints(hole, sourcePoints, startPoint);
+  const metrics = photoShotMetrics(hole, orderedPoints, teeInfo.totalYards, startPoint);
   const viewPoints = orderedPoints
     .map((point, index) => photoSourceToTargetPoint(hole, point) || saved?.viewPoints?.[index] || saved?.view)
     .filter(Boolean)
@@ -994,7 +1075,9 @@ function resolvePhotoShotPlan(hole, teeInfo) {
   return {
     ...metrics,
     points: orderedPoints,
-    viewPoints
+    viewPoints,
+    startPoint,
+    startViewPoint: photoSourceToTargetPoint(hole, startPoint)
   };
 }
 
@@ -1012,12 +1095,13 @@ function normalizedPlanSourcePoints(saved) {
   return Array.isArray(saved.source) ? [saved.source] : [];
 }
 
-function sortPhotoPlanPoints(hole, points) {
+function sortPhotoPlanPoints(hole, points, startPoint = null) {
   const sourcePoints = photoSourcePoints(hole);
+  const start = normalizedPhotoPoint(startPoint) || sourcePoints.tee;
   const image = loadedPhotoImageForCourse(photoCourseId(hole));
   const width = image?.naturalWidth || 100;
   const height = image?.naturalHeight || 100;
-  const tee = { x: (sourcePoints.tee[0] / 100) * width, y: (sourcePoints.tee[1] / 100) * height };
+  const tee = { x: (start[0] / 100) * width, y: (start[1] / 100) * height };
   const green = { x: (sourcePoints.green[0] / 100) * width, y: (sourcePoints.green[1] / 100) * height };
   const vector = { x: green.x - tee.x, y: green.y - tee.y };
   const lengthSquared = Math.max(1, vector.x * vector.x + vector.y * vector.y);
@@ -1027,19 +1111,20 @@ function sortPhotoPlanPoints(hole, points) {
       const progress = ((candidate.x - tee.x) * vector.x + (candidate.y - tee.y) * vector.y) / lengthSquared;
       return { point, progress };
     })
+    .filter((item) => item.progress > -0.08 && item.progress < 1.08)
     .sort((a, b) => a.progress - b.progress)
     .map((item) => item.point)
     .slice(0, 4);
 }
 
-function photoShotMetrics(hole, planPoints, totalYards) {
+function photoShotMetrics(hole, planPoints, totalYards, startPoint = null) {
   const sourcePoints = photoSourcePoints(hole);
   const fullDistance = photoSourceDistance(hole, sourcePoints.tee, sourcePoints.green);
   if (!fullDistance) {
     return null;
   }
   const yardsPerUnit = totalYards / fullDistance;
-  const route = [sourcePoints.tee, ...planPoints, sourcePoints.green];
+  const route = [normalizedPhotoPoint(startPoint) || sourcePoints.tee, ...planPoints, sourcePoints.green];
   const segments = route.slice(0, -1).map((point, index) => {
     const yards = Math.round(photoSourceDistance(hole, point, route[index + 1]) * yardsPerUnit);
     const last = index === route.length - 2;
@@ -1053,6 +1138,24 @@ function photoShotMetrics(hole, planPoints, totalYards) {
     teeToPoint: segments[0]?.yards || 0,
     pointToGreen: segments[segments.length - 1]?.yards || 0
   };
+}
+
+function photoCurrentShotStartPoint(hole) {
+  if (gps.status !== "ready" || !gps.position) {
+    return photoSourcePoints(hole).tee;
+  }
+  const courseId = photoCourseId(hole);
+  return gpsTestSourcePoint(hole, courseId) ||
+    photoGeoToSourcePoint(courseId, gps.position) ||
+    photoHoleGeoToSourcePoint(hole, gps.position) ||
+    photoSourcePoints(hole).tee;
+}
+
+function gpsTestSourcePoint(hole, courseId) {
+  if (!gps.position?.spoofed || gps.position.sourceCourseId !== courseId || Number(gps.position.sourceHoleNumber) !== Number(hole?.number)) {
+    return null;
+  }
+  return normalizedPhotoPoint(gps.position.sourcePoint);
 }
 
 function photoSourceDistance(hole, a, b) {
@@ -1584,6 +1687,11 @@ function handleClick(event) {
     setGpsTestPosition(button);
   }
 
+  if (action === "toggle-gps-test-move") {
+    gpsTestMoveMode = !gpsTestMoveMode;
+    render();
+  }
+
   if (action === "find-nearby") {
     importNearbyCourses();
   }
@@ -1758,10 +1866,10 @@ function handlePhotoPlanningClick(event) {
     event.preventDefault();
     return;
   }
-  if (photoEditMode || event.defaultPrevented) {
+  if (photoEditMode || gpsTestMoveMode || event.defaultPrevented) {
     return;
   }
-  if (event.target.closest("[data-action], [data-photo-handle], button, input, label, .photo-hole-badge, .photo-align-toolbar, .photo-yardage-card, .photo-tap-hint, .photo-club-panel, .photo-zoom-toolbar")) {
+  if (event.target.closest("[data-action], [data-photo-handle], [data-gps-test-marker], button, input, label, .photo-hole-badge, .photo-align-toolbar, .photo-yardage-card, .photo-tap-hint, .photo-club-panel, .photo-zoom-toolbar")) {
     return;
   }
   const panel = event.target.closest(".photo-hole");
@@ -1785,12 +1893,17 @@ function handlePhotoPlanningClick(event) {
   const course = getCourse(state, courseId);
   const hole = course?.holes?.find((item) => item.number === Number(holeNumber));
   const points = hole
-    ? sortPhotoPlanPoints(hole, [...existing, sourcePoint])
+    ? sortPhotoPlanPoints(hole, [...existing, sourcePoint], photoCurrentShotStartPoint(hole))
     : [...existing, sourcePoint].slice(0, 4);
   setPhotoShotPoints(courseId, holeNumber, hole, points, viewPoint);
 }
 
 function handlePhotoPointerDown(event) {
+  const gpsMarker = event.target.closest("[data-gps-test-marker]");
+  if (gpsMarker && gpsTestEnabled() && !photoEditMode) {
+    beginGpsTestDrag(event, gpsMarker);
+    return;
+  }
   const handle = event.target.closest("[data-photo-handle]");
   if (!handle || !photoEditMode) {
     if (!photoEditMode) {
@@ -1817,11 +1930,54 @@ function handlePhotoPointerDown(event) {
   movePhotoHandle(event);
 }
 
+function handleGpsTestPointerDown(event) {
+  if (photoDrag || event.isPrimary === false || Number(event.button || 0) !== 0) {
+    return;
+  }
+  const gpsMarker = event.target.closest("[data-gps-test-marker]");
+  if (gpsMarker && gpsTestEnabled() && !photoEditMode) {
+    beginGpsTestDrag(event, gpsMarker);
+    return;
+  }
+  if (gpsTestEnabled() && gpsTestMoveMode && !photoEditMode && !event.target.closest("[data-action], button, input, label, .photo-hole-badge, .photo-align-toolbar, .photo-yardage-card, .photo-tap-hint, .photo-club-panel, .photo-zoom-toolbar")) {
+    beginGpsTestDragFromTarget(event);
+  }
+}
+
+function handleGpsTestMouseDown(event) {
+  if (photoDrag || event.button !== 0) {
+    return;
+  }
+  const gpsMarker = event.target.closest("[data-gps-test-marker]");
+  if (gpsMarker && gpsTestEnabled() && !photoEditMode) {
+    beginGpsTestDrag(event, gpsMarker);
+    return;
+  }
+  if (gpsTestEnabled() && gpsTestMoveMode && !photoEditMode && !event.target.closest("[data-action], button, input, label, .photo-hole-badge, .photo-align-toolbar, .photo-yardage-card, .photo-tap-hint, .photo-club-panel, .photo-zoom-toolbar")) {
+    beginGpsTestDragFromTarget(event);
+  }
+}
+
+function beginGpsTestDragFromTarget(event) {
+  const panel = event.target.closest(".photo-hole");
+  const canvas = panel?.querySelector(".photo-hole-canvas");
+  if (!panel || !canvas) {
+    return;
+  }
+  const courseId = canvas.dataset.photoCourseId || "";
+  const holeNumber = String(canvas.dataset.photoHole || "");
+  const course = getCourse(state, courseId);
+  const hole = course?.holes?.find((item) => item.number === Number(holeNumber));
+  if (hole) {
+    beginGpsTestDragOnHole(event, panel, canvas, courseId, holeNumber, hole);
+  }
+}
+
 function beginPhotoPlanOrPanDrag(event) {
   if (event.defaultPrevented) {
     return;
   }
-  if (event.target.closest("[data-action], button, input, label, .photo-hole-badge, .photo-align-toolbar, .photo-yardage-card, .photo-tap-hint, .photo-club-panel, .photo-zoom-toolbar")) {
+  if (event.target.closest("[data-action], [data-gps-test-marker], button, input, label, .photo-hole-badge, .photo-align-toolbar, .photo-yardage-card, .photo-tap-hint, .photo-club-panel, .photo-zoom-toolbar")) {
     return;
   }
   const panel = event.target.closest(".photo-hole");
@@ -1840,6 +1996,10 @@ function beginPhotoPlanOrPanDrag(event) {
   if (!hole) {
     return;
   }
+  if (gpsTestEnabled() && gpsTestMoveMode) {
+    beginGpsTestDragOnHole(event, panel, canvas, courseId, holeNumber, hole);
+    return;
+  }
   const teeInfo = photoPlanningTee(hole);
   const shotPlan = resolvePhotoShotPlan(hole, teeInfo);
   const hit = hitTestPhotoPlanPoint(canvas, shotPlan, event);
@@ -1849,6 +2009,36 @@ function beginPhotoPlanOrPanDrag(event) {
   }
 
   beginPhotoPanDrag(event, panel, canvas, courseId, holeNumber);
+}
+
+function beginGpsTestDrag(event, marker) {
+  const panel = marker.closest(".photo-hole");
+  const canvas = panel?.querySelector(".photo-hole-canvas");
+  if (!panel || !canvas) {
+    return;
+  }
+  const course = getCourse(state, canvas.dataset.photoCourseId);
+  const hole = course?.holes?.find((item) => item.number === Number(canvas.dataset.photoHole));
+  if (!hole) {
+    return;
+  }
+  beginGpsTestDragOnHole(event, panel, canvas, canvas.dataset.photoCourseId || "", String(canvas.dataset.photoHole || ""), hole);
+}
+
+function beginGpsTestDragOnHole(event, panel, canvas, courseId, holeNumber, hole) {
+  event.preventDefault();
+  capturePhotoPointer(panel, event.pointerId);
+  suppressPhotoPlanningClick = true;
+  photoDrag = {
+    type: "gps-test",
+    courseId,
+    holeNumber,
+    hole,
+    panel,
+    canvas,
+    moved: false
+  };
+  panel.classList.add("dragging-gps-test");
 }
 
 function beginPhotoShotDrag(event, panel, canvas, courseId, holeNumber, hole, shotPlan, hit) {
@@ -1903,6 +2093,10 @@ function handlePhotoPointerMove(event) {
     movePhotoPan(event);
     return;
   }
+  if (photoDrag.type === "gps-test") {
+    moveGpsTestMarker(event);
+    return;
+  }
   event.preventDefault();
   if (photoDrag.type === "shot") {
     movePhotoPlanPoint(event);
@@ -1923,6 +2117,10 @@ function handlePhotoPointerEnd(event) {
   }
   if (photoDrag.type === "pan") {
     finishPhotoPanDrag(event);
+    return;
+  }
+  if (photoDrag.type === "gps-test") {
+    finishGpsTestDrag(event);
     return;
   }
   event.preventDefault();
@@ -1981,7 +2179,7 @@ function handleHoleSwipePointerDown(event) {
   if (!event.target.closest("[data-play-round]")) {
     return;
   }
-  if (event.target.closest("[data-action], button, input, select, label, a, summary, .score-card-backdrop, .photo-align-toolbar, .photo-zoom-toolbar, .photo-yardage-card, .photo-clear-shot, .photo-club-panel")) {
+  if (event.target.closest("[data-action], [data-gps-test-marker], button, input, select, label, a, summary, .score-card-backdrop, .photo-align-toolbar, .photo-zoom-toolbar, .photo-yardage-card, .photo-clear-shot, .photo-club-panel")) {
     return;
   }
 
@@ -2086,6 +2284,33 @@ function finishPhotoPlanDrag(event) {
 
   points[index] = sourcePoint;
   setPhotoShotPoints(courseId, holeNumber, hole, points);
+}
+
+function moveGpsTestMarker(event) {
+  event.preventDefault();
+  const sourcePoint = photoEventToSourcePoint(photoDrag.canvas, event);
+  if (!sourcePoint) {
+    return;
+  }
+  const position = photoSourcePointToGeo(photoDrag.courseId, photoDrag.hole, sourcePoint);
+  if (!position) {
+    return;
+  }
+  photoDrag.moved = true;
+  applyGpsPosition(position, 3, true, sourcePoint, photoDrag.courseId, photoDrag.holeNumber);
+}
+
+function finishGpsTestDrag(event) {
+  event.preventDefault();
+  const drag = photoDrag;
+  if (!drag.moved) {
+    moveGpsTestMarker(event);
+  }
+  photoDrag = null;
+  drag.panel.classList.remove("dragging-gps-test");
+  window.setTimeout(() => {
+    suppressPhotoPlanningClick = false;
+  }, 250);
 }
 
 function movePhotoHandle(event) {
@@ -2497,9 +2722,10 @@ function startGps() {
     const round = getActiveRound(state);
     const course = round ? getCourse(state, round.courseId) : getCourse(state, state.selectedCourseId);
     const hole = course?.holes?.find((item) => item.number === round?.currentHole) || course?.holes?.[0];
-    const position = gpsTestPositionForHole(hole, course?.id, "tee");
+    const sourcePoint = hole?.visual?.photo ? gpsTestPhotoSourcePoint(hole, "tee") : null;
+    const position = gpsTestPositionForHole(hole, course?.id, "tee", sourcePoint);
     if (position) {
-      applyGpsPosition(position, 3, true);
+      applyGpsPosition(position, 3, true, sourcePoint, course?.id, hole?.number);
       flash("GPS test mode: spoofed to tee.");
       return;
     }
@@ -2535,13 +2761,16 @@ function startGps() {
   );
 }
 
-function applyGpsPosition(position, accuracy = 0, spoofed = false) {
+function applyGpsPosition(position, accuracy = 0, spoofed = false, sourcePoint = null, sourceCourseId = "", sourceHoleNumber = "") {
   gps.status = "ready";
   gps.position = {
     lat: position.lat,
     lng: position.lng,
     accuracy,
-    spoofed
+    spoofed,
+    sourcePoint: normalizedPhotoPoint(sourcePoint),
+    sourceCourseId,
+    sourceHoleNumber
   };
   render();
 }
@@ -2556,21 +2785,21 @@ function setGpsTestPosition(button) {
   }
   const course = getCourse(state, button.dataset.courseId);
   const hole = course?.holes?.find((item) => item.number === Number(button.dataset.hole));
-  const position = gpsTestPositionForHole(hole, course?.id, button.dataset.point);
+  const sourcePoint = hole?.visual?.photo ? gpsTestPhotoSourcePoint(hole, button.dataset.point) : null;
+  const position = gpsTestPositionForHole(hole, course?.id, button.dataset.point, sourcePoint);
   if (!position) {
     flash("No GPS test point for this hole.");
     return;
   }
-  applyGpsPosition(position, 3, true);
+  applyGpsPosition(position, 3, true, sourcePoint, course?.id, hole?.number);
 }
 
-function gpsTestPositionForHole(hole, courseId, point) {
+function gpsTestPositionForHole(hole, courseId, point, sourcePoint = null) {
   if (!hole) {
     return null;
   }
-  if (hole.visual?.photo && courseId) {
-    const source = gpsTestPhotoSourcePoint(hole, point);
-    const photoPosition = source ? photoPointToGeo(courseId, source) : null;
+  if (hole.visual?.photo && courseId && sourcePoint) {
+    const photoPosition = photoSourcePointToGeo(courseId, hole, sourcePoint);
     if (photoPosition) {
       return photoPosition;
     }
@@ -3105,7 +3334,7 @@ function clampPhotoPan(pan, zoom) {
 function setPhotoShotPoints(courseId, holeNumber, hole, sourcePoints, fallbackViewPoint = null) {
   const key = photoShotPlanKey(courseId, holeNumber);
   const points = hole
-    ? sortPhotoPlanPoints(hole, sourcePoints)
+    ? sortPhotoPlanPoints(hole, sourcePoints, photoCurrentShotStartPoint(hole))
     : sourcePoints.filter((point) => Array.isArray(point)).slice(0, 4);
   if (!key || !points.length) {
     return;
