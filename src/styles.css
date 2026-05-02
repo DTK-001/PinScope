@@ -866,6 +866,20 @@ select option {
   height: 100%;
 }
 
+.azure-tile-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+  background: #06100f;
+}
+
+.azure-map-tile {
+  position: absolute;
+  display: block;
+  object-fit: cover;
+}
+
 .photo-hole::after {
   content: "";
   position: absolute;

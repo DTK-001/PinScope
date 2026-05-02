@@ -31,6 +31,12 @@ const GPS_GREY_IMAGE_SRC = "./assets/gps-grey.png";
 const HOLE_SWIPE_MIN_DISTANCE = 68;
 const HOLE_SWIPE_VERTICAL_RATIO = 1.25;
 const GPS_TEST_QUERY_KEY = "gpsTest";
+const AZURE_MAPS_KEY_STORAGE = "pinscope:azure-maps-key:v1";
+const AZURE_MAPS_ENABLED_STORAGE = "pinscope:azure-maps-enabled:v1";
+const AZURE_MAPS_QUERY_KEY = "azureMapsKey";
+const AZURE_MAPS_QUERY_ENABLED = "azureMaps";
+const AZURE_MAPS_TILE_SIZE = 512;
+const AZURE_MAPS_ZOOM = 18;
 const BELHUS_PHOTO_GEO_BOUNDS = {
   north: 51.515,
   south: 51.5046,
@@ -49,12 +55,15 @@ let photoDrag = null;
 let suppressPhotoPlanningClick = false;
 let photoPointers = new Map();
 let photoShotPlans = {};
+let azureShotPlans = {};
 let photoZoomLevels = {};
 let photoPanOffsets = {};
 let holeSwipe = null;
 let wheelHoleNavigationAt = 0;
 let courseSearchQuery = "";
 let gpsTestMoveMode = false;
+let azureMapsKey = initAzureMapsKey();
+let azureMapsEnabled = initAzureMapsEnabled();
 let view = getViewFromHash();
 let gps = {
   status: "off",
@@ -85,6 +94,7 @@ window.addEventListener("pointerup", handleHoleSwipePointerEnd);
 window.addEventListener("pointercancel", cancelHoleSwipe);
 
 app.addEventListener("click", handleClick);
+app.addEventListener("click", handleAzurePlanningClick);
 app.addEventListener("click", handlePhotoPlanningClick);
 app.addEventListener("pointerdown", handlePhotoPointerDown);
 app.addEventListener("pointerdown", handleHoleSwipePointerDown);
@@ -585,6 +595,9 @@ function renderPlayerScoreCard(round, course, hole, player) {
 }
 
 function renderHoleVisual(hole) {
+  if (azureMapsActiveForHole(hole)) {
+    return renderAzureHoleVisual(hole);
+  }
   if (hole.visual?.photo && coursePhotoSource(photoCourseId(hole))) {
     return renderPhotoHoleVisual(hole);
   }
@@ -603,6 +616,88 @@ function renderHoleVisual(hole) {
         return `<span class="hazard ${item.type}" style="left:${visual[0]}%; top:${visual[1]}%;" title="${escapeAttribute(item.label)}"></span>`;
       }).join("")}
     </section>
+  `;
+}
+
+function renderAzureHoleVisual(hole) {
+  const courseId = photoCourseId(hole);
+  const course = getCourse(state, courseId);
+  const map = azureMapViewForHole(hole);
+  if (!map) {
+    return renderMappedHoleVisual(hole);
+  }
+  const tee = azureViewPoint(map, hole.tee);
+  const green = azureViewPoint(map, hole.greenCenter);
+  const gpsPoint = gps.status === "ready" && gps.position ? azureViewPoint(map, gps.position) : null;
+  const start = gpsPoint || tee;
+  const shotPlan = resolveAzureShotPlan(courseId, hole, map);
+  const routePoints = shotPlan
+    ? [start, ...shotPlan.viewPoints, green].map((point) => `${point.x},${point.y}`).join(" ")
+    : "";
+  const guide = shotPlan ? "" : `<line class="photo-guide-route" x1="${start.x}" y1="${start.y}" x2="${green.x}" y2="${green.y}"></line>`;
+  return `
+    <section class="hole-visual photo-hole azure-hole${shotPlan ? " planning" : ""}" data-azure-hole="${hole.number}" data-azure-course-id="${courseId}" aria-label="${escapeAttribute(course?.name || "Course")} Azure satellite hole ${hole.number}">
+      <div class="azure-tile-layer">
+        ${renderAzureTiles(map)}
+      </div>
+      <svg class="photo-hole-overlay" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+        <defs>
+          <linearGradient id="azure-shot-gradient-${hole.number}" x1="0" y1="1" x2="0" y2="0">
+            <stop offset="0" stop-color="#ff4fd8"></stop>
+            <stop offset="1" stop-color="#8d5cff"></stop>
+          </linearGradient>
+        </defs>
+        ${guide}
+        ${shotPlan ? `<polyline class="photo-plan-route" points="${routePoints}" stroke="url(#azure-shot-gradient-${hole.number})"></polyline>` : ""}
+        ${shotPlan?.viewPoints.map((point, index) => `
+          <circle class="photo-plan-point" cx="${point.x}" cy="${point.y}" r="1.9"></circle>
+          <path class="photo-plan-cross" d="M ${point.x - 1.4} ${point.y} L ${point.x + 1.4} ${point.y} M ${point.x} ${point.y - 1.4} L ${point.x} ${point.y + 1.4}"></path>
+        `).join("") || ""}
+        <circle class="photo-green-marker" cx="${green.x}" cy="${green.y}" r="4.1"></circle>
+        <circle class="photo-green-core" cx="${green.x}" cy="${green.y}" r="1.15"></circle>
+        <circle class="${gpsPoint ? "photo-tee-marker reference" : "photo-tee-marker"}" cx="${tee.x}" cy="${tee.y}" r="${gpsPoint ? "1.45" : "2.3"}"></circle>
+        ${gpsPoint ? renderPhotoGpsMarker(gpsPoint) : ""}
+      </svg>
+      <div class="photo-info-stack">
+        <div class="photo-hole-badge">
+          <span>Hole ${hole.number}</span>
+          <strong>Par ${hole.par}</strong>
+          <span>${firstHoleYardage(hole.yards)} yd</span>
+          <span>SI ${hole.strokeIndex}</span>
+          <em>Azure</em>
+        </div>
+        ${renderAzureShotInfo(courseId, hole, shotPlan)}
+      </div>
+      ${renderPhotoClubPanel(hole, shotPlan)}
+      ${renderGpsTestControls(hole, courseId)}
+      <div class="photo-align-toolbar">
+        <button class="photo-tool-button" type="button" data-action="toggle-azure-maps">Satellite</button>
+        ${shotPlan ? `<button class="photo-tool-button" type="button" data-action="clear-azure-shot-plan" data-course-id="${courseId}" data-hole="${hole.number}">Clear</button>` : ""}
+      </div>
+    </section>
+  `;
+}
+
+function renderAzureTiles(map) {
+  return map.tiles.map((tile) => `
+    <img class="azure-map-tile" src="${azureTileUrl(tile.x, tile.y, map.zoom)}" alt="" aria-hidden="true" style="left:${tile.left}%; top:${tile.top}%; width:${tile.width}%; height:${tile.height}%;" />
+  `).join("");
+}
+
+function renderAzureShotInfo(courseId, hole, shotPlan) {
+  if (!shotPlan) {
+    return `<div class="photo-tap-hint">Tap the satellite image to plan a shot</div>`;
+  }
+  return `
+    <div class="photo-yardage-card" aria-live="polite">
+      ${shotPlan.segments.map((segment) => `
+        <div>
+          <span>${escapeHtml(segment.label)}</span>
+          <strong>${segment.yards}<small>yd</small></strong>
+        </div>
+      `).join("")}
+      <button class="photo-clear-shot" type="button" data-action="clear-azure-shot-plan" data-course-id="${courseId}" data-hole="${hole.number}" aria-label="Clear shot path">Clear</button>
+    </div>
   `;
 }
 
@@ -849,6 +944,198 @@ function gpsDistanceToGreen(hole) {
   }
   const target = gpsTargetForHole(hole);
   return target ? yardsBetween(gps.position, target) : null;
+}
+
+function azureMapsActiveForHole(hole) {
+  return Boolean(azureMapsEnabled && azureMapsKey && hole?.tee && hole?.greenCenter);
+}
+
+function initAzureMapsKey() {
+  const params = new URLSearchParams(window.location.search);
+  const queryKey = String(params.get(AZURE_MAPS_QUERY_KEY) || "").trim();
+  if (queryKey) {
+    try {
+      localStorage.setItem(AZURE_MAPS_KEY_STORAGE, queryKey);
+      localStorage.setItem(AZURE_MAPS_ENABLED_STORAGE, "1");
+    } catch {
+      // The key still works for the current page load if storage is blocked.
+    }
+    return queryKey;
+  }
+  return readLocalStorage(AZURE_MAPS_KEY_STORAGE, "");
+}
+
+function initAzureMapsEnabled() {
+  const params = new URLSearchParams(window.location.search);
+  const queryValue = params.get(AZURE_MAPS_QUERY_ENABLED);
+  if (queryValue !== null) {
+    const enabled = queryValue !== "0" && queryValue.toLowerCase() !== "false";
+    try {
+      localStorage.setItem(AZURE_MAPS_ENABLED_STORAGE, enabled ? "1" : "0");
+    } catch {
+      // Keep the setting in memory if storage is blocked.
+    }
+    return enabled;
+  }
+  return readLocalStorage(AZURE_MAPS_ENABLED_STORAGE, "0") === "1";
+}
+
+function saveAzureMapsEnabled() {
+  try {
+    localStorage.setItem(AZURE_MAPS_ENABLED_STORAGE, azureMapsEnabled ? "1" : "0");
+  } catch {
+    // In-memory toggle still works for this session.
+  }
+}
+
+function azureTileUrl(x, y, zoom) {
+  const params = new URLSearchParams({
+    "api-version": "2024-04-01",
+    tilesetId: "microsoft.imagery",
+    zoom: String(zoom),
+    x: String(x),
+    y: String(y),
+    tileSize: String(AZURE_MAPS_TILE_SIZE),
+    view: "Auto",
+    "subscription-key": azureMapsKey
+  });
+  return `https://atlas.microsoft.com/map/tile?${params.toString()}`;
+}
+
+function azureMapViewForHole(hole) {
+  if (!hole?.tee || !hole?.greenCenter) {
+    return null;
+  }
+  const zoom = AZURE_MAPS_ZOOM;
+  const tee = geoToWorldPixel(hole.tee, zoom);
+  const green = geoToWorldPixel(hole.greenCenter, zoom);
+  const minX = Math.min(tee.x, green.x);
+  const maxX = Math.max(tee.x, green.x);
+  const minY = Math.min(tee.y, green.y);
+  const maxY = Math.max(tee.y, green.y);
+  const routeWidth = Math.max(1, maxX - minX);
+  const routeHeight = Math.max(1, maxY - minY);
+  const width = Math.max(routeWidth * 2.1, 520);
+  const height = Math.max(routeHeight * 1.55, width * (13 / 9));
+  const center = {
+    x: (tee.x + green.x) / 2,
+    y: (tee.y + green.y) / 2
+  };
+  const left = center.x - width / 2;
+  const top = center.y - height / 2;
+  const right = left + width;
+  const bottom = top + height;
+  const minTileX = Math.floor(left / AZURE_MAPS_TILE_SIZE);
+  const maxTileX = Math.floor(right / AZURE_MAPS_TILE_SIZE);
+  const minTileY = Math.floor(top / AZURE_MAPS_TILE_SIZE);
+  const maxTileY = Math.floor(bottom / AZURE_MAPS_TILE_SIZE);
+  const tiles = [];
+  for (let x = minTileX; x <= maxTileX; x += 1) {
+    for (let y = minTileY; y <= maxTileY; y += 1) {
+      tiles.push({
+        x,
+        y,
+        left: Number((((x * AZURE_MAPS_TILE_SIZE - left) / width) * 100).toFixed(4)),
+        top: Number((((y * AZURE_MAPS_TILE_SIZE - top) / height) * 100).toFixed(4)),
+        width: Number(((AZURE_MAPS_TILE_SIZE / width) * 100).toFixed(4)),
+        height: Number(((AZURE_MAPS_TILE_SIZE / height) * 100).toFixed(4))
+      });
+    }
+  }
+  return { zoom, left, top, width, height, tiles };
+}
+
+function azureViewPoint(map, position) {
+  const world = geoToWorldPixel(position, map.zoom);
+  return {
+    x: Number((((world.x - map.left) / map.width) * 100).toFixed(2)),
+    y: Number((((world.y - map.top) / map.height) * 100).toFixed(2))
+  };
+}
+
+function azureEventToPosition(panel, map, event) {
+  const rect = panel.getBoundingClientRect();
+  if (!rect.width || !rect.height) {
+    return null;
+  }
+  return worldPixelToGeo({
+    x: map.left + ((event.clientX - rect.left) / rect.width) * map.width,
+    y: map.top + ((event.clientY - rect.top) / rect.height) * map.height
+  }, map.zoom);
+}
+
+function geoToWorldPixel(position, zoom) {
+  const lat = clamp(Number(position.lat), -85.05112878, 85.05112878);
+  const lng = Number(position.lng);
+  const scale = AZURE_MAPS_TILE_SIZE * 2 ** zoom;
+  const sinLat = Math.sin((lat * Math.PI) / 180);
+  return {
+    x: ((lng + 180) / 360) * scale,
+    y: (0.5 - Math.log((1 + sinLat) / (1 - sinLat)) / (4 * Math.PI)) * scale
+  };
+}
+
+function worldPixelToGeo(pixel, zoom) {
+  const scale = AZURE_MAPS_TILE_SIZE * 2 ** zoom;
+  const lng = (pixel.x / scale) * 360 - 180;
+  const n = Math.PI - (2 * Math.PI * pixel.y) / scale;
+  const lat = (180 / Math.PI) * Math.atan(Math.sinh(n));
+  return { lat: Number(lat.toFixed(6)), lng: Number(lng.toFixed(6)) };
+}
+
+function azureShotPlanKey(courseId, holeNumber) {
+  return `${courseId || "course"}:${String(holeNumber || "")}`;
+}
+
+function resolveAzureShotPlan(courseId, hole, map) {
+  const saved = azureShotPlans[azureShotPlanKey(courseId, hole.number)];
+  const points = sortAzurePlanPoints(hole, saved?.points || []);
+  if (!points.length) {
+    return null;
+  }
+  const start = gps.status === "ready" && gps.position ? gps.position : hole.tee;
+  const route = [start, ...points, hole.greenCenter];
+  const segments = route.slice(0, -1).map((point, index) => {
+    const last = index === route.length - 2;
+    return {
+      label: last ? "Into green" : `Shot ${index + 1}`,
+      yards: yardsBetween(point, route[index + 1]) || 0
+    };
+  });
+  return {
+    points,
+    viewPoints: points.map((point) => azureViewPoint(map, point)),
+    segments
+  };
+}
+
+function sortAzurePlanPoints(hole, points) {
+  const tee = geoToLocalMeters(hole.tee, gps.status === "ready" && gps.position ? gps.position : hole.tee);
+  const green = geoToLocalMeters(hole.tee, hole.greenCenter);
+  const vector = { x: green.x - tee.x, y: green.y - tee.y };
+  const lengthSquared = Math.max(1, vector.x * vector.x + vector.y * vector.y);
+  return points
+    .filter((point) => point && typeof point.lat === "number" && typeof point.lng === "number")
+    .map((point) => {
+      const candidate = geoToLocalMeters(hole.tee, point);
+      const progress = ((candidate.x - tee.x) * vector.x + (candidate.y - tee.y) * vector.y) / lengthSquared;
+      return { point, progress };
+    })
+    .filter((item) => item.progress > -0.08 && item.progress < 1.08)
+    .sort((a, b) => a.progress - b.progress)
+    .map((item) => item.point)
+    .slice(0, 4);
+}
+
+function clearAzureShotPlan(courseId, holeNumber) {
+  const key = azureShotPlanKey(courseId, holeNumber);
+  if (!key || !azureShotPlans[key]) {
+    return;
+  }
+  const next = { ...azureShotPlans };
+  delete next[key];
+  azureShotPlans = next;
+  render();
 }
 
 function gpsTargetForHole(hole) {
@@ -1687,6 +1974,16 @@ function handleClick(event) {
     setGpsTestPosition(button);
   }
 
+  if (action === "toggle-azure-maps") {
+    azureMapsEnabled = !azureMapsEnabled;
+    saveAzureMapsEnabled();
+    render();
+  }
+
+  if (action === "clear-azure-shot-plan") {
+    clearAzureShotPlan(button.dataset.courseId, button.dataset.hole);
+  }
+
   if (action === "toggle-gps-test-move") {
     gpsTestMoveMode = !gpsTestMoveMode;
     render();
@@ -1858,6 +2155,38 @@ function handleChange(event) {
       event.target.value = "";
     }
   }
+}
+
+function handleAzurePlanningClick(event) {
+  if (photoEditMode || gpsTestMoveMode || event.defaultPrevented) {
+    return;
+  }
+  if (event.target.closest("[data-action], [data-gps-test-marker], button, input, label, .photo-hole-badge, .photo-align-toolbar, .photo-yardage-card, .photo-tap-hint, .photo-club-panel, .photo-zoom-toolbar")) {
+    return;
+  }
+  const panel = event.target.closest(".azure-hole");
+  if (!panel) {
+    return;
+  }
+  const course = getCourse(state, panel.dataset.azureCourseId);
+  const hole = course?.holes?.find((item) => item.number === Number(panel.dataset.azureHole));
+  const map = hole ? azureMapViewForHole(hole) : null;
+  if (!hole || !map) {
+    return;
+  }
+  const point = azureEventToPosition(panel, map, event);
+  if (!point) {
+    return;
+  }
+  const key = azureShotPlanKey(panel.dataset.azureCourseId, hole.number);
+  const existing = azureShotPlans[key]?.points || [];
+  azureShotPlans = {
+    ...azureShotPlans,
+    [key]: {
+      points: sortAzurePlanPoints(hole, [...existing, point]).slice(0, 4)
+    }
+  };
+  render();
 }
 
 function handlePhotoPlanningClick(event) {
