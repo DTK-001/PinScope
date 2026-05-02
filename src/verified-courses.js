@@ -13,6 +13,8 @@ const CRANHAM_SCORECARD = {
 };
 
 const BELHUS_COURSE_ID = "verified-belhus-park";
+const BASILDON_COURSE_ID = "verified-basildon";
+const CANVEY_COURSE_ID = "verified-castle-point-canvey";
 
 const BELHUS_SCORECARD = {
   par: [4, 4, 4, 4, 4, 3, 4, 3, 4, 4, 3, 4, 4, 3, 4, 5, 3, 5],
@@ -20,6 +22,21 @@ const BELHUS_SCORECARD = {
   white: [278, 299, 383, 400, 408, 192, 326, 136, 387, 327, 194, 353, 278, 172, 328, 491, 170, 482],
   yellow: [262, 288, 359, 388, 385, 182, 299, 124, 370, 306, 180, 339, 257, 161, 310, 473, 160, 460],
   red: [248, 276, 350, 373, 373, 170, 290, 112, 358, 295, 167, 323, 245, 146, 299, 457, 155, 445]
+};
+
+const BASILDON_SCORECARD = {
+  par: [4, 3, 5, 3, 4, 4, 4, 4, 4, 5, 4, 3, 4, 3, 4, 5, 5, 4],
+  strokeIndex: [1, 6, 11, 7, 18, 3, 13, 9, 15, 8, 5, 4, 2, 16, 17, 10, 14, 12],
+  white: [453, 218, 506, 155, 290, 411, 338, 328, 330, 481, 372, 242, 392, 120, 287, 499, 482, 332],
+  yellow: [443, 189, 474, 143, 278, 398, 325, 318, 320, 463, 357, 229, 374, 115, 280, 478, 469, 323],
+  red: [384, 156, 395, 137, 269, 346, 309, 307, 289, 447, 353, 192, 358, 97, 272, 428, 397, 297]
+};
+
+const CANVEY_SCORECARD = {
+  par: [4, 5, 4, 3, 5, 3, 4, 3, 4, 4, 3, 5, 4, 4, 4, 5, 3, 4],
+  strokeIndex: [6, 12, 8, 2, 16, 14, 10, 18, 4, 15, 7, 17, 1, 13, 3, 11, 9, 5],
+  white: [320, 471, 361, 207, 465, 160, 369, 135, 378, 285, 147, 470, 407, 312, 401, 478, 164, 372],
+  red: [312, 460, 353, 198, 456, 156, 361, 133, 363, 259, 140, 464, 316, 253, 393, 473, 155, 365]
 };
 
 const CRANHAM_COORDS = [
@@ -133,6 +150,70 @@ export const verifiedCourses = [
       { id: "red", name: "Red", color: "#e85d3f", rating: "69.8", slope: "115", totalYards: 5082 }
     ],
     holes: Array.from({ length: 18 }, (_, index) => makeBelhusHole(index))
+  },
+  {
+    id: BASILDON_COURSE_ID,
+    source: "verified",
+    homeAreaId: homeArea.id,
+    name: "Basildon Golf Course",
+    town: "Basildon",
+    postcode: "SS16 5JP",
+    country: "England",
+    holesCount: 18,
+    par: "72",
+    distanceMiles: 12.1,
+    website: "https://www.glendalegolf.co.uk/basildon-golf-course/",
+    phone: "+44 1268 533532",
+    location: { lat: 51.5746, lng: 0.4372 },
+    attribution: "Scorecard cross-checked from BlueGolf and GolfSherpa. Image alignment pending user-supplied top-down course image.",
+    verification: {
+      status: "verified",
+      updated: "2026-05-02",
+      confidence: "BlueGolf and GolfSherpa agree on the 18-hole, par-72 scorecard with 6236 white yards and 5976 yellow yards. Red yards are included from BlueGolf; tee-specific red par differs on some holes and will need tee-specific par support later.",
+      sources: [
+        { label: "BlueGolf detailed scorecard", url: "https://course.bluegolf.com/bluegolf/course/course/basildon/detailedscorecard.htm" },
+        { label: "GolfSherpa scorecard", url: "https://golfsherpa.co.uk/courses/england/basildon-golf-club" },
+        { label: "GolfPass course page", url: "https://www.golfpass.com/travel-advisor/courses/32437-basildon-golf-course" }
+      ]
+    },
+    tees: [
+      { id: "white", name: "White", color: "#f8f7f1", rating: "70.0", slope: "110", totalYards: 6236 },
+      { id: "yellow", name: "Yellow", color: "#d7a44d", rating: "", slope: "", totalYards: 5976 },
+      { id: "red", name: "Red", color: "#e85d3f", rating: "", slope: "", totalYards: 5433 }
+    ],
+    holes: Array.from({ length: 18 }, (_, index) => makeScorecardOnlyHole(index, BASILDON_SCORECARD, BASILDON_COURSE_ID))
+  },
+  {
+    id: CANVEY_COURSE_ID,
+    source: "verified",
+    homeAreaId: homeArea.id,
+    name: "Canvey Island Golf Course",
+    town: "Canvey Island",
+    postcode: "SS8 9FG",
+    country: "England",
+    holesCount: 18,
+    par: "71",
+    distanceMiles: 13.8,
+    website: "https://www.glendalegolf.co.uk/castle-point-golf-course/",
+    phone: "+44 1268 510830",
+    location: { lat: 51.5354, lng: 0.5844 },
+    attribution: "Castle Point / Canvey scorecard seeded from My Online Golf Club and cross-checked against Golfshake and Grassy. Image alignment pending user-supplied top-down course image.",
+    verification: {
+      status: "verified",
+      updated: "2026-05-02",
+      confidence: "Castle Point is the Canvey Island 18-hole course at Somnes Avenue. Public scorecard sources disagree slightly on total par and tee yardages; this seed uses the hole-by-hole My Online Golf Club card for white yards and SI, with the red yardages cross-checked against Grassy.",
+      sources: [
+        { label: "My Online Golf Club scorecard", url: "https://www.myonlinegolfclub.com/clubpage?clubID=1005" },
+        { label: "Golfshake course page", url: "https://www.golfshake.com/course/view/14233/Castle_Point_Golf_Club.html" },
+        { label: "Grassy scorecard", url: "https://www.grassy.golf/courses/castle-point-golf-course-gb-ess" },
+        { label: "Albrecht Golf Guide", url: "https://www.1golf.eu/en/club/castle-point-golf-club/" }
+      ]
+    },
+    tees: [
+      { id: "white", name: "White", color: "#f8f7f1", rating: "", slope: "", totalYards: 5902 },
+      { id: "red", name: "Red", color: "#e85d3f", rating: "72.3", slope: "121", totalYards: 5610 }
+    ],
+    holes: Array.from({ length: 18 }, (_, index) => makeScorecardOnlyHole(index, CANVEY_SCORECARD, CANVEY_COURSE_ID))
   }
 ];
 
@@ -218,6 +299,63 @@ function makeBelhusHole(index) {
     },
     notes: "Initial Belhus alignment is seeded from the supplied course image; use Adjust to fine-tune."
   };
+}
+
+function makeScorecardOnlyHole(index, scorecard, courseId) {
+  const number = index + 1;
+  const hole = placeholderHole(number);
+  const par = scorecard.par[index];
+  const yards = Object.fromEntries(
+    Object.entries(scorecard)
+      .filter(([key, value]) => Array.isArray(value) && !["par", "strokeIndex"].includes(key))
+      .map(([teeId, values]) => [teeId, values[index]])
+  );
+  const teePoint = schematicTeePoint(number, par);
+  const greenPoint = schematicGreenPoint(number, par);
+  return {
+    ...hole,
+    name: `Hole ${number}`,
+    par,
+    strokeIndex: scorecard.strokeIndex[index],
+    yards,
+    tee: null,
+    greenFront: null,
+    greenCenter: null,
+    greenBack: null,
+    hazards: [],
+    visual: {
+      path: schematicPath(teePoint, greenPoint, number),
+      tee: teePoint,
+      green: greenPoint,
+      photo: null,
+      render: "scorecard-schematic"
+    },
+    notes: `Scorecard verified; ${courseId === BASILDON_COURSE_ID ? "Basildon" : "Canvey"} image alignment pending.`
+  };
+}
+
+function schematicTeePoint(number, par) {
+  const x = Number((50 + (((number * 19) % 17) - 8) * (Number(par) === 3 ? 0.8 : 1.15)).toFixed(1));
+  return [clampVisualPoint(x), 82];
+}
+
+function schematicGreenPoint(number, par) {
+  const x = Number((50 + (((number * 23) % 19) - 9) * (Number(par) === 3 ? 0.7 : 1.05)).toFixed(1));
+  const y = Number(par) === 3 ? 26 : Number(par) === 5 ? 14 : 18;
+  return [clampVisualPoint(x), y];
+}
+
+function schematicPath(tee, green, number) {
+  const bend = Number((((number * 11) % 21) - 10).toFixed(1));
+  return [
+    tee,
+    [clampVisualPoint((tee[0] + green[0]) / 2 + bend), Number(((tee[1] + green[1]) / 2).toFixed(1))],
+    green
+  ];
+}
+
+function clampVisualPoint(value) {
+  return Math.min(84, Math.max(16, Number(value.toFixed(1))));
 }
 
 function visualPoint(points, index) {
