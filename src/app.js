@@ -36,7 +36,7 @@ const AZURE_MAPS_ENABLED_STORAGE = "pinscope:azure-maps-enabled:v1";
 const AZURE_MAPS_QUERY_KEY = "azureMapsKey";
 const AZURE_MAPS_QUERY_ENABLED = "azureMaps";
 const AZURE_MAPS_TILE_SIZE = 512;
-const AZURE_MAPS_ZOOM = 18;
+const AZURE_MAPS_ZOOM = 17;
 const BELHUS_PHOTO_GEO_BOUNDS = {
   north: 51.515,
   south: 51.5046,
@@ -595,8 +595,9 @@ function renderPlayerScoreCard(round, course, hole, player) {
 }
 
 function renderHoleVisual(hole) {
-  if (azureMapsActiveForHole(hole)) {
-    return renderAzureHoleVisual(hole);
+  const course = activeVisualCourse();
+  if (azureMapsActiveForHole(hole, course)) {
+    return renderAzureHoleVisual(hole, course);
   }
   if (hole.visual?.photo && coursePhotoSource(photoCourseId(hole))) {
     return renderPhotoHoleVisual(hole);
@@ -619,18 +620,19 @@ function renderHoleVisual(hole) {
   `;
 }
 
-function renderAzureHoleVisual(hole) {
-  const courseId = photoCourseId(hole);
-  const course = getCourse(state, courseId);
-  const map = azureMapViewForHole(hole);
+function renderAzureHoleVisual(hole, course) {
+  const courseId = course?.id || photoCourseId(hole);
+  const anchors = azureHoleAnchors(hole, course);
+  const map = azureMapViewForHole(anchors);
   if (!map) {
     return renderMappedHoleVisual(hole);
   }
-  const tee = azureViewPoint(map, hole.tee);
-  const green = azureViewPoint(map, hole.greenCenter);
-  const gpsPoint = gps.status === "ready" && gps.position ? azureViewPoint(map, gps.position) : null;
+  const marker = photoTargetMarkers(hole.par);
+  const tee = { x: marker.tee[0], y: marker.tee[1] };
+  const green = { x: marker.green[0], y: marker.green[1] };
+  const gpsPoint = gps.status === "ready" && gps.position ? azureGeoToTargetPoint(anchors, gps.position, marker) : null;
   const start = gpsPoint || tee;
-  const shotPlan = resolveAzureShotPlan(courseId, hole, map);
+  const shotPlan = resolveAzureShotPlan(courseId, hole, anchors, marker);
   const routePoints = shotPlan
     ? [start, ...shotPlan.viewPoints, green].map((point) => `${point.x},${point.y}`).join(" ")
     : "";
@@ -664,7 +666,7 @@ function renderAzureHoleVisual(hole) {
           <strong>Par ${hole.par}</strong>
           <span>${firstHoleYardage(hole.yards)} yd</span>
           <span>SI ${hole.strokeIndex}</span>
-          <em>Azure</em>
+          <em>${anchors.estimated ? "Estimated" : "Azure"}</em>
         </div>
         ${renderAzureShotInfo(courseId, hole, shotPlan)}
       </div>
@@ -946,8 +948,13 @@ function gpsDistanceToGreen(hole) {
   return target ? yardsBetween(gps.position, target) : null;
 }
 
-function azureMapsActiveForHole(hole) {
-  return Boolean(azureMapsEnabled && azureMapsKey && hole?.tee && hole?.greenCenter);
+function activeVisualCourse() {
+  const round = getActiveRound(state);
+  return round ? getCourse(state, round.courseId) : getCourse(state, state.selectedCourseId);
+}
+
+function azureMapsActiveForHole(hole, course = activeVisualCourse()) {
+  return Boolean(azureMapsEnabled && azureMapsKey && azureHoleAnchors(hole, course));
 }
 
 function initAzureMapsKey() {
@@ -1002,13 +1009,29 @@ function azureTileUrl(x, y, zoom) {
   return `https://atlas.microsoft.com/map/tile?${params.toString()}`;
 }
 
-function azureMapViewForHole(hole) {
-  if (!hole?.tee || !hole?.greenCenter) {
+function azureHoleAnchors(hole, course = activeVisualCourse()) {
+  if (hole?.tee && hole?.greenCenter) {
+    return { tee: hole.tee, green: hole.greenCenter, estimated: false };
+  }
+  if (!course?.location) {
+    return null;
+  }
+  const yardage = Math.max(120, firstHoleYardage(hole.yards) || (Number(hole.par) === 3 ? 155 : Number(hole.par) === 5 ? 500 : 370));
+  const holeSpread = 95 + (Number(hole.number || 1) % 6) * 34;
+  const baseBearing = ((Number(hole.number || 1) - 1) * 137.5 + 18) % 360;
+  const playBearing = (baseBearing + 36 + (Number(hole.par) === 5 ? 10 : 0)) % 360;
+  const tee = destinationPoint(course.location, baseBearing, holeSpread);
+  const green = destinationPoint(tee, playBearing, yardage / 1.0936132983);
+  return { tee, green, estimated: true };
+}
+
+function azureMapViewForHole(anchors) {
+  if (!anchors?.tee || !anchors?.green) {
     return null;
   }
   const zoom = AZURE_MAPS_ZOOM;
-  const tee = geoToWorldPixel(hole.tee, zoom);
-  const green = geoToWorldPixel(hole.greenCenter, zoom);
+  const tee = geoToWorldPixel(anchors.tee, zoom);
+  const green = geoToWorldPixel(anchors.green, zoom);
   const minX = Math.min(tee.x, green.x);
   const maxX = Math.max(tee.x, green.x);
   const minY = Math.min(tee.y, green.y);
@@ -1045,23 +1068,16 @@ function azureMapViewForHole(hole) {
   return { zoom, left, top, width, height, tiles };
 }
 
-function azureViewPoint(map, position) {
-  const world = geoToWorldPixel(position, map.zoom);
-  return {
-    x: Number((((world.x - map.left) / map.width) * 100).toFixed(2)),
-    y: Number((((world.y - map.top) / map.height) * 100).toFixed(2))
-  };
-}
-
-function azureEventToPosition(panel, map, event) {
+function azureEventToPosition(panel, anchors, marker, event) {
   const rect = panel.getBoundingClientRect();
   if (!rect.width || !rect.height) {
     return null;
   }
-  return worldPixelToGeo({
-    x: map.left + ((event.clientX - rect.left) / rect.width) * map.width,
-    y: map.top + ((event.clientY - rect.top) / rect.height) * map.height
-  }, map.zoom);
+  const point = {
+    x: ((event.clientX - rect.left) / rect.width) * 100,
+    y: ((event.clientY - rect.top) / rect.height) * 100
+  };
+  return azureTargetPointToGeo(anchors, point, marker);
 }
 
 function geoToWorldPixel(position, zoom) {
@@ -1083,18 +1099,39 @@ function worldPixelToGeo(pixel, zoom) {
   return { lat: Number(lat.toFixed(6)), lng: Number(lng.toFixed(6)) };
 }
 
+function destinationPoint(origin, bearingDegrees, distanceMeters) {
+  const radius = 6371000;
+  const angular = Number(distanceMeters || 0) / radius;
+  const bearing = (Number(bearingDegrees || 0) * Math.PI) / 180;
+  const lat1 = (Number(origin.lat) * Math.PI) / 180;
+  const lng1 = (Number(origin.lng) * Math.PI) / 180;
+  const sinLat1 = Math.sin(lat1);
+  const cosLat1 = Math.cos(lat1);
+  const sinAngular = Math.sin(angular);
+  const cosAngular = Math.cos(angular);
+  const lat2 = Math.asin(sinLat1 * cosAngular + cosLat1 * sinAngular * Math.cos(bearing));
+  const lng2 = lng1 + Math.atan2(
+    Math.sin(bearing) * sinAngular * cosLat1,
+    cosAngular - sinLat1 * Math.sin(lat2)
+  );
+  return {
+    lat: Number(((lat2 * 180) / Math.PI).toFixed(6)),
+    lng: Number((((lng2 * 180) / Math.PI + 540) % 360 - 180).toFixed(6))
+  };
+}
+
 function azureShotPlanKey(courseId, holeNumber) {
   return `${courseId || "course"}:${String(holeNumber || "")}`;
 }
 
-function resolveAzureShotPlan(courseId, hole, map) {
+function resolveAzureShotPlan(courseId, hole, anchors, marker) {
   const saved = azureShotPlans[azureShotPlanKey(courseId, hole.number)];
-  const points = sortAzurePlanPoints(hole, saved?.points || []);
+  const points = sortAzurePlanPoints(anchors, saved?.points || []);
   if (!points.length) {
     return null;
   }
-  const start = gps.status === "ready" && gps.position ? gps.position : hole.tee;
-  const route = [start, ...points, hole.greenCenter];
+  const start = gps.status === "ready" && gps.position ? gps.position : anchors.tee;
+  const route = [start, ...points, anchors.green];
   const segments = route.slice(0, -1).map((point, index) => {
     const last = index === route.length - 2;
     return {
@@ -1104,20 +1141,20 @@ function resolveAzureShotPlan(courseId, hole, map) {
   });
   return {
     points,
-    viewPoints: points.map((point) => azureViewPoint(map, point)),
+    viewPoints: points.map((point) => azureGeoToTargetPoint(anchors, point, marker)),
     segments
   };
 }
 
-function sortAzurePlanPoints(hole, points) {
-  const tee = geoToLocalMeters(hole.tee, gps.status === "ready" && gps.position ? gps.position : hole.tee);
-  const green = geoToLocalMeters(hole.tee, hole.greenCenter);
+function sortAzurePlanPoints(anchors, points) {
+  const tee = geoToLocalMeters(anchors.tee, gps.status === "ready" && gps.position ? gps.position : anchors.tee);
+  const green = geoToLocalMeters(anchors.tee, anchors.green);
   const vector = { x: green.x - tee.x, y: green.y - tee.y };
   const lengthSquared = Math.max(1, vector.x * vector.x + vector.y * vector.y);
   return points
     .filter((point) => point && typeof point.lat === "number" && typeof point.lng === "number")
     .map((point) => {
-      const candidate = geoToLocalMeters(hole.tee, point);
+      const candidate = geoToLocalMeters(anchors.tee, point);
       const progress = ((candidate.x - tee.x) * vector.x + (candidate.y - tee.y) * vector.y) / lengthSquared;
       return { point, progress };
     })
@@ -1125,6 +1162,53 @@ function sortAzurePlanPoints(hole, points) {
     .sort((a, b) => a.progress - b.progress)
     .map((item) => item.point)
     .slice(0, 4);
+}
+
+function azureGeoToTargetPoint(anchors, position, marker = photoTargetMarkers(4)) {
+  if (!anchors?.tee || !anchors?.green || !position) {
+    return null;
+  }
+  const tee = geoToLocalMeters(anchors.tee, anchors.tee);
+  const green = geoToLocalMeters(anchors.tee, anchors.green);
+  const current = geoToLocalMeters(anchors.tee, position);
+  const fairway = { x: green.x - tee.x, y: green.y - tee.y };
+  const currentVector = { x: current.x - tee.x, y: current.y - tee.y };
+  const lengthSquared = fairway.x * fairway.x + fairway.y * fairway.y;
+  const length = Math.sqrt(lengthSquared);
+  if (length < 1) {
+    return null;
+  }
+  const progress = (currentVector.x * fairway.x + currentVector.y * fairway.y) / lengthSquared;
+  const crossMeters = ((currentVector.x * fairway.y) - (currentVector.y * fairway.x)) / length;
+  const targetLength = marker.tee[1] - marker.green[1];
+  const crossScale = targetLength / length;
+  return {
+    x: Number(clamp(marker.tee[0] + crossMeters * crossScale, -8, 108).toFixed(2)),
+    y: Number(clamp(marker.tee[1] - progress * targetLength, -8, 108).toFixed(2))
+  };
+}
+
+function azureTargetPointToGeo(anchors, point, marker = photoTargetMarkers(4)) {
+  if (!anchors?.tee || !anchors?.green || !point) {
+    return null;
+  }
+  const green = geoToLocalMeters(anchors.tee, anchors.green);
+  const fairway = { x: green.x, y: green.y };
+  const length = Math.hypot(fairway.x, fairway.y);
+  const targetLength = marker.tee[1] - marker.green[1];
+  if (length < 1 || !targetLength) {
+    return null;
+  }
+  const progress = (marker.tee[1] - Number(point.y)) / targetLength;
+  const crossMeters = (Number(point.x) - marker.tee[0]) * (length / targetLength);
+  const geoPerp = {
+    x: fairway.y / length,
+    y: -fairway.x / length
+  };
+  return localMetersToGeo(anchors.tee, {
+    x: fairway.x * progress + geoPerp.x * crossMeters,
+    y: fairway.y * progress + geoPerp.y * crossMeters
+  });
 }
 
 function clearAzureShotPlan(courseId, holeNumber) {
@@ -2170,11 +2254,11 @@ function handleAzurePlanningClick(event) {
   }
   const course = getCourse(state, panel.dataset.azureCourseId);
   const hole = course?.holes?.find((item) => item.number === Number(panel.dataset.azureHole));
-  const map = hole ? azureMapViewForHole(hole) : null;
-  if (!hole || !map) {
+  const anchors = hole ? azureHoleAnchors(hole, course) : null;
+  if (!hole || !anchors) {
     return;
   }
-  const point = azureEventToPosition(panel, map, event);
+  const point = azureEventToPosition(panel, anchors, photoTargetMarkers(hole.par), event);
   if (!point) {
     return;
   }
@@ -2183,7 +2267,7 @@ function handleAzurePlanningClick(event) {
   azureShotPlans = {
     ...azureShotPlans,
     [key]: {
-      points: sortAzurePlanPoints(hole, [...existing, point]).slice(0, 4)
+      points: sortAzurePlanPoints(anchors, [...existing, point]).slice(0, 4)
     }
   };
   render();
