@@ -672,6 +672,7 @@ function renderAzureHoleVisual(hole, course) {
   }
   const tee = { x: marker.tee[0], y: marker.tee[1] };
   const green = { x: marker.green[0], y: marker.green[1] };
+  const greenShapeSvg = renderAzureGreenShapeSvg(hole, anchors, marker);
   const gpsPoint = gps.status === "ready" && gps.position ? azureGeoToTargetPoint(anchors, gps.position, marker) : null;
   const start = gpsPoint || tee;
   const shotPlan = resolveAzureShotPlan(courseId, hole, anchors, marker);
@@ -701,6 +702,7 @@ function renderAzureHoleVisual(hole, course) {
             <stop offset="1" stop-color="#8d5cff"></stop>
           </linearGradient>
         </defs>
+        ${greenShapeSvg}
         ${guide}
         ${shotPlan ? `<polyline class="photo-plan-route" points="${routePoints}" stroke="url(#azure-shot-gradient-${hole.number})"></polyline>` : ""}
         ${shotPlan?.viewPoints.map((point, index) => `
@@ -708,7 +710,7 @@ function renderAzureHoleVisual(hole, course) {
           <path class="photo-plan-cross" d="M ${point.x - 1.4} ${point.y} L ${point.x + 1.4} ${point.y} M ${point.x} ${point.y - 1.4} L ${point.x} ${point.y + 1.4}"></path>
         `).join("") || ""}
       </svg>
-      ${renderPhotoGreenMarkerElement(green, hole.par)}
+      ${greenShapeSvg ? renderPhotoGreenCenterDot(green) : renderPhotoGreenMarkerElement(green, hole.par)}
       ${renderPhotoTeeMarkerElement(tee, Boolean(gpsPoint))}
       ${renderPhotoGpsMarker(gpsPoint)}
       ${photoEditMode ? `
@@ -917,6 +919,41 @@ function renderPhotoGreenMarkerElement(marker, par) {
       <span class="photo-green-core"></span>
     </span>
   `;
+}
+
+function renderPhotoGreenCenterDot(marker) {
+  if (!marker) {
+    return "";
+  }
+  return `
+    <span class="photo-green-center-dot" style="left:${marker.x}%; top:${marker.y}%;">
+      <span></span>
+    </span>
+  `;
+}
+
+function renderAzureGreenShapeSvg(hole, anchors, marker) {
+  const polygon = holeGreenPolygon(hole);
+  if (!polygon.length) {
+    return "";
+  }
+  const points = polygon
+    .map((point) => azureGeoToTargetPoint(anchors, point, marker))
+    .filter(Boolean);
+  if (points.length < 3) {
+    return "";
+  }
+  const path = points.map((point) => `${point.x},${point.y}`).join(" ");
+  const center = azureGeoToTargetPoint(anchors, hole.greenCenter || anchors.green, marker) || { x: marker.green[0], y: marker.green[1] };
+  return `
+    <polygon class="photo-osm-green-shape" points="${path}"></polygon>
+    <circle class="photo-osm-green-centre" cx="${center.x}" cy="${center.y}" r="1.8"></circle>
+  `;
+}
+
+function holeGreenPolygon(hole) {
+  const polygon = hole?.geometry?.greenPolygon || hole?.greenPolygon || hole?.green?.polygon || [];
+  return Array.isArray(polygon) ? polygon.filter(validGeoPoint) : [];
 }
 
 function renderPhotoTeeMarkerElement(marker, reference = false) {
@@ -3568,8 +3605,8 @@ async function refreshCourseLayout(courseId) {
     const layout = await fetchOsmCourseLayout(course);
     applyCourseGeometry(course.id, layout, {
       source: "OpenStreetMap",
-      message: layout.mappedCount
-        ? `Mapped ${layout.mappedCount} hole${layout.mappedCount === 1 ? "" : "s"} from OSM${layout.counts ? ` (${layout.counts.holeLines} hole lines, ${layout.counts.greens} greens, ${layout.counts.tees} tees found)` : ""}.`
+      message: layout.mappedCount || layout.greenShapeCount
+        ? `Mapped ${layout.mappedCount || 0} tee/green hole${(layout.mappedCount || 0) === 1 ? "" : "s"} and ${layout.greenShapeCount || 0} green shape${(layout.greenShapeCount || 0) === 1 ? "" : "s"} from OSM${layout.counts ? ` (${layout.counts.holeLines} hole lines, ${layout.counts.greens} greens, ${layout.counts.tees} tees found)` : ""}.`
         : "No OSM hole geometry found for this course."
     });
   } catch (error) {

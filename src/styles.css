@@ -2266,3 +2266,45 @@ select option {
     grid-template-columns: 1fr;
   }
 }
+
+/* OSM green shapes: replaces the old circular green marker when a real
+   OpenStreetMap green polygon is available for the hole. */
+.photo-osm-green-shape {
+  fill: rgba(135, 245, 123, 0.28);
+  stroke: rgba(248, 255, 243, 0.92);
+  stroke-width: 0.9;
+  vector-effect: non-scaling-stroke;
+  filter: drop-shadow(0 0 1.8px rgba(5, 18, 8, 0.7));
+}
+
+.photo-osm-green-centre {
+  fill: #aff17e;
+  stroke: #f8fff3;
+  stroke-width: 0.55;
+  vector-effect: non-scaling-stroke;
+}
+
+.photo-green-center-dot {
+  position: absolute;
+  z-index: 4;
+  display: block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid #f8fff3;
+  border-radius: 999px;
+  background: rgba(175, 241, 126, 0.95);
+  transform: translate(-50%, -50%);
+  filter: drop-shadow(0 0 2px rgba(7, 16, 12, 0.75));
+  pointer-events: none;
+}
+
+.photo-green-center-dot span {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 4px;
+  height: 4px;
+  border-radius: 999px;
+  background: #07100c;
+  transform: translate(-50%, -50%);
+}
