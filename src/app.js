@@ -13,7 +13,7 @@ import {
   yardsBetween
 } from "./course-data.js";
 import { homeArea } from "./local-area.js";
-import { findNearbyOsmCourses } from "./osm.js";
+import { fetchOsmCourseLayout, findNearbyOsmCourses } from "./osm.js";
 import { loadState, saveState } from "./storage.js";
 
 const CRANHAM_COURSE_ID = "osm-way-23454278";
@@ -339,10 +339,40 @@ function renderCourseCard(course) {
         ${course.website ? `<a href="${escapeAttribute(course.website)}" target="_blank" rel="noreferrer">Website</a>` : "<span>Website pending</span>"}
         ${course.phone ? `<a href="tel:${escapeAttribute(course.phone)}">Call</a>` : "<span>Phone pending</span>"}
       </div>
+      ${renderCourseGeometryStatus(course)}
       ${course.verification ? renderTeeSummary(course) : ""}
-      ${isSelected ? `<button class="secondary-action full" type="button" data-action="quick-start" data-course-id="${course.id}">Start Round</button>` : ""}
+      ${isSelected ? renderSelectedCourseActions(course) : ""}
     </article>
   `;
+}
+
+function renderCourseGeometryStatus(course) {
+  const mapped = courseMappedHoleCount(course);
+  const total = course.holes?.length || course.holesCount || 18;
+  const label = mapped ? `${mapped}/${total} GPS holes mapped` : "GPS holes not mapped yet";
+  return `
+    <div class="course-geometry-status ${mapped ? "mapped" : "pending"}">
+      <span>${label}</span>
+      ${course.geometrySource ? `<em>${escapeHtml(course.geometrySource)}</em>` : ""}
+    </div>
+  `;
+}
+
+function renderSelectedCourseActions(course) {
+  return `
+    <div class="course-actions">
+      <button class="secondary-action" type="button" data-action="quick-start" data-course-id="${course.id}">Start Round</button>
+      <button class="secondary-action" type="button" data-action="refresh-course-layout" data-course-id="${course.id}">OSM holes</button>
+      <label class="file-action secondary-action">
+        Import mapper JSON
+        <input type="file" accept="application/json,.json" data-action="course-geometry-file" data-course-id="${course.id}" />
+      </label>
+    </div>
+  `;
+}
+
+function courseMappedHoleCount(course) {
+  return (course?.holes || []).filter((hole) => validGeoPoint(hole?.tee) && validGeoPoint(hole?.greenCenter)).length;
 }
 
 function renderTeeSummary(course) {
@@ -2290,6 +2320,10 @@ function handleClick(event) {
     importHomeAreaCourses();
   }
 
+  if (action === "refresh-course-layout") {
+    refreshCourseLayout(button.dataset.courseId || state.selectedCourseId);
+  }
+
   if (action === "select-course") {
     state.selectedCourseId = button.dataset.courseId;
     persist("Course selected.");
@@ -2445,6 +2479,13 @@ function handleChange(event) {
     const file = event.target.files?.[0];
     if (file) {
       storeCoursePhotoSource(file, event.target.dataset.courseId);
+      event.target.value = "";
+    }
+  }
+  if (event.target.matches("[data-action='course-geometry-file']")) {
+    const file = event.target.files?.[0];
+    if (file) {
+      importCourseGeometryFile(file, event.target.dataset.courseId || state.selectedCourseId);
       event.target.value = "";
     }
   }
@@ -3474,13 +3515,286 @@ function mergeImportedCourses(courses, label) {
   const updates = new Map(namedCourses.map((course) => [course.id, course]));
   state.courses = [
     ...fresh,
-    ...state.courses.map((course) => (updates.has(course.id) ? { ...course, ...updates.get(course.id) } : course))
+    ...state.courses.map((course) => (updates.has(course.id) ? mergeCourseShell(course, updates.get(course.id)) : course))
   ].sort(compareCourses);
   if (fresh[0]) {
     state.selectedCourseId = fresh[0].id;
   }
   const area = label ? `${label}: ` : "";
   persist(fresh.length ? `${area}imported ${fresh.length} courses.` : `${area}no new courses found.`);
+}
+
+function mergeCourseShell(existing, incoming) {
+  const existingMapped = courseMappedHoleCount(existing);
+  return {
+    ...existing,
+    ...incoming,
+    holes: existingMapped ? existing.holes : incoming.holes,
+    geometrySource: existing.geometrySource || incoming.geometrySource || ""
+  };
+}
+
+async function refreshCourseLayout(courseId) {
+  const course = getCourse(state, courseId);
+  if (!course) {
+    flash("Select a course first.");
+    return;
+  }
+  flash(`Mapping ${course.name} from OSM...`);
+  try {
+    const layout = await fetchOsmCourseLayout(course);
+    applyCourseGeometry(course.id, layout, {
+      source: "OpenStreetMap",
+      message: layout.mappedCount
+        ? `Mapped ${layout.mappedCount} hole${layout.mappedCount === 1 ? "" : "s"} from OSM.`
+        : "No OSM hole geometry found for this course."
+    });
+  } catch (error) {
+    flash(error.message || "Could not map holes from OSM.");
+  }
+}
+
+async function importCourseGeometryFile(file, courseId) {
+  try {
+    const payload = JSON.parse(await file.text());
+    applyCourseGeometry(courseId, payload, {
+      source: payload.source || payload.schema || "PinScope Green Mapper",
+      message: "Imported mapper geometry."
+    });
+  } catch (error) {
+    flash(error.message || "Could not import that geometry JSON.");
+  }
+}
+
+function applyCourseGeometry(courseId, payload, options = {}) {
+  const course = getCourse(state, courseId);
+  if (!course) {
+    flash("Select a course before importing geometry.");
+    return;
+  }
+  const updates = normalizeCourseGeometryPayload(payload);
+  if (!updates.length) {
+    flash("No usable tee/green coordinates found in that geometry data.");
+    return;
+  }
+  const byNumber = new Map(updates.map((hole) => [hole.number, hole]));
+  let changed = 0;
+  course.holes = course.holes.map((hole) => {
+    const update = byNumber.get(Number(hole.number));
+    const cleaned = { ...hole, visual: sanitizeVisualCoordinates(hole.visual) };
+    if (!update) {
+      return cleaned;
+    }
+    changed += 1;
+    const nextGeometry = {
+      ...(cleaned.geometry || {}),
+      ...(update.geometry || {})
+    };
+    return {
+      ...cleaned,
+      name: update.name || cleaned.name,
+      tee: update.tee || cleaned.tee || null,
+      greenCenter: update.greenCenter || cleaned.greenCenter || null,
+      greenFront: update.greenFront || cleaned.greenFront || null,
+      greenBack: update.greenBack || cleaned.greenBack || null,
+      yards: mergeHoleYards(cleaned.yards, update.yards),
+      geometry: Object.keys(nextGeometry).length ? nextGeometry : cleaned.geometry,
+      mapping: {
+        ...(cleaned.mapping || {}),
+        source: options.source || payload.source || payload.schema || "Imported geometry",
+        updatedAt: new Date().toISOString(),
+        osm: update.osm || cleaned.mapping?.osm || null
+      }
+    };
+  });
+  course.geometrySource = options.source || payload.source || payload.schema || "Imported geometry";
+  course.attribution = mergeAttribution(course.attribution, payload.attribution);
+  persist(options.message || `Updated ${changed} mapped hole${changed === 1 ? "" : "s"}.`);
+}
+
+function normalizeCourseGeometryPayload(payload) {
+  const holes = Array.isArray(payload?.holes)
+    ? payload.holes
+    : Array.isArray(payload?.course?.holes)
+      ? payload.course.holes
+      : [];
+  return holes.map(normalizeGeometryHole).filter(Boolean);
+}
+
+function normalizeGeometryHole(raw) {
+  if (!raw) {
+    return null;
+  }
+  const number = Number(raw.number ?? raw.holeNumber ?? raw.ref ?? raw.hole);
+  if (!Number.isFinite(number) || number < 1) {
+    return null;
+  }
+  const greenCenter = normalizeGeoPoint(
+    raw.greenCenter || raw.green?.center || raw.green || raw.pin || raw.centre || raw.center
+  );
+  const teeList = normalizeTeeList(raw.tees || raw.teeBoxes || raw.tee_box || raw.teeBox);
+  const tee = normalizeGeoPoint(raw.tee || teeList[0]);
+  if (!greenCenter && !tee) {
+    return null;
+  }
+  const greenPolygon = normalizePolygon(raw.greenPolygon || raw.geometry?.greenPolygon || raw.geometry?.green || raw.green?.polygon);
+  const estimated = estimateGreenFrontBackFromPolygon(
+    tee,
+    greenCenter,
+    greenPolygon,
+    normalizeGeoPoint(raw.greenFront || raw.green?.front),
+    normalizeGeoPoint(raw.greenBack || raw.green?.back)
+  );
+  return {
+    number,
+    name: raw.name || raw.label || "",
+    tee,
+    greenCenter,
+    greenFront: estimated.front,
+    greenBack: estimated.back,
+    yards: raw.yards,
+    geometry: {
+      greenPolygon,
+      tees: teeList,
+      detection: raw.detection || null
+    },
+    osm: raw.osm || null
+  };
+}
+
+function normalizeTeeList(value) {
+  const list = Array.isArray(value) ? value : value ? [value] : [];
+  return list
+    .map((item, index) => {
+      const point = normalizeGeoPoint(item);
+      if (!point) {
+        return null;
+      }
+      return {
+        name: item?.name || item?.colour || item?.color || `Tee ${index + 1}`,
+        ...point,
+        yards: Number.isFinite(Number(item?.yards)) ? Number(item.yards) : null,
+        osm: item?.osm || null
+      };
+    })
+    .filter(Boolean);
+}
+
+function normalizeGeoPoint(value) {
+  if (!value) {
+    return null;
+  }
+  if (Array.isArray(value) && value.length >= 2) {
+    const a = Number(value[0]);
+    const b = Number(value[1]);
+    if (Math.abs(a) <= 90 && Math.abs(b) <= 180) {
+      return roundGeoPoint({ lat: a, lng: b });
+    }
+    if (Math.abs(b) <= 90 && Math.abs(a) <= 180) {
+      return roundGeoPoint({ lat: b, lng: a });
+    }
+    return null;
+  }
+  const lat = Number(value.lat ?? value.latitude);
+  const lng = Number(value.lng ?? value.lon ?? value.longitude);
+  return validGeoPoint({ lat, lng }) ? roundGeoPoint({ lat, lng }) : null;
+}
+
+function normalizePolygon(value) {
+  const points = Array.isArray(value) ? value : [];
+  const normalized = points.map(normalizeGeoPoint).filter(Boolean);
+  return normalized.length >= 3 ? normalized : [];
+}
+
+function estimateGreenFrontBackFromPolygon(tee, greenCenter, polygon, suppliedFront, suppliedBack) {
+  if (suppliedFront || suppliedBack) {
+    return {
+      front: suppliedFront || greenCenter || null,
+      back: suppliedBack || greenCenter || null
+    };
+  }
+  if (!validGeoPoint(tee) || !validGeoPoint(greenCenter)) {
+    return { front: greenCenter || null, back: greenCenter || null };
+  }
+  const fairway = geoToLocalMeters(tee, greenCenter);
+  const length = Math.hypot(fairway.x, fairway.y);
+  if (length < 1) {
+    return { front: greenCenter, back: greenCenter };
+  }
+  if (Array.isArray(polygon) && polygon.length >= 3) {
+    let front = null;
+    let back = null;
+    let minProjection = Infinity;
+    let maxProjection = -Infinity;
+    for (const point of polygon) {
+      const local = geoToLocalMeters(tee, point);
+      const projection = (local.x * fairway.x + local.y * fairway.y) / length;
+      if (projection < minProjection) {
+        minProjection = projection;
+        front = point;
+      }
+      if (projection > maxProjection) {
+        maxProjection = projection;
+        back = point;
+      }
+    }
+    return { front: front || greenCenter, back: back || greenCenter };
+  }
+  const unit = { x: fairway.x / length, y: fairway.y / length };
+  return {
+    front: localMetersToGeo(greenCenter, { x: -unit.x * 10, y: -unit.y * 10 }),
+    back: localMetersToGeo(greenCenter, { x: unit.x * 10, y: unit.y * 10 })
+  };
+}
+
+function mergeHoleYards(existing = {}, incoming) {
+  const next = { ...(existing || {}) };
+  if (Number.isFinite(Number(incoming))) {
+    next.mapped = Number(incoming);
+  } else if (incoming && typeof incoming === "object" && !Array.isArray(incoming)) {
+    Object.entries(incoming).forEach(([key, value]) => {
+      if (Number.isFinite(Number(value))) {
+        next[key] = Number(value);
+      }
+    });
+  }
+  return next;
+}
+
+function sanitizeVisualCoordinates(visual) {
+  if (!visual || typeof visual !== "object") {
+    return visual;
+  }
+  const next = { ...visual };
+  if (!isPercentPair(next.tee)) {
+    delete next.tee;
+  }
+  if (!isPercentPair(next.green)) {
+    delete next.green;
+  }
+  return next;
+}
+
+function isPercentPair(value) {
+  return Array.isArray(value) && value.length >= 2 && Number.isFinite(Number(value[0])) && Number.isFinite(Number(value[1]));
+}
+
+function mergeAttribution(existing = "", incoming = "") {
+  if (!incoming || String(existing).includes(incoming)) {
+    return existing;
+  }
+  return existing ? `${existing} ${incoming}` : incoming;
+}
+
+function validGeoPoint(point) {
+  return Boolean(point && Number.isFinite(Number(point.lat)) && Number.isFinite(Number(point.lng)) && Math.abs(Number(point.lat)) <= 90 && Math.abs(Number(point.lng)) <= 180);
+}
+
+function roundGeoPoint(point) {
+  return {
+    lat: Number(Number(point.lat).toFixed(6)),
+    lng: Number(Number(point.lng).toFixed(6))
+  };
 }
 
 function compareCourses(a, b) {

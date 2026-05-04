@@ -48,3 +48,14 @@ OpenStreetMap data is open under ODbL and needs attribution. The app stores impo
 ## Next step
 
 Publish the static app to an HTTPS host such as GitHub Pages, Netlify, Vercel, or Cloudflare Pages so phone GPS can work reliably. After that, the next engineering layer is adding more verified local course packs and improving the round-planning/club recommendation flow on real phone GPS.
+
+## Geometry import / OSM hole mapping
+
+This build adds a selected-course geometry workflow for accurate satellite tee/green placement:
+
+1. Select a course from the course list.
+2. Click **OSM holes** to pull `golf=hole`, `golf=green`, and `golf=tee` geometry from OpenStreetMap around the course centre.
+3. Or click **Import mapper JSON** and choose an export from the standalone PinScope Green Mapper.
+4. Start a round and enable the satellite view. Holes with both `tee` and `greenCenter` now use those real GPS points instead of estimated placeholders.
+
+Imported geometry is saved locally in the browser with the rest of the course data. The app deliberately keeps real GPS coordinates in `hole.tee`, `hole.greenCenter`, `hole.greenFront`, and `hole.greenBack`; it no longer treats `visual.tee` or `visual.green` as GPS coordinates because those are screen/image percentage positions.
