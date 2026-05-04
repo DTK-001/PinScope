@@ -59,3 +59,17 @@ This build adds a selected-course geometry workflow for accurate satellite tee/g
 4. Start a round and enable the satellite view. Holes with both `tee` and `greenCenter` now use those real GPS points instead of estimated placeholders.
 
 Imported geometry is saved locally in the browser with the rest of the course data. The app deliberately keeps real GPS coordinates in `hole.tee`, `hole.greenCenter`, `hole.greenFront`, and `hole.greenBack`; it no longer treats `visual.tee` or `visual.green` as GPS coordinates because those are screen/image percentage positions.
+
+## Sharing mapped courses across devices
+
+This build includes `src/shared-course-defaults.js` for course data that should ship with the app instead of only living in one browser's local storage.
+
+Recommended workflow:
+
+1. On the device/browser where the courses are already mapped, open PinScope.
+2. Select any mapped course.
+3. Click **Export shared data**.
+4. Replace `src/shared-course-defaults.js` in the project with the downloaded file.
+5. Deploy the app again. The service worker cache has been bumped to `local-loop-golf-v52`, so updated devices should pick up the shared course file.
+
+Use `src/verified-green-defaults.js` for lightweight tee/green overrides on verified built-in courses. Use `src/shared-course-defaults.js` when you also want imported OSM/manual courses to appear on every device.

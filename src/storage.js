@@ -1,12 +1,97 @@
 import { defaultClubs, seedCourses } from "./course-data.js";
 import { verifiedCourses } from "./verified-courses.js";
 import { verifiedGreenDefaults } from "./verified-green-defaults.js";
+import { sharedCourseDefaults } from "./shared-course-defaults.js";
 
 const STORAGE_KEY = "local-loop-golf:v1";
 const REMOVED_BUILT_IN_COURSE_IDS = new Set(["demo-starter-nine"]);
 const GPS_FIELDS = ["tee", "greenFront", "greenCenter", "greenBack"];
 
-const builtInCourses = applyVerifiedGreenDefaults([...verifiedCourses, ...seedCourses]);
+const builtInCourses = applyVerifiedGreenDefaults(buildBuiltInCourses());
+
+
+function buildBuiltInCourses() {
+  const baseCourses = [...verifiedCourses, ...seedCourses];
+  const sharedCourses = normalizeSharedCourseDefaults(sharedCourseDefaults);
+  if (!sharedCourses.length) {
+    return baseCourses;
+  }
+
+  const sharedById = new Map(sharedCourses.map((course) => [course.id, course]));
+  const baseIds = new Set(baseCourses.map((course) => course.id));
+  const mergedBaseCourses = baseCourses.map((course) => {
+    const sharedCourse = sharedById.get(course.id);
+    return sharedCourse ? mergeSharedCourseDefault(course, sharedCourse) : course;
+  });
+  const extraSharedCourses = sharedCourses
+    .filter((course) => !baseIds.has(course.id))
+    .map((course) => ({
+      ...course,
+      source: course.source || "shared",
+      geometrySource: course.geometrySource || "PinScope shared defaults"
+    }));
+
+  return [...mergedBaseCourses, ...extraSharedCourses];
+}
+
+function normalizeSharedCourseDefaults(value) {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+  return value
+    .filter((course) => course && typeof course === "object" && course.id && Array.isArray(course.holes))
+    .map((course) => ({
+      ...course,
+      holes: course.holes.filter((hole) => hole && typeof hole === "object")
+    }));
+}
+
+function mergeSharedCourseDefault(baseCourse, sharedCourse) {
+  const next = {
+    ...sharedCourse,
+    ...baseCourse,
+    geometrySource: sharedCourse.geometrySource || baseCourse.geometrySource || "PinScope shared defaults",
+    attribution: mergeAttribution(baseCourse.attribution, sharedCourse.attribution)
+  };
+
+  if (Array.isArray(baseCourse.holes) && Array.isArray(sharedCourse.holes)) {
+    const sharedByNumber = new Map(sharedCourse.holes.map((hole) => [Number(hole.number), hole]));
+    next.holes = baseCourse.holes.map((baseHole) => mergeSharedHoleDefault(baseHole, sharedByNumber.get(Number(baseHole.number))));
+  }
+
+  return next;
+}
+
+function mergeSharedHoleDefault(baseHole, sharedHole) {
+  if (!sharedHole) {
+    return baseHole;
+  }
+
+  const next = { ...baseHole };
+
+  GPS_FIELDS.forEach((key) => {
+    if (validGeoPoint(sharedHole[key])) {
+      next[key] = roundGeoPoint(sharedHole[key]);
+    } else if (validGeoPoint(baseHole[key])) {
+      next[key] = roundGeoPoint(baseHole[key]);
+    }
+  });
+
+  next.geometry = mergeGeometry(baseHole.geometry, sharedHole.geometry);
+
+  if (sharedHole.mapping && typeof sharedHole.mapping === "object") {
+    next.mapping = {
+      ...(baseHole.mapping || {}),
+      ...sharedHole.mapping
+    };
+  }
+
+  if (Array.isArray(sharedHole.tees) && sharedHole.tees.length) {
+    next.tees = sharedHole.tees;
+  }
+
+  return next;
+}
 
 const baseState = {
   schemaVersion: 1,

@@ -1,4 +1,4 @@
-const CACHE_NAME = "local-loop-golf-v51";
+const CACHE_NAME = "local-loop-golf-v52";
 
 const APP_SHELL = [
   "./",
@@ -17,6 +17,7 @@ const APP_SHELL = [
   "./src/styles.css",
   "./src/verified-courses.js",
   "./src/verified-green-defaults.js",
+  "./src/shared-course-defaults.js",
   "./src/shot-marker-drag-patch.js"
 ];
 

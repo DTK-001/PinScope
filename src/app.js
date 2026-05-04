@@ -338,7 +338,7 @@ function renderMiniCourseSignal(course) {
 function renderCourseCard(course) {
   const isSelected = state.selectedCourseId === course.id;
   const selected = isSelected ? "selected" : "";
-  const source = course.source === "verified" ? "Verified" : course.source === "osm" ? "OSM" : course.source === "manual" ? "Manual" : "Demo";
+  const source = course.source === "verified" ? "Verified" : course.source === "shared" ? "Shared" : course.source === "osm" ? "OSM" : course.source === "manual" ? "Manual" : "Demo";
   return `
     <article class="course-card ${selected}">
       <div class="course-main">
@@ -384,6 +384,7 @@ function renderSelectedCourseActions(course) {
     <div class="course-actions">
       <button class="secondary-action" type="button" data-action="quick-start" data-course-id="${course.id}">Start Round</button>
       <button class="secondary-action" type="button" data-action="refresh-course-layout" data-course-id="${course.id}">OSM holes</button>
+      <button class="secondary-action" type="button" data-action="export-shared-course-defaults">Export shared data</button>
       <label class="file-action secondary-action">
         Import mapper JSON
         <input type="file" accept="application/json,.json" data-action="course-geometry-file" data-course-id="${course.id}" />
@@ -2713,6 +2714,10 @@ function handleClick(event) {
     refreshCourseLayout(button.dataset.courseId || state.selectedCourseId);
   }
 
+  if (action === "export-shared-course-defaults") {
+    exportSharedCourseDefaults();
+  }
+
   if (action === "select-course") {
     state.selectedCourseId = button.dataset.courseId;
     persist("Course selected.");
@@ -3855,6 +3860,163 @@ function moveHole(delta) {
     scoreCardOpen = false;
   }
   persist();
+}
+
+
+function exportSharedCourseDefaults() {
+  const defaults = state.courses
+    .map(courseToSharedDefault)
+    .filter(Boolean);
+
+  if (!defaults.length) {
+    flash("No saved courses are ready to export yet.");
+    return;
+  }
+
+  const moduleText = `// Generated from PinScope saved courses on ${new Date().toISOString()}\n// Replace src/shared-course-defaults.js with this file, then deploy.\n\nexport const sharedCourseDefaults = ${JSON.stringify(defaults, null, 2)};\n`;
+  downloadTextFile("shared-course-defaults.js", moduleText, "text/javascript");
+  flash(`Exported shared defaults for ${defaults.length} course${defaults.length === 1 ? "" : "s"}. Replace src/shared-course-defaults.js, then deploy.`);
+}
+
+function courseToSharedDefault(course) {
+  if (!course || !course.id || !Array.isArray(course.holes)) {
+    return null;
+  }
+
+  const holes = course.holes.map(holeToSharedDefault).filter(Boolean);
+  const hasMappedHole = holes.some((hole) => validGeoPoint(hole.tee) || validGeoPoint(hole.greenCenter) || hole.geometry?.greenPolygon?.length);
+  const shouldExport = hasMappedHole || ["osm", "manual", "shared"].includes(course.source);
+  if (!shouldExport) {
+    return null;
+  }
+
+  return pruneEmpty({
+    id: course.id,
+    source: course.source === "verified" ? "shared" : course.source || "shared",
+    homeAreaId: course.homeAreaId || "",
+    name: course.name || "",
+    town: course.town || "",
+    postcode: course.postcode || "",
+    country: course.country || "",
+    holesCount: Number(course.holesCount || holes.length || course.holes.length || 18),
+    par: course.par || "",
+    distanceMiles: typeof course.distanceMiles === "number" ? course.distanceMiles : null,
+    website: course.website || "",
+    phone: course.phone || "",
+    location: normalizeExportPoint(course.location),
+    osm: course.osm || null,
+    holesTag: course.holesTag || "",
+    attribution: course.attribution || "",
+    geometrySource: course.geometrySource || "PinScope shared defaults",
+    verification: course.verification || null,
+    tees: normalizeExportArray(course.tees),
+    holes
+  });
+}
+
+function holeToSharedDefault(hole) {
+  if (!hole || !Number.isFinite(Number(hole.number))) {
+    return null;
+  }
+
+  const geometry = normalizeExportGeometry(hole.geometry, hole.greenPolygon);
+  return pruneEmpty({
+    number: Number(hole.number),
+    name: hole.name || "",
+    par: Number.isFinite(Number(hole.par)) ? Number(hole.par) : null,
+    strokeIndex: Number.isFinite(Number(hole.strokeIndex)) ? Number(hole.strokeIndex) : null,
+    yards: normalizeExportObject(hole.yards),
+    tee: normalizeExportPoint(hole.tee),
+    greenCenter: normalizeExportPoint(hole.greenCenter),
+    greenFront: normalizeExportPoint(hole.greenFront),
+    greenBack: normalizeExportPoint(hole.greenBack),
+    geometry,
+    mapping: normalizeExportObject(hole.mapping),
+    osm: hole.osm || null,
+    visual: sanitizeVisualCoordinates(hole.visual)
+  });
+}
+
+function normalizeExportGeometry(geometry, fallbackGreenPolygon) {
+  const source = geometry && typeof geometry === "object" ? geometry : {};
+  const greenPolygon = normalizeExportPolygon(source.greenPolygon || fallbackGreenPolygon);
+  const tees = normalizeExportArray(source.tees);
+  const detection = normalizeExportObject(source.detection);
+  return pruneEmpty({
+    ...normalizeExportObject(source),
+    greenPolygon,
+    tees,
+    detection
+  });
+}
+
+function normalizeExportArray(value) {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+  return value
+    .map((item) => {
+      if (validGeoPoint(item)) {
+        return { ...item, ...roundGeoPoint(item) };
+      }
+      if (item && typeof item === "object") {
+        const point = normalizeExportPoint(item);
+        return pruneEmpty({ ...item, ...(point || {}) });
+      }
+      return item;
+    })
+    .filter((item) => item !== null && item !== undefined && item !== "");
+}
+
+function normalizeExportObject(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return null;
+  }
+  return pruneEmpty({ ...value });
+}
+
+function normalizeExportPolygon(value) {
+  const list = Array.isArray(value) ? value : [];
+  return list.map(normalizeExportPoint).filter(Boolean);
+}
+
+function normalizeExportPoint(value) {
+  if (!validGeoPoint(value)) {
+    return null;
+  }
+  return roundGeoPoint(value);
+}
+
+function pruneEmpty(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return value;
+  }
+  const next = {};
+  Object.entries(value).forEach(([key, item]) => {
+    if (item === null || item === undefined || item === "") {
+      return;
+    }
+    if (Array.isArray(item) && !item.length) {
+      return;
+    }
+    if (item && typeof item === "object" && !Array.isArray(item) && !Object.keys(item).length) {
+      return;
+    }
+    next[key] = item;
+  });
+  return next;
+}
+
+function downloadTextFile(filename, text, type = "text/plain") {
+  const blob = new Blob([text], { type });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename;
+  document.body.append(anchor);
+  anchor.click();
+  anchor.remove();
+  URL.revokeObjectURL(url);
 }
 
 function finishRound() {
