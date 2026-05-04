@@ -39,6 +39,7 @@ const AZURE_MAPS_QUERY_ENABLED = "azureMaps";
 const AZURE_MAPS_TILE_SIZE = 256;
 const AZURE_MAPS_REQUEST_TILE_SIZE = 512;
 const AZURE_MAPS_ZOOM = 17;
+const SATELLITE_PRELOAD_CONCURRENCY = 2;
 const SATELLITE_PANEL_RATIO = 13 / 9;
 const ESRI_WORLD_IMAGERY_URL = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile";
 const ESRI_WORLD_IMAGERY_EXPORT_URL = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/export";
@@ -78,6 +79,11 @@ let gps = {
   error: "",
   watchId: null
 };
+let satellitePreloadQueue = [];
+let satellitePreloadActive = 0;
+let satellitePreloadCourseId = "";
+let satellitePreloadedUrls = new Set();
+let satellitePreloadingUrls = new Set();
 let notice = "";
 let scoreCardOpen = false;
 
@@ -415,6 +421,7 @@ function renderPlay() {
     return `<section class="empty-state"><h2>Course missing</h2><p>Select a saved course to continue.</p></section>`;
   }
   const hole = course.holes.find((item) => item.number === activeRound.currentHole) || course.holes[0];
+  queueCourseSatellitePreload(course, hole.number);
   const players = getRoundPlayers(activeRound);
   const leadTotals = roundTotals(activeRound, course, players[0]?.id);
   const teeInfo = photoPlanningTee(hole);
@@ -923,6 +930,96 @@ function renderAzureTiles(map) {
   return map.tiles.map((tile) => `
     <img class="azure-map-tile" src="${satelliteTileUrl(tile.x, tile.y, map.zoom)}" alt="" aria-hidden="true" loading="eager" decoding="async" referrerpolicy="no-referrer" data-azure-tile data-fallback-src="${escapeAttribute(esriTileUrl(tile.x, tile.y, map.zoom))}" style="left:${tile.left}%; top:${tile.top}%; width:${tile.width}%; height:${tile.height}%; transform:rotate(${tile.rotation}deg);" />
   `).join("");
+}
+
+function queueCourseSatellitePreload(course, currentHoleNumber = 1) {
+  if (!course?.holes?.length || !azureMapsEnabled) {
+    return;
+  }
+  if (satellitePreloadCourseId !== course.id) {
+    satellitePreloadCourseId = course.id;
+    satellitePreloadQueue = [];
+    satellitePreloadedUrls = new Set();
+    satellitePreloadingUrls = new Set();
+    satellitePreloadActive = 0;
+  }
+  const ratio = satellitePanelRatio();
+  const orderedHoles = course.holes
+    .slice()
+    .sort((a, b) => {
+      const aDistance = Math.abs(Number(a.number) - Number(currentHoleNumber));
+      const bDistance = Math.abs(Number(b.number) - Number(currentHoleNumber));
+      return aDistance - bDistance || Number(a.number) - Number(b.number);
+    });
+  const queuedUrls = new Set([...satellitePreloadQueue.map((item) => item.src), ...satellitePreloadingUrls]);
+  orderedHoles.forEach((hole) => {
+    const anchors = azureHoleAnchors(hole, course);
+    const map = azureMapViewForHole(anchors, photoTargetMarkers(hole.par), ratio);
+    satelliteMapPreloadItems(map).forEach((item) => {
+      if (!item.src || satellitePreloadedUrls.has(item.src) || queuedUrls.has(item.src)) {
+        return;
+      }
+      queuedUrls.add(item.src);
+      satellitePreloadQueue.push(item);
+    });
+  });
+  scheduleSatellitePreload();
+}
+
+function satelliteMapPreloadItems(map) {
+  if (!map) {
+    return [];
+  }
+  if (map.image?.src) {
+    return [{ src: map.image.src }];
+  }
+  return (map.tiles || []).map((tile) => ({
+    src: satelliteTileUrl(tile.x, tile.y, map.zoom),
+    fallbackSrc: azureMapsKey ? esriTileUrl(tile.x, tile.y, map.zoom) : ""
+  }));
+}
+
+function scheduleSatellitePreload() {
+  const scheduler = window.requestIdleCallback || ((callback) => window.setTimeout(callback, 80));
+  scheduler(runSatellitePreloadQueue);
+}
+
+function runSatellitePreloadQueue() {
+  while (satellitePreloadActive < SATELLITE_PRELOAD_CONCURRENCY && satellitePreloadQueue.length) {
+    const item = satellitePreloadQueue.shift();
+    if (!item?.src || satellitePreloadedUrls.has(item.src)) {
+      continue;
+    }
+    satellitePreloadingUrls.add(item.src);
+    satellitePreloadActive += 1;
+    preloadSatelliteImage(item.src, item.fallbackSrc).finally(() => {
+      satellitePreloadingUrls.delete(item.src);
+      satellitePreloadedUrls.add(item.src);
+      satellitePreloadActive = Math.max(0, satellitePreloadActive - 1);
+      if (satellitePreloadQueue.length) {
+        scheduleSatellitePreload();
+      }
+    });
+  }
+}
+
+function preloadSatelliteImage(src, fallbackSrc = "") {
+  return new Promise((resolve) => {
+    const image = new Image();
+    let triedFallback = false;
+    image.decoding = "async";
+    image.referrerPolicy = "no-referrer";
+    image.onload = () => resolve();
+    image.onerror = () => {
+      if (fallbackSrc && !triedFallback) {
+        triedFallback = true;
+        image.src = fallbackSrc;
+        return;
+      }
+      resolve();
+    };
+    image.src = src;
+  });
 }
 
 function renderAzureShotInfo(courseId, hole, shotPlan) {
@@ -3676,14 +3773,17 @@ function startRound(courseId, teeId = "") {
   state.selectedCourseId = course.id;
   view = "play";
   window.location.hash = "play";
+  queueCourseSatellitePreload(course, round.currentHole);
   persist("Round started.");
 }
 
 function openRoundSetup(courseId) {
+  const course = getCourse(state, courseId);
   state.selectedCourseId = courseId;
   state.activeRoundId = "";
   view = "play";
   window.location.hash = "play";
+  queueCourseSatellitePreload(course, 1);
   persist("Course ready.");
 }
 
