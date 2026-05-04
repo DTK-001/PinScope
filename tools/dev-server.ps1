@@ -1,7 +1,8 @@
 param(
   [int]$Port = 5173,
   [string]$Bind = "127.0.0.1",
-  [string]$Root = (Resolve-Path "$PSScriptRoot\..").Path
+  [string]$Root = (Resolve-Path "$PSScriptRoot\..").Path,
+  [string]$GolfCourseApiBase = "https://api.golfcourseapi.com"
 )
 
 $ErrorActionPreference = "Stop"
@@ -30,6 +31,33 @@ $mimeTypes = @{
   ".png" = "image/png"
   ".jpg" = "image/jpeg"
   ".jpeg" = "image/jpeg"
+}
+
+function Import-LocalEnv {
+  param([string]$RootPath)
+
+  $envPath = [System.IO.Path]::Combine($RootPath, ".env.local")
+  if (-not [System.IO.File]::Exists($envPath)) {
+    return
+  }
+
+  foreach ($line in [System.IO.File]::ReadAllLines($envPath)) {
+    $trimmed = $line.Trim()
+    if (-not $trimmed -or $trimmed.StartsWith("#")) {
+      continue
+    }
+
+    $separator = $trimmed.IndexOf("=")
+    if ($separator -le 0) {
+      continue
+    }
+
+    $name = $trimmed.Substring(0, $separator).Trim()
+    $value = $trimmed.Substring($separator + 1).Trim().Trim('"').Trim("'")
+    if ($name -and -not [System.Environment]::GetEnvironmentVariable($name, "Process")) {
+      [System.Environment]::SetEnvironmentVariable($name, $value, "Process")
+    }
+  }
 }
 
 function Send-Response {
@@ -63,7 +91,64 @@ function Send-Text {
   Send-Response $Stream $StatusCode $Reason "text/plain; charset=utf-8" $bytes $HeadOnly
 }
 
+function Send-Json {
+  param(
+    [System.IO.Stream]$Stream,
+    [int]$StatusCode,
+    [string]$Reason,
+    [string]$Body,
+    [bool]$HeadOnly = $false
+  )
+
+  $bytes = [System.Text.Encoding]::UTF8.GetBytes($Body)
+  Send-Response $Stream $StatusCode $Reason "application/json; charset=utf-8" $bytes $HeadOnly
+}
+
+function Send-GolfCourseApiProxy {
+  param(
+    [System.IO.Stream]$Stream,
+    [string]$Target,
+    [bool]$HeadOnly = $false
+  )
+
+  $key = [System.Environment]::GetEnvironmentVariable("GOLFCOURSEAPI_KEY", "Process")
+  if ([string]::IsNullOrWhiteSpace($key)) {
+    Send-Json $Stream 503 "Service Unavailable" '{"error":"GolfCourseAPI key is not configured on the local server."}' $HeadOnly
+    return
+  }
+
+  $targetParts = $Target.Split("?", 2)
+  $apiPath = [System.Uri]::UnescapeDataString($targetParts[0]).Substring("/api/golfcourseapi".Length)
+  $query = if ($targetParts.Length -gt 1) { "?$($targetParts[1])" } else { "" }
+  if ($apiPath -notmatch "^/v1/(search|courses/[0-9]+)$") {
+    Send-Json $Stream 404 "Not Found" '{"error":"Unsupported GolfCourseAPI proxy path."}' $HeadOnly
+    return
+  }
+
+  $uri = "$($GolfCourseApiBase.TrimEnd('/'))$apiPath$query"
+  try {
+    $response = Invoke-WebRequest -UseBasicParsing -Uri $uri -Headers @{ Authorization = "Key $key" } -TimeoutSec 20
+    Send-Json $Stream ([int]$response.StatusCode) "OK" $response.Content $HeadOnly
+  }
+  catch {
+    $status = 502
+    $body = '{"error":"GolfCourseAPI request failed."}'
+    if ($_.Exception.Response) {
+      $status = [int]$_.Exception.Response.StatusCode
+      try {
+        $reader = [System.IO.StreamReader]::new($_.Exception.Response.GetResponseStream())
+        $body = $reader.ReadToEnd()
+      }
+      catch {
+        $body = '{"error":"GolfCourseAPI request failed."}'
+      }
+    }
+    Send-Json $Stream $status "Upstream Error" $body $HeadOnly
+  }
+}
+
 try {
+  Import-LocalEnv $rootFull
   $listener.Start()
   Write-Host "Local Loop Golf dev server listening at $prefix"
   Write-Host "Serving $rootFull"
@@ -93,6 +178,12 @@ try {
 
       if ($method -ne "GET" -and $method -ne "HEAD") {
         Send-Text $stream 405 "Method Not Allowed" "Method not allowed" $headOnly
+        $client.Close()
+        continue
+      }
+
+      if ($target.StartsWith("/api/golfcourseapi/", [System.StringComparison]::OrdinalIgnoreCase)) {
+        Send-GolfCourseApiProxy $stream $target $headOnly
         $client.Close()
         continue
       }

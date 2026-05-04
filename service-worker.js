@@ -1,4 +1,4 @@
-const CACHE_NAME = "local-loop-golf-v31";
+const CACHE_NAME = "local-loop-golf-v38";
 
 const APP_SHELL = [
   "./",
@@ -47,6 +47,9 @@ self.addEventListener("fetch", (event) => {
 
   const url = new URL(event.request.url);
   if (url.origin !== self.location.origin) {
+    return;
+  }
+  if (url.pathname.startsWith("/api/")) {
     return;
   }
 

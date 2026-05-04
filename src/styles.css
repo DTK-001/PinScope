@@ -876,15 +876,19 @@ select option {
     #06100f;
 }
 
-.azure-map-tile {
+.azure-map-tile,
+.azure-map-image {
   position: absolute;
   display: block;
-  object-fit: cover;
+  object-fit: fill;
+  transform-origin: 0 0;
   opacity: 0;
+  backface-visibility: hidden;
   transition: opacity 180ms ease;
 }
 
-.azure-map-tile[data-loaded="1"] {
+.azure-map-tile[data-loaded="1"],
+.azure-map-image[data-loaded="1"] {
   opacity: 1;
 }
 
@@ -909,6 +913,23 @@ select option {
 .azure-tile-layer.failed .azure-map-status {
   color: #fff;
   background: rgba(86, 12, 45, 0.76);
+}
+
+.satellite-attribution {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  z-index: 3;
+  max-width: calc(100% - 20px);
+  padding: 4px 7px;
+  border-radius: 6px;
+  color: rgba(255, 255, 255, 0.84);
+  background: rgba(4, 8, 8, 0.58);
+  font-size: 0.62rem;
+  font-weight: 750;
+  line-height: 1.2;
+  text-align: right;
+  pointer-events: none;
 }
 
 .photo-hole::after {

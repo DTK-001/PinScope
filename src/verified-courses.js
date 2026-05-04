@@ -60,6 +60,48 @@ const CRANHAM_COORDS = [
   [51.558088, 0.280114, 51.557625, 0.281694]
 ];
 
+const BELHUS_COORDS = [
+  [51.507091, 0.263577, 51.507466, 0.261565],
+  [51.508769, 0.259517, 51.507183, 0.259425],
+  [51.506355, 0.258703, 51.508191, 0.258968],
+  [51.509577, 0.258612, 51.506754, 0.258027],
+  [51.506344, 0.257267, 51.508187, 0.2577],
+  null,
+  [51.50718, 0.255448, 51.508973, 0.256224],
+  null,
+  [51.509314, 0.259365, 51.50784, 0.261944],
+  [51.507803, 0.263759, 51.508162, 0.262242],
+  [51.509007, 0.261351, 51.510028, 0.261009],
+  [51.510221, 0.26144, 51.508933, 0.262103],
+  [51.508498, 0.264601, 51.509342, 0.263021],
+  null,
+  [51.509278, 0.264974, 51.510415, 0.262568],
+  [51.51106, 0.260071, 51.510649, 0.26449],
+  null,
+  [51.510737, 0.266706, 51.50798, 0.264697]
+];
+
+const CANVEY_COORDS = [
+  [51.533759, 0.575203, 51.535364, 0.574148],
+  [51.536888, 0.573907, 51.537888, 0.570233],
+  [51.538091, 0.567871, 51.537018, 0.570643],
+  [51.536155, 0.571904, 51.535268, 0.571346],
+  [51.534072, 0.571493, 51.535625, 0.567399],
+  [51.535975, 0.565365, 51.536699, 0.566496],
+  [51.537208, 0.566934, 51.536217, 0.570479],
+  [51.535674, 0.57304, 51.536401, 0.573461],
+  [51.536734, 0.574205, 51.534599, 0.575717],
+  [51.533536, 0.575752, 51.533824, 0.577833],
+  null,
+  null,
+  [51.533761, 0.588949, 51.532109, 0.590796],
+  [51.530844, 0.592894, 51.532271, 0.593593],
+  [51.533368, 0.593914, 51.533278, 0.591657],
+  [51.533688, 0.589108, 51.534801, 0.584078],
+  null,
+  null
+];
+
 const CRANHAM_VISUALS = [
   { path: [[77.3, 22.7], [46.2, 58.5], [22.7, 77.3]], water: [[52.6, 85.4]], bunkers: [[60.8, 61.8], [33.8, 53.4], [35.5, 77.5], [20.6, 80.9]] },
   { path: [[77.3, 22.7], [22.7, 57.3], [45.9, 77.3]], water: [[16.2, 21.2]], bunkers: [[19.3, 69.3], [57.2, 69.4], [46.5, 81.2]] },
@@ -131,7 +173,7 @@ export const verifiedCourses = [
     website: "https://www.belhusparkgc.co.uk/",
     phone: "+44 1708 853545",
     location: { lat: 51.507331, lng: 0.263364 },
-    attribution: "Scorecard from Golfify and Belhus Park Golf Club scorecard page. Top-down image supplied by the user for PinScope hole alignment.",
+    attribution: "Scorecard from Golfify and Belhus Park Golf Club scorecard page. Available tee and green geometry from OpenStreetMap contributors under ODbL.",
     photoSource: belhusPhotoCropSource,
     verification: {
       status: "verified",
@@ -141,7 +183,8 @@ export const verifiedCourses = [
         { label: "Official scorecard page", url: "https://www.belhusparkgc.co.uk/scorecard" },
         { label: "Official contact page", url: "https://www.belhusparkgc.co.uk/contact" },
         { label: "Golfify scorecard", url: "https://www.golfify.io/courses/belhus-park-golf-club" },
-        { label: "Impulse Leisure course page", url: "https://impulseleisure.co.uk/golf/" }
+        { label: "Impulse Leisure course page", url: "https://impulseleisure.co.uk/golf/" },
+        { label: "OpenStreetMap map extract", url: "https://api.openstreetmap.org/api/0.6/map?bbox=0.245539,51.495831,0.281189,51.518831" }
       ]
     },
     tees: [
@@ -197,7 +240,7 @@ export const verifiedCourses = [
     website: "https://www.glendalegolf.co.uk/castle-point-golf-course/",
     phone: "+44 1268 510830",
     location: { lat: 51.5354, lng: 0.5844 },
-    attribution: "Castle Point / Canvey scorecard seeded from My Online Golf Club and cross-checked against Golfshake and Grassy. Image alignment pending user-supplied top-down course image.",
+    attribution: "Castle Point / Canvey scorecard seeded from My Online Golf Club and cross-checked against Golfshake and Grassy. Available tee and green geometry from OpenStreetMap contributors under ODbL.",
     verification: {
       status: "verified",
       updated: "2026-05-02",
@@ -206,7 +249,8 @@ export const verifiedCourses = [
         { label: "My Online Golf Club scorecard", url: "https://www.myonlinegolfclub.com/clubpage?clubID=1005" },
         { label: "Golfshake course page", url: "https://www.golfshake.com/course/view/14233/Castle_Point_Golf_Club.html" },
         { label: "Grassy scorecard", url: "https://www.grassy.golf/courses/castle-point-golf-course-gb-ess" },
-        { label: "Albrecht Golf Guide", url: "https://www.1golf.eu/en/club/castle-point-golf-club/" }
+        { label: "Albrecht Golf Guide", url: "https://www.1golf.eu/en/club/castle-point-golf-club/" },
+        { label: "OpenStreetMap map extract", url: "https://api.openstreetmap.org/api/0.6/map?bbox=0.562700,51.521400,0.606100,51.549400" }
       ]
     },
     tees: [
@@ -266,6 +310,7 @@ function makeBelhusHole(index) {
   const par = BELHUS_SCORECARD.par[index];
   const teePoint = photoClip?.tee || [50, 82];
   const greenPoint = photoClip?.green || [50, 18];
+  const geo = geoFromCoords(BELHUS_COORDS[index]);
   return {
     ...hole,
     name: `Hole ${number}`,
@@ -276,10 +321,10 @@ function makeBelhusHole(index) {
       yellow: BELHUS_SCORECARD.yellow[index],
       red: BELHUS_SCORECARD.red[index]
     },
-    tee: null,
-    greenFront: null,
-    greenCenter: null,
-    greenBack: null,
+    tee: geo.tee,
+    greenFront: geo.greenFront,
+    greenCenter: geo.greenCenter,
+    greenBack: geo.greenBack,
     hazards: [],
     visual: {
       tee: teePoint,
@@ -297,7 +342,9 @@ function makeBelhusHole(index) {
         : null,
       render: "user-photo"
     },
-    notes: "Initial Belhus alignment is seeded from the supplied course image; use Adjust to fine-tune."
+    notes: geo.tee
+      ? "Satellite alignment seeded from OpenStreetMap hole geometry; use Adjust to fine-tune."
+      : "OpenStreetMap has no reliable tee/green geometry for this hole yet; use Adjust to place it."
   };
 }
 
@@ -312,16 +359,17 @@ function makeScorecardOnlyHole(index, scorecard, courseId) {
   );
   const teePoint = schematicTeePoint(number, par);
   const greenPoint = schematicGreenPoint(number, par);
+  const geo = geoFromCoords(courseId === CANVEY_COURSE_ID ? CANVEY_COORDS[index] : null);
   return {
     ...hole,
     name: `Hole ${number}`,
     par,
     strokeIndex: scorecard.strokeIndex[index],
     yards,
-    tee: null,
-    greenFront: null,
-    greenCenter: null,
-    greenBack: null,
+    tee: geo.tee,
+    greenFront: geo.greenFront,
+    greenCenter: geo.greenCenter,
+    greenBack: geo.greenBack,
     hazards: [],
     visual: {
       path: schematicPath(teePoint, greenPoint, number),
@@ -330,7 +378,22 @@ function makeScorecardOnlyHole(index, scorecard, courseId) {
       photo: null,
       render: "scorecard-schematic"
     },
-    notes: `Scorecard verified; ${courseId === BASILDON_COURSE_ID ? "Basildon" : "Canvey"} image alignment pending.`
+    notes: geo.tee
+      ? "Satellite alignment seeded from OpenStreetMap hole geometry; use Adjust to fine-tune."
+      : `Scorecard verified; ${courseId === BASILDON_COURSE_ID ? "Basildon" : "Canvey"} tee/green geometry pending.`
+  };
+}
+
+function geoFromCoords(coords) {
+  if (!coords) {
+    return { tee: null, greenFront: null, greenCenter: null, greenBack: null };
+  }
+  const [teeLat, teeLng, greenLat, greenLng] = coords;
+  return {
+    tee: { lat: teeLat, lng: teeLng },
+    greenFront: offsetPoint(greenLat, greenLng, -0.00008, -0.00004),
+    greenCenter: { lat: greenLat, lng: greenLng },
+    greenBack: offsetPoint(greenLat, greenLng, 0.00008, 0.00004)
   };
 }
 
