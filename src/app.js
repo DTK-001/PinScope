@@ -349,7 +349,11 @@ function renderCourseCard(course) {
 function renderCourseGeometryStatus(course) {
   const mapped = courseMappedHoleCount(course);
   const total = course.holes?.length || course.holesCount || 18;
-  const label = mapped ? `${mapped}/${total} GPS holes mapped` : "GPS holes not mapped yet";
+  const label = mapped
+    ? mapped < total
+      ? `${mapped}/${total} GPS holes mapped - click OSM holes to refresh`
+      : `${mapped}/${total} GPS holes mapped`
+    : "GPS holes not mapped yet";
   return `
     <div class="course-geometry-status ${mapped ? "mapped" : "pending"}">
       <span>${label}</span>
@@ -1455,6 +1459,25 @@ function resetSatelliteAnchorEdit(courseId, holeNumber) {
   satelliteAnchorEdits = next;
   saveSatelliteAnchorEdits();
   render();
+}
+
+function clearSatelliteAnchorEditsForHoles(courseId, holeNumbers = []) {
+  if (!courseId || !Array.isArray(holeNumbers) || !holeNumbers.length) {
+    return;
+  }
+  const next = { ...satelliteAnchorEdits };
+  let changed = false;
+  holeNumbers.forEach((holeNumber) => {
+    const key = satelliteAnchorEditKey(courseId, holeNumber);
+    if (next[key]) {
+      delete next[key];
+      changed = true;
+    }
+  });
+  if (changed) {
+    satelliteAnchorEdits = next;
+    saveSatelliteAnchorEdits();
+  }
 }
 
 function gpsTargetForHole(hole) {
@@ -3546,7 +3569,7 @@ async function refreshCourseLayout(courseId) {
     applyCourseGeometry(course.id, layout, {
       source: "OpenStreetMap",
       message: layout.mappedCount
-        ? `Mapped ${layout.mappedCount} hole${layout.mappedCount === 1 ? "" : "s"} from OSM.`
+        ? `Mapped ${layout.mappedCount} hole${layout.mappedCount === 1 ? "" : "s"} from OSM${layout.counts ? ` (${layout.counts.holeLines} hole lines, ${layout.counts.greens} greens, ${layout.counts.tees} tees found)` : ""}.`
         : "No OSM hole geometry found for this course."
     });
   } catch (error) {
@@ -3579,6 +3602,7 @@ function applyCourseGeometry(courseId, payload, options = {}) {
   }
   const byNumber = new Map(updates.map((hole) => [hole.number, hole]));
   let changed = 0;
+  const changedHoleNumbers = [];
   course.holes = course.holes.map((hole) => {
     const update = byNumber.get(Number(hole.number));
     const cleaned = { ...hole, visual: sanitizeVisualCoordinates(hole.visual) };
@@ -3586,6 +3610,7 @@ function applyCourseGeometry(courseId, payload, options = {}) {
       return cleaned;
     }
     changed += 1;
+    changedHoleNumbers.push(Number(hole.number));
     const nextGeometry = {
       ...(cleaned.geometry || {}),
       ...(update.geometry || {})
@@ -3609,6 +3634,7 @@ function applyCourseGeometry(courseId, payload, options = {}) {
   });
   course.geometrySource = options.source || payload.source || payload.schema || "Imported geometry";
   course.attribution = mergeAttribution(course.attribution, payload.attribution);
+  clearSatelliteAnchorEditsForHoles(course.id, changedHoleNumbers);
   persist(options.message || `Updated ${changed} mapped hole${changed === 1 ? "" : "s"}.`);
 }
 

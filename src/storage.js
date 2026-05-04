@@ -50,7 +50,67 @@ function mergeState(defaults, stored) {
 function ensureBuiltInCourses(courses) {
   const builtInIds = new Set(builtInCourses.map((course) => course.id));
   const byId = new Map(courses.map((course) => [course.id, course]));
-  const mergedBuiltIns = builtInCourses.map((course) => ({ ...(byId.get(course.id) || {}), ...course }));
+  const mergedBuiltIns = builtInCourses.map((course) => mergeBuiltInCourse(course, byId.get(course.id)));
   const userCourses = courses.filter((course) => !builtInIds.has(course.id));
   return [...mergedBuiltIns, ...userCourses];
+}
+
+function mergeBuiltInCourse(defaultCourse, storedCourse) {
+  if (!storedCourse) {
+    return defaultCourse;
+  }
+
+  const next = {
+    ...storedCourse,
+    ...defaultCourse,
+    geometrySource: storedCourse.geometrySource || defaultCourse.geometrySource || "",
+    attribution: mergeAttribution(defaultCourse.attribution, storedCourse.attribution)
+  };
+
+  if (Array.isArray(defaultCourse.holes) && Array.isArray(storedCourse.holes)) {
+    const storedByNumber = new Map(storedCourse.holes.map((hole) => [Number(hole.number), hole]));
+    next.holes = defaultCourse.holes.map((defaultHole) => mergeBuiltInHole(defaultHole, storedByNumber.get(Number(defaultHole.number))));
+  }
+
+  return next;
+}
+
+function mergeBuiltInHole(defaultHole, storedHole) {
+  if (!storedHole) {
+    return defaultHole;
+  }
+  const next = { ...defaultHole };
+  const geometryKeys = ["tee", "greenCenter", "greenFront", "greenBack"];
+  geometryKeys.forEach((key) => {
+    if (validGeoPoint(storedHole[key])) {
+      next[key] = storedHole[key];
+    }
+  });
+  if (storedHole.geometry && typeof storedHole.geometry === "object") {
+    next.geometry = storedHole.geometry;
+  }
+  if (storedHole.mapping && typeof storedHole.mapping === "object") {
+    next.mapping = storedHole.mapping;
+  }
+  if (Array.isArray(storedHole.tees) && storedHole.tees.length) {
+    next.tees = storedHole.tees;
+  }
+  return next;
+}
+
+function validGeoPoint(point) {
+  return Boolean(
+    point &&
+    Number.isFinite(Number(point.lat)) &&
+    Number.isFinite(Number(point.lng)) &&
+    Math.abs(Number(point.lat)) <= 90 &&
+    Math.abs(Number(point.lng)) <= 180
+  );
+}
+
+function mergeAttribution(primary = "", extra = "") {
+  if (!extra || primary.includes(extra)) {
+    return primary;
+  }
+  return primary ? `${primary} ${extra}` : extra;
 }
