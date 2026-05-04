@@ -6,12 +6,13 @@ const OVERPASS_URLS = [
   "https://z.overpass-api.de/api/interpreter"
 ];
 const METERS_TO_YARDS = 1.0936132983;
-const DEFAULT_LAYOUT_RADIUS_METERS = 3000;
-const MAX_LAYOUT_RADIUS_METERS = 5200;
-const GREEN_SNAP_YARDS = 420;
-const GREEN_EXISTING_SNAP_YARDS = 260;
-const TEE_SNAP_YARDS = 260;
-const FEATURE_ONLY_TEE_SNAP_YARDS = 180;
+const DEFAULT_LAYOUT_RADIUS_METERS = 2600;
+const MAX_LAYOUT_RADIUS_METERS = 4200;
+const GREEN_SNAP_YARDS = 180;
+const GREEN_EXISTING_SNAP_YARDS = 130;
+const TEE_SNAP_YARDS = 160;
+const FEATURE_ONLY_TEE_SNAP_YARDS = 120;
+const COURSE_AREA_BUFFER_YARDS = 90;
 
 export async function findNearbyOsmCourses(position, radiusMeters = 25000) {
   const radius = Math.min(Math.max(Number(radiusMeters) || 25000, 1000), 50000);
@@ -86,6 +87,8 @@ async function fetchOverpassLayoutElements(location, radius) {
       node["golf"~"^(hole|green|tee|pin)$"](${bbox.minLat},${bbox.minLng},${bbox.maxLat},${bbox.maxLng});
       way["golf"~"^(hole|green|tee|pin)$"](${bbox.minLat},${bbox.minLng},${bbox.maxLat},${bbox.maxLng});
       relation["golf"~"^(hole|green|tee|pin)$"](${bbox.minLat},${bbox.minLng},${bbox.maxLat},${bbox.maxLng});
+      way["leisure"="golf_course"](${bbox.minLat},${bbox.minLng},${bbox.maxLat},${bbox.maxLng});
+      relation["leisure"="golf_course"](${bbox.minLat},${bbox.minLng},${bbox.maxLat},${bbox.maxLng});
     );
     out center geom tags;
   `;
@@ -163,7 +166,7 @@ function elementsFromOsmXml(xmlText) {
       geometry: geometry.map((point) => ({ lat: point.lat, lon: point.lng }))
     };
     waysById.set(id, { ...element, geometryPoints: geometry });
-    if (isGolfGeometryTag(tags.golf)) {
+    if (isGolfGeometryTag(tags.golf) || isCourseBoundaryTag(tags)) {
       elements.push(element);
     }
   });
@@ -171,7 +174,7 @@ function elementsFromOsmXml(xmlText) {
   doc.querySelectorAll("relation").forEach((relation) => {
     const id = relation.getAttribute("id");
     const tags = tagsFromXmlElement(relation);
-    if (!isGolfGeometryTag(tags.golf)) {
+    if (!isGolfGeometryTag(tags.golf) && !isCourseBoundaryTag(tags)) {
       return;
     }
     const memberGeometries = Array.from(relation.querySelectorAll("member[type='way']"))
@@ -199,6 +202,10 @@ function tagsFromXmlElement(element) {
 
 function isGolfGeometryTag(value) {
   return ["hole", "green", "tee", "pin"].includes(String(value || ""));
+}
+
+function isCourseBoundaryTag(tags = {}) {
+  return String(tags.leisure || "") === "golf_course";
 }
 
 function courseFromOsmElement(element, origin) {
@@ -247,7 +254,9 @@ function shouldSkipCourse(tags) {
 }
 
 function layoutFromOsmElements(elements, course, radiusMeters, method = "OpenStreetMap") {
-  const parsed = parseGolfFeatures(elements);
+  const parsedAll = parseGolfFeatures(elements);
+  const courseArea = selectCourseArea(elements, course);
+  const parsed = filterParsedFeaturesToCourseArea(parsedAll, courseArea, course?.location);
   const count = Math.max(1, Number(course?.holesCount) || Number(course?.holes?.length) || 18);
   const existingByNumber = new Map((course?.holes || []).map((hole) => [Number(hole.number), hole]));
   const linesByNumber = bestLinesByNumber(parsed.holeLines, parsed.tees, parsed.greens);
@@ -261,18 +270,28 @@ function layoutFromOsmElements(elements, course, radiusMeters, method = "OpenStr
     const teeSeed = validPoint(line?.tee) ? line.tee : normalizePoint(existing.tee);
     const greenSeed = validPoint(line?.green) ? line.green : normalizePoint(existing.greenCenter);
 
-    const refGreen = bestFeatureForRef(number, parsed.greens, greenSeed || line?.green, GREEN_SNAP_YARDS);
-    const nearLineGreen = bestFeatureByDistance(greenSeed, parsed.greens, line ? GREEN_SNAP_YARDS : GREEN_EXISTING_SNAP_YARDS, usedGreens);
-    const greenFeature = refGreen || nearLineGreen || bestFeatureByDistance(normalizePoint(existing.greenCenter), parsed.greens, GREEN_EXISTING_SNAP_YARDS, usedGreens);
+    const greenFeature = bestGreenForHole({
+      number,
+      line,
+      seed: greenSeed,
+      existing: normalizePoint(existing.greenCenter),
+      greens: parsed.greens,
+      used: usedGreens
+    });
     const greenCenter = greenFeature?.center || greenSeed || null;
 
     if (greenFeature?.osm) {
       usedGreens.add(greenFeature.osm);
     }
 
-    const refTee = bestFeatureForRef(number, parsed.tees, teeSeed, TEE_SNAP_YARDS);
-    const nearTee = bestFeatureByDistance(teeSeed, parsed.tees, line ? TEE_SNAP_YARDS : FEATURE_ONLY_TEE_SNAP_YARDS, usedTees);
-    const teeFeature = refTee || nearTee;
+    const teeFeature = bestTeeForHole({
+      number,
+      line,
+      seed: teeSeed,
+      existing: normalizePoint(existing.tee),
+      tees: parsed.tees,
+      used: usedTees
+    });
     const tee = teeFeature?.center || teeSeed || null;
 
     if (teeFeature?.osm) {
@@ -314,22 +333,27 @@ function layoutFromOsmElements(elements, course, radiusMeters, method = "OpenStr
       osm: {
         hole: line?.osm || null,
         green: greenFeature?.osm || null,
-        tee: teeFeature?.osm || null
+        tee: teeFeature?.osm || null,
+        courseArea: courseArea?.osm || null
       },
       yards: tee && greenCenter ? Math.round(yardsBetween(tee, greenCenter)) : existing.yards || line?.yards || null
     });
   }
 
   return {
-    schema: "pinscope-osm-course-layout-v4",
-    source: `OpenStreetMap (${method})`,
+    schema: "pinscope-osm-course-layout-v5",
+    source: `OpenStreetMap (${method}${courseArea ? ", course-locked" : ""})`,
     attribution: "Hole geometry from OpenStreetMap contributors under ODbL.",
     radiusMeters,
+    courseArea: courseArea ? featureForExport(courseArea) : null,
     counts: {
       holeLines: parsed.holeLines.length,
       greens: parsed.greens.length,
       tees: parsed.tees.length,
-      pins: parsed.pins.length
+      pins: parsed.pins.length,
+      allHoleLines: parsedAll.holeLines.length,
+      allGreens: parsedAll.greens.length,
+      allTees: parsedAll.tees.length
     },
     mappedCount: holes.filter((hole) => hole?.tee && hole?.greenCenter).length,
     greenShapeCount: holes.filter((hole) => hole?.greenPolygon?.length || hole?.geometry?.greenPolygon?.length).length,
@@ -346,6 +370,193 @@ function layoutFromOsmElements(elements, course, radiusMeters, method = "OpenStr
       }))
     }
   };
+}
+
+function selectCourseArea(elements, course) {
+  const boundaries = (elements || [])
+    .filter((element) => isCourseBoundaryTag(element.tags || {}))
+    .map((element) => courseAreaFromElement(element))
+    .filter(Boolean);
+  if (!boundaries.length) {
+    return null;
+  }
+  const expectedOsm = course?.osm ? `${course.osm.type}/${course.osm.id}` : "";
+  const courseName = normalizeName(course?.name || "");
+  const location = normalizePoint(course?.location);
+  let best = null;
+  let bestScore = -Infinity;
+  for (const area of boundaries) {
+    const name = normalizeName(area.tags?.name || area.tags?.operator || "");
+    const sameOsm = expectedOsm && area.osm === expectedOsm;
+    const nameMatch = courseName && name && (name.includes(courseName) || courseName.includes(name));
+    const distance = validPoint(location) && validPoint(area.center) ? yardsBetween(location, area.center) : 999999;
+    const containsCenter = validPoint(location) && area.polygon?.length ? pointInPolygon(location, area.polygon) : false;
+    const score = (sameOsm ? 100000 : 0) + (nameMatch ? 50000 : 0) + (containsCenter ? 12000 : 0) - Math.min(distance, 12000);
+    if (score > bestScore) {
+      best = area;
+      bestScore = score;
+    }
+  }
+  return best;
+}
+
+function courseAreaFromElement(element) {
+  const geometry = elementGeometry(element);
+  const polygon = polygonFromGeometry(geometry);
+  const hull = polygon.length ? polygon : convexHullPolygon(geometry);
+  const center = elementCenter(element, geometry);
+  if (!validPoint(center) && !hull.length) {
+    return null;
+  }
+  return {
+    osm: `${element.type}/${element.id}`,
+    ref: null,
+    name: element.tags?.name || element.tags?.operator || "",
+    center,
+    geometry: geometry.map(roundPoint),
+    polygon: hull,
+    tags: element.tags || {}
+  };
+}
+
+function convexHullPolygon(points) {
+  const valid = (points || []).filter(validPoint).map(roundPoint);
+  if (valid.length < 3) {
+    return [];
+  }
+  const unique = Array.from(new Map(valid.map((point) => [`${point.lat},${point.lng}`, point])).values())
+    .sort((a, b) => a.lng === b.lng ? a.lat - b.lat : a.lng - b.lng);
+  if (unique.length < 3) {
+    return [];
+  }
+  const cross = (o, a, b) => (a.lng - o.lng) * (b.lat - o.lat) - (a.lat - o.lat) * (b.lng - o.lng);
+  const lower = [];
+  for (const point of unique) {
+    while (lower.length >= 2 && cross(lower[lower.length - 2], lower[lower.length - 1], point) <= 0) {
+      lower.pop();
+    }
+    lower.push(point);
+  }
+  const upper = [];
+  for (const point of [...unique].reverse()) {
+    while (upper.length >= 2 && cross(upper[upper.length - 2], upper[upper.length - 1], point) <= 0) {
+      upper.pop();
+    }
+    upper.push(point);
+  }
+  const hull = lower.slice(0, -1).concat(upper.slice(0, -1));
+  return hull.length >= 3 ? [...hull, hull[0]] : [];
+}
+
+function filterParsedFeaturesToCourseArea(parsed, courseArea, fallbackCenter) {
+  const center = normalizePoint(fallbackCenter);
+  const maxFallbackYards = 2600;
+  const keepFeature = (feature) => featureBelongsToCourse(feature, courseArea, center, maxFallbackYards);
+  const keepLine = (line) => lineBelongsToCourse(line, courseArea, center, maxFallbackYards);
+  return {
+    holeLines: (parsed.holeLines || []).filter(keepLine),
+    greens: (parsed.greens || []).filter(keepFeature),
+    tees: (parsed.tees || []).filter(keepFeature),
+    pins: (parsed.pins || []).filter(keepFeature)
+  };
+}
+
+function featureBelongsToCourse(feature, courseArea, fallbackCenter, maxFallbackYards) {
+  if (!feature || !validPoint(feature.center)) {
+    return false;
+  }
+  if (courseArea?.polygon?.length) {
+    if (pointInPolygon(feature.center, courseArea.polygon)) {
+      return true;
+    }
+    if ((feature.geometry || []).some((point) => validPoint(point) && pointInPolygon(point, courseArea.polygon))) {
+      return true;
+    }
+    return distanceToPolygonYards(feature.center, courseArea.polygon) <= COURSE_AREA_BUFFER_YARDS;
+  }
+  if (validPoint(courseArea?.center)) {
+    return yardsBetween(feature.center, courseArea.center) <= maxFallbackYards;
+  }
+  return validPoint(fallbackCenter) ? yardsBetween(feature.center, fallbackCenter) <= maxFallbackYards : true;
+}
+
+function lineBelongsToCourse(line, courseArea, fallbackCenter, maxFallbackYards) {
+  if (!line) {
+    return false;
+  }
+  const points = [line.tee, line.green, ...(line.path || [])].filter(validPoint);
+  if (!points.length) {
+    return false;
+  }
+  if (courseArea?.polygon?.length) {
+    const insideCount = points.filter((point) => pointInPolygon(point, courseArea.polygon) || distanceToPolygonYards(point, courseArea.polygon) <= COURSE_AREA_BUFFER_YARDS).length;
+    return insideCount >= Math.max(1, Math.ceil(points.length * 0.35));
+  }
+  const center = validPoint(courseArea?.center) ? courseArea.center : fallbackCenter;
+  return validPoint(center) ? points.some((point) => yardsBetween(point, center) <= maxFallbackYards) : true;
+}
+
+function bestGreenForHole({ number, line, seed, existing, greens, used }) {
+  const candidates = (greens || []).filter((feature) => !used?.has(feature.osm));
+  const byRef = candidates.filter((feature) => Number(feature.ref) === Number(number));
+  if (line) {
+    const byLine = bestGreenForLineEnd(line, byRef.length ? byRef : candidates, GREEN_SNAP_YARDS);
+    if (byLine) {
+      return byLine;
+    }
+  }
+  if (byRef.length) {
+    return bestFeatureByDistance(seed || existing || byRef[0].center, byRef, GREEN_SNAP_YARDS) || byRef[0];
+  }
+  if (line) {
+    return bestGreenForLineEnd(line, candidates, GREEN_SNAP_YARDS);
+  }
+  return bestFeatureByDistance(seed || existing, candidates, existing ? GREEN_EXISTING_SNAP_YARDS : GREEN_SNAP_YARDS, used);
+}
+
+function bestGreenForLineEnd(line, features, maxYards) {
+  const target = line?.green;
+  if (!validPoint(target) || !Array.isArray(features)) {
+    return null;
+  }
+  let best = null;
+  let bestScore = Number(maxYards || GREEN_SNAP_YARDS);
+  for (const feature of features) {
+    if (!validPoint(feature.center)) {
+      continue;
+    }
+    const centerDistance = yardsBetween(target, feature.center);
+    const polygonDistance = feature.polygon?.length ? distanceToPolygonYards(target, feature.polygon) : centerDistance;
+    const refPenalty = feature.ref && Number(feature.ref) !== Number(line.number) ? 80 : 0;
+    // Use the end of the numbered OSM golf=hole line as the primary match.
+    // Some fairways pass close to a neighbouring green, so using distance to
+    // any point on the path can accidentally steal the wrong hole's green.
+    const score = Math.min(centerDistance, polygonDistance) + refPenalty;
+    if (score <= bestScore) {
+      best = feature;
+      bestScore = score;
+    }
+  }
+  return best;
+}
+
+function bestTeeForHole({ number, line, seed, existing, tees, used }) {
+  const candidates = (tees || []).filter((feature) => !used?.has(feature.osm));
+  const byRef = candidates.filter((feature) => Number(feature.ref) === Number(number));
+  const target = seed || line?.tee || existing;
+  if (byRef.length) {
+    return bestFeatureByDistance(target || byRef[0].center, byRef, TEE_SNAP_YARDS) || byRef[0];
+  }
+  return bestFeatureByDistance(target, candidates, line ? TEE_SNAP_YARDS : FEATURE_ONLY_TEE_SNAP_YARDS, used);
+}
+
+function normalizeName(value) {
+  return String(value || "")
+    .toLowerCase()
+    .replace(/&/g, "and")
+    .replace(/golf\s+club|golf\s+course|park|club|course/g, "")
+    .replace(/[^a-z0-9]+/g, "")
+    .trim();
 }
 
 function parseGolfFeatures(elements) {
@@ -629,7 +840,27 @@ function featureForExport(feature) {
 }
 
 function scoreLayout(layout) {
-  return (layout.mappedCount || 0) * 1000 + (layout.greenShapeCount || 0) * 30 + (layout.counts?.greens || 0) * 3 + (layout.counts?.holeLines || 0);
+  return (layout.courseArea ? 5000 : 0) + (layout.mappedCount || 0) * 1000 + (layout.greenShapeCount || 0) * 30 + (layout.counts?.greens || 0) * 3 + (layout.counts?.holeLines || 0);
+}
+
+function pointInPolygon(point, polygon) {
+  if (!validPoint(point) || !Array.isArray(polygon) || polygon.length < 3) {
+    return false;
+  }
+  let inside = false;
+  const x = Number(point.lng);
+  const y = Number(point.lat);
+  for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i, i += 1) {
+    const xi = Number(polygon[i].lng);
+    const yi = Number(polygon[i].lat);
+    const xj = Number(polygon[j].lng);
+    const yj = Number(polygon[j].lat);
+    const intersects = ((yi > y) !== (yj > y)) && (x < ((xj - xi) * (y - yi)) / ((yj - yi) || 1e-12) + xi);
+    if (intersects) {
+      inside = !inside;
+    }
+  }
+  return inside;
 }
 
 function distanceToPolygonYards(point, polygon) {

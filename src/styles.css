@@ -1002,7 +1002,8 @@ select option {
   display: block;
   width: 28px;
   height: 28px;
-  transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%) scale(var(--photo-marker-scale, 1));
+  transform-origin: center center;
   filter: drop-shadow(0 0 4px rgba(255, 79, 216, 0.92));
   pointer-events: none;
 }
@@ -1054,7 +1055,8 @@ select option {
   border-radius: 999px;
   background: #f8f3ff;
   filter: drop-shadow(0 0 2px rgba(255, 79, 216, 0.62));
-  transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%) scale(var(--photo-marker-scale, 1));
+  transform-origin: center center;
   pointer-events: none;
 }
 
@@ -1073,7 +1075,8 @@ select option {
   border: 3px solid rgba(248, 243, 255, 0.88);
   border-radius: 999px;
   background: rgba(174, 241, 126, 0.16);
-  transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%) scale(var(--photo-marker-scale, 1));
+  transform-origin: center center;
   pointer-events: none;
 }
 
@@ -1098,12 +1101,13 @@ select option {
   place-items: center;
   border: 2px solid #f8fffb;
   border-radius: 999px;
-  transform: translate(-50%, -50%);
   cursor: grab;
   touch-action: none;
   box-shadow: 0 8px 20px rgba(2, 9, 7, 0.45);
   font-size: 0.82rem;
   font-weight: 900;
+  transform: translate(-50%, -50%) scale(var(--photo-marker-scale, 1));
+  transform-origin: center center;
 }
 
 .photo-drag-handle.tee {
@@ -1118,7 +1122,7 @@ select option {
 
 .photo-drag-handle.dragging {
   cursor: grabbing;
-  transform: translate(-50%, -50%) scale(1.08);
+  transform: translate(-50%, -50%) scale(calc(var(--photo-marker-scale, 1) * 1.08));
 }
 
 .photo-hole.editing::before {
@@ -2293,7 +2297,8 @@ select option {
   border: 2px solid #f8fff3;
   border-radius: 999px;
   background: rgba(175, 241, 126, 0.95);
-  transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%) scale(var(--photo-marker-scale, 1));
+  transform-origin: center center;
   filter: drop-shadow(0 0 2px rgba(7, 16, 12, 0.75));
   pointer-events: none;
 }

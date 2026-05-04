@@ -680,44 +680,45 @@ function renderAzureHoleVisual(hole, course) {
     ? [start, ...shotPlan.viewPoints, green].map((point) => `${point.x},${point.y}`).join(" ")
     : "";
   const guide = shotPlan ? "" : `<line class="photo-guide-route" x1="${start.x}" y1="${start.y}" x2="${green.x}" y2="${green.y}"></line>`;
-  const zoom = photoZoomLevel(courseId, hole.number);
+  const zoom = photoEditMode ? 1 : photoZoomLevel(courseId, hole.number);
   const pan = photoPanOffset(courseId, hole.number, zoom);
+  const markerScale = Number((1 / Math.max(1, zoom)).toFixed(4));
   const zoomClass = zoom > 1 ? " zoomed" : "";
   const editClass = photoEditMode ? " editing" : "";
   const hasAnchorEdit = Boolean(satelliteAnchorEdit(courseId, hole.number));
   return `
-    <section class="hole-visual photo-hole azure-hole${shotPlan ? " planning" : ""}${zoomClass}${editClass}" data-azure-hole="${hole.number}" data-azure-course-id="${courseId}" aria-label="${escapeAttribute(course?.name || "Course")} Azure satellite hole ${hole.number}">
+    <section class="hole-visual photo-hole azure-hole${shotPlan ? " planning" : ""}${zoomClass}${editClass}" style="--photo-marker-scale:${markerScale};" data-azure-hole="${hole.number}" data-azure-course-id="${courseId}" aria-label="${escapeAttribute(course?.name || "Course")} Azure satellite hole ${hole.number}">
       <div class="photo-pan-layer" style="transform:${photoPanTransform(pan)};">
         <div class="photo-zoom-layer" style="transform:scale(${zoom});">
           <div class="azure-tile-layer" data-azure-tile-layer>
             ${renderAzureTiles(map)}
             <div class="azure-map-status" data-azure-map-status>Loading satellite</div>
           </div>
+          <svg class="photo-hole-overlay" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+            <defs>
+              <linearGradient id="azure-shot-gradient-${hole.number}" x1="0" y1="1" x2="0" y2="0">
+                <stop offset="0" stop-color="#ff4fd8"></stop>
+                <stop offset="1" stop-color="#8d5cff"></stop>
+              </linearGradient>
+            </defs>
+            ${greenShapeSvg}
+            ${guide}
+            ${shotPlan ? `<polyline class="photo-plan-route" points="${routePoints}" stroke="url(#azure-shot-gradient-${hole.number})"></polyline>` : ""}
+            ${shotPlan?.viewPoints.map((point, index) => `
+              <circle class="photo-plan-point" cx="${point.x}" cy="${point.y}" r="1.9"></circle>
+              <path class="photo-plan-cross" d="M ${point.x - 1.4} ${point.y} L ${point.x + 1.4} ${point.y} M ${point.x} ${point.y - 1.4} L ${point.x} ${point.y + 1.4}"></path>
+            `).join("") || ""}
+          </svg>
+          ${greenShapeSvg ? renderPhotoGreenCenterDot(green) : renderPhotoGreenMarkerElement(green, hole.par)}
+          ${renderPhotoTeeMarkerElement(tee, Boolean(gpsPoint))}
+          ${renderPhotoGpsMarker(gpsPoint)}
+          ${photoEditMode ? `
+            <button class="photo-drag-handle tee" type="button" style="left:${tee.x}%; top:${tee.y}%;" data-azure-handle="tee" data-course-id="${courseId}" data-hole="${hole.number}" aria-label="Drag satellite tee anchor">T</button>
+            <button class="photo-drag-handle green" type="button" style="left:${green.x}%; top:${green.y}%;" data-azure-handle="green" data-course-id="${courseId}" data-hole="${hole.number}" aria-label="Drag satellite green anchor">G</button>
+          ` : ""}
         </div>
       </div>
-      <svg class="photo-hole-overlay" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-        <defs>
-          <linearGradient id="azure-shot-gradient-${hole.number}" x1="0" y1="1" x2="0" y2="0">
-            <stop offset="0" stop-color="#ff4fd8"></stop>
-            <stop offset="1" stop-color="#8d5cff"></stop>
-          </linearGradient>
-        </defs>
-        ${greenShapeSvg}
-        ${guide}
-        ${shotPlan ? `<polyline class="photo-plan-route" points="${routePoints}" stroke="url(#azure-shot-gradient-${hole.number})"></polyline>` : ""}
-        ${shotPlan?.viewPoints.map((point, index) => `
-          <circle class="photo-plan-point" cx="${point.x}" cy="${point.y}" r="1.9"></circle>
-          <path class="photo-plan-cross" d="M ${point.x - 1.4} ${point.y} L ${point.x + 1.4} ${point.y} M ${point.x} ${point.y - 1.4} L ${point.x} ${point.y + 1.4}"></path>
-        `).join("") || ""}
-      </svg>
-      ${greenShapeSvg ? renderPhotoGreenCenterDot(green) : renderPhotoGreenMarkerElement(green, hole.par)}
-      ${renderPhotoTeeMarkerElement(tee, Boolean(gpsPoint))}
-      ${renderPhotoGpsMarker(gpsPoint)}
-      ${photoEditMode ? `
-        <button class="photo-drag-handle tee" type="button" style="left:${tee.x}%; top:${tee.y}%;" data-azure-handle="tee" data-course-id="${courseId}" data-hole="${hole.number}" aria-label="Drag satellite tee anchor">T</button>
-        <button class="photo-drag-handle green" type="button" style="left:${green.x}%; top:${green.y}%;" data-azure-handle="green" data-course-id="${courseId}" data-hole="${hole.number}" aria-label="Drag satellite green anchor">G</button>
-        <p class="photo-edit-help">Drag T or G onto the real satellite tee box or green.</p>
-      ` : ""}
+      ${photoEditMode ? `<p class="photo-edit-help">Drag T or G onto the real satellite tee box or green.</p>` : ""}
       <div class="photo-info-stack">
         <div class="photo-hole-badge">
           <span>Hole ${hole.number}</span>
@@ -3606,7 +3607,7 @@ async function refreshCourseLayout(courseId) {
     applyCourseGeometry(course.id, layout, {
       source: "OpenStreetMap",
       message: layout.mappedCount || layout.greenShapeCount
-        ? `Mapped ${layout.mappedCount || 0} tee/green hole${(layout.mappedCount || 0) === 1 ? "" : "s"} and ${layout.greenShapeCount || 0} green shape${(layout.greenShapeCount || 0) === 1 ? "" : "s"} from OSM${layout.counts ? ` (${layout.counts.holeLines} hole lines, ${layout.counts.greens} greens, ${layout.counts.tees} tees found)` : ""}.`
+        ? `Mapped ${layout.mappedCount || 0} tee/green hole${(layout.mappedCount || 0) === 1 ? "" : "s"} and ${layout.greenShapeCount || 0} green shape${(layout.greenShapeCount || 0) === 1 ? "" : "s"} from course-locked OSM${layout.courseArea ? " boundary" : " area"}${layout.counts ? ` (${layout.counts.holeLines} hole lines, ${layout.counts.greens} greens, ${layout.counts.tees} tees found inside the course)` : ""}.`
         : "No OSM hole geometry found for this course."
     });
   } catch (error) {
