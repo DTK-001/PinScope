@@ -15,6 +15,12 @@ const CRANHAM_SCORECARD = {
 const BELHUS_COURSE_ID = "verified-belhus-park";
 const BASILDON_COURSE_ID = "verified-basildon";
 const CANVEY_COURSE_ID = "verified-castle-point-canvey";
+const ORSETT_COURSE_ID = "osm-way-94530219";
+const ST_CLERES_COURSE_ID = "osm-way-94530214";
+const INGREBOURNE_COURSE_ID = "osm-way-183480485";
+const WARLEY_COURSE_ID = "osm-way-127582078";
+const THORNDON_COURSE_ID = "osm-way-128679377";
+const BRENTWOOD_COURSE_ID = "osm-relation-3908574";
 
 const BELHUS_SCORECARD = {
   par: [4, 4, 4, 4, 4, 3, 4, 3, 4, 4, 3, 4, 4, 3, 4, 5, 3, 5],
@@ -37,6 +43,55 @@ const CANVEY_SCORECARD = {
   strokeIndex: [6, 12, 8, 2, 16, 14, 10, 18, 4, 15, 7, 17, 1, 13, 3, 11, 9, 5],
   white: [320, 471, 361, 207, 465, 160, 369, 135, 378, 285, 147, 470, 407, 312, 401, 478, 164, 372],
   red: [312, 460, 353, 198, 456, 156, 361, 133, 363, 259, 140, 464, 316, 253, 393, 473, 155, 365]
+};
+
+const ORSETT_SCORECARD = {
+  par: [5, 4, 3, 4, 5, 4, 5, 3, 4, 4, 5, 3, 4, 4, 3, 4, 4, 4],
+  strokeIndex: [10, 4, 18, 6, 14, 8, 16, 12, 2, 7, 17, 15, 11, 3, 13, 1, 5, 9],
+  white: [531, 443, 154, 374, 496, 318, 513, 180, 458, 388, 485, 145, 385, 358, 199, 425, 438, 404],
+  blue: [506, 443, 154, 374, 496, 318, 513, 180, 424, 388, 485, 145, 385, 358, 199, 401, 438, 404],
+  yellow: [469, 399, 138, 338, 468, 304, 493, 143, 390, 354, 474, 125, 358, 328, 172, 362, 404, 386],
+  red: [451, 376, 123, 326, 429, 298, 451, 120, 369, 320, 433, 123, 345, 307, 161, 401, 394, 367]
+};
+
+const ST_CLERES_SCORECARD = {
+  par: [4, 5, 4, 3, 4, 3, 4, 5, 4, 3, 5, 4, 3, 4, 5, 4, 4, 4],
+  strokeIndex: [11, 7, 9, 15, 1, 17, 13, 5, 3, 18, 4, 12, 8, 2, 14, 10, 6, 16],
+  white: [276, 472, 305, 191, 449, 165, 356, 488, 548, 140, 565, 303, 222, 443, 484, 369, 399, 312],
+  yellow: [266, 444, 296, 164, 363, 156, 347, 484, 392, 133, 477, 291, 205, 385, 438, 332, 391, 301],
+  red: [257, 428, 289, 148, 353, 146, 335, 475, 374, 128, 465, 280, 188, 370, 380, 308, 321, 283]
+};
+
+const INGREBOURNE_SCORECARD = {
+  par: [4, 4, 5, 4, 4, 4, 4, 3, 5, 4, 3, 4, 4, 3, 5, 4, 3, 5],
+  strokeIndex: [5, 9, 13, 3, 1, 11, 7, 17, 15, 16, 10, 4, 6, 12, 2, 8, 18, 14],
+  black: [413, 408, 503, 428, 459, 411, 409, 168, 502, 378, 186, 454, 413, 192, 634, 443, 140, 581],
+  white: [402, 390, 480, 404, 431, 381, 382, 154, 477, 347, 168, 434, 385, 166, 599, 386, 120, 527],
+  yellow: [391, 371, 442, 384, 392, 358, 365, 141, 472, 321, 147, 423, 367, 130, 563, 329, 120, 471]
+};
+
+const WARLEY_SCORECARD = {
+  par: [4, 5, 3, 4, 5, 4, 4, 3, 4, 4, 4, 4, 5, 3, 4, 4, 4, 3],
+  strokeIndex: [11, 5, 15, 3, 9, 1, 13, 17, 7, 10, 18, 8, 2, 14, 4, 16, 6, 12],
+  white: [346, 479, 164, 439, 573, 437, 327, 198, 415, 397, 265, 364, 488, 198, 354, 282, 332, 192],
+  yellow: [338, 464, 146, 418, 557, 432, 302, 146, 407, 363, 247, 356, 477, 180, 348, 272, 298, 174],
+  red: [307, 454, 122, 406, 547, 422, 263, 141, 382, 343, 225, 346, 470, 152, 332, 252, 288, 164]
+};
+
+const THORNDON_SCORECARD = {
+  par: [4, 3, 4, 4, 3, 4, 4, 4, 5, 4, 5, 3, 4, 4, 3, 5, 4, 4],
+  strokeIndex: [7, 13, 3, 9, 15, 17, 5, 1, 11, 6, 12, 18, 2, 10, 14, 16, 4, 8],
+  white: [420, 178, 406, 377, 142, 337, 386, 422, 505, 406, 512, 154, 392, 378, 179, 487, 412, 397],
+  yellow: [400, 162, 390, 365, 133, 322, 378, 414, 500, 394, 497, 150, 377, 353, 162, 475, 386, 386],
+  red: [350, 146, 371, 344, 122, 298, 352, 401, 418, 388, 422, 129, 325, 297, 117, 420, 292, 361]
+};
+
+const BRENTWOOD_SCORECARD = {
+  par: [4, 4, 4, 4, 3, 5, 3, 4, 4, 4, 4, 4, 3, 4, 3, 4, 4, 5],
+  strokeIndex: [18, 14, 2, 6, 16, 8, 10, 12, 4, 9, 11, 17, 15, 1, 3, 13, 5, 7],
+  white: [304, 352, 399, 416, 177, 484, 170, 372, 425, 408, 347, 317, 175, 421, 210, 362, 379, 478],
+  yellow: [288, 339, 379, 379, 156, 479, 124, 342, 391, 397, 324, 306, 165, 395, 146, 302, 367, 400],
+  red: [279, 291, 386, 388, 126, 450, 142, 347, 375, 323, 329, 304, 152, 364, 173, 312, 322, 432]
 };
 
 const CRANHAM_COORDS = [
@@ -258,6 +313,208 @@ export const verifiedCourses = [
       { id: "red", name: "Red", color: "#e85d3f", rating: "72.3", slope: "121", totalYards: 5610 }
     ],
     holes: Array.from({ length: 18 }, (_, index) => makeScorecardOnlyHole(index, CANVEY_SCORECARD, CANVEY_COURSE_ID))
+  },
+  {
+    id: ORSETT_COURSE_ID,
+    source: "verified",
+    homeAreaId: homeArea.id,
+    name: "Orsett Golf Club",
+    town: "Orsett",
+    postcode: "RM16 3DR",
+    country: "England",
+    holesCount: 18,
+    par: "72",
+    distanceMiles: 3.2,
+    website: "https://www.orsettgolfclub.co.uk/",
+    phone: "+44 1375 891352",
+    location: { lat: 51.498807, lng: 0.390301 },
+    osm: { type: "way", id: 94530219 },
+    attribution: "Identity and scorecard from Orsett Golf Club official course overview. Course shell from OpenStreetMap contributors under ODbL.",
+    verification: {
+      status: "verified",
+      updated: "2026-05-04",
+      confidence: "Official course overview confirms the RM16 3DR address, phone number, WHS ratings, and hole-by-hole white, blue, yellow, and red scorecard. BlueGolf cross-checks the white tee total, par, and stroke indexes.",
+      sources: [
+        { label: "Official course overview", url: "https://www.orsettgolfclub.co.uk/the-course/course-overview/" },
+        { label: "BlueGolf detailed scorecard", url: "https://course.bluegolf.com/bluegolf/course/course/orsettgc/detailedscorecard.htm" },
+        { label: "OpenStreetMap course shell", url: "https://www.openstreetmap.org/way/94530219" }
+      ]
+    },
+    tees: [
+      { id: "white", name: "White", color: "#f8f7f1", rating: "73.3", slope: "135", totalYards: 6694 },
+      { id: "blue", name: "Blue", color: "#4f83ff", rating: "72.3", slope: "132", totalYards: 6611 },
+      { id: "yellow", name: "Yellow", color: "#d7a44d", rating: "70.4", slope: "127", totalYards: 6105 },
+      { id: "red", name: "Red", color: "#e85d3f", rating: "74.5", slope: "126", totalYards: 5794 }
+    ],
+    holes: Array.from({ length: 18 }, (_, index) => makeScorecardOnlyHole(index, ORSETT_SCORECARD, ORSETT_COURSE_ID))
+  },
+  {
+    id: ST_CLERES_COURSE_ID,
+    source: "verified",
+    homeAreaId: homeArea.id,
+    name: "St Clere's Hall Golf Club",
+    town: "Stanford-le-Hope",
+    postcode: "SS17 0LX",
+    country: "England",
+    holesCount: 18,
+    par: "72",
+    distanceMiles: 4.3,
+    website: "http://stclereshallgolfclub.weebly.com/",
+    phone: "+44 1375 673007",
+    location: { lat: 51.50759, lng: 0.410656 },
+    osm: { type: "way", id: 94530214 },
+    attribution: "Scorecard cross-checked from Golfify and Albrecht Golf Guide. Course shell from OpenStreetMap contributors under ODbL.",
+    verification: {
+      status: "verified",
+      updated: "2026-05-04",
+      confidence: "Golfify provides the full white/yellow/red hole-by-hole scorecard, while Albrecht confirms the 18-hole course, London Road / SS17 0LX address, visitor status, and yellow/red total yardages. Red stroke indexes differ on a couple of holes; this seed keeps the men's SI until tee-specific SI support exists.",
+      sources: [
+        { label: "Golfify scorecard", url: "https://www.golfify.io/courses/st-clere-s-hall-golf-club-st-clere" },
+        { label: "Albrecht Golf Guide", url: "https://www.1golf.eu/en/club/st-clere-s-hall-golf-club/" },
+        { label: "OpenStreetMap course shell", url: "https://www.openstreetmap.org/way/94530214" }
+      ]
+    },
+    tees: [
+      { id: "white", name: "White", color: "#f8f7f1", rating: "72.0", slope: "", totalYards: 6487 },
+      { id: "yellow", name: "Yellow", color: "#d7a44d", rating: "69.0", slope: "", totalYards: 5865 },
+      { id: "red", name: "Red", color: "#e85d3f", rating: "72.0", slope: "", totalYards: 5528 }
+    ],
+    holes: Array.from({ length: 18 }, (_, index) => makeScorecardOnlyHole(index, ST_CLERES_SCORECARD, ST_CLERES_COURSE_ID))
+  },
+  {
+    id: INGREBOURNE_COURSE_ID,
+    source: "verified",
+    homeAreaId: homeArea.id,
+    name: "Ingrebourne Links Golf Course",
+    town: "Rainham",
+    postcode: "RM13 9FL",
+    country: "England",
+    holesCount: 18,
+    par: "72",
+    distanceMiles: 4.8,
+    website: "https://www.ingrebournelinks.com/",
+    phone: "+44 1708 552054",
+    location: { lat: 51.513613, lng: 0.230958 },
+    osm: { type: "way", id: 183480485 },
+    attribution: "North/East scorecard cross-checked from BlueGolf, The Social Golfer, GolfPass, and GolfNow/TeeOff course details. Course shell from OpenStreetMap contributors under ODbL.",
+    verification: {
+      status: "verified",
+      updated: "2026-05-04",
+      confidence: "This verifies the 18-hole Championship North/East layout rather than the separate par-3 course. BlueGolf gives the full black/white/yellow scorecard; GolfPass and GolfNow/TeeOff confirm par 72, 7122 yards from black, and rating/slope details.",
+      sources: [
+        { label: "BlueGolf North/East scorecard", url: "https://course.bluegolf.com/bluegolf/course/course/ingrebournelinksnort/detailedscorecard.htm" },
+        { label: "GolfPass North/East course page", url: "https://www.golfpass.com/travel-advisor/courses/38672-ingrebourne-links-golf-country-club-north-east-course" },
+        { label: "GolfNow/TeeOff tee details", url: "https://www.teeoff.com/courses/-6384-ingrebourne-links-championship-northeast-course-details" },
+        { label: "OpenStreetMap course shell", url: "https://www.openstreetmap.org/way/183480485" }
+      ]
+    },
+    tees: [
+      { id: "black", name: "Black", color: "#171719", rating: "74.2", slope: "121", totalYards: 7122 },
+      { id: "white", name: "White", color: "#f8f7f1", rating: "71.8", slope: "117", totalYards: 6633 },
+      { id: "yellow", name: "Yellow", color: "#d7a44d", rating: "69.7", slope: "111", totalYards: 6187 }
+    ],
+    holes: Array.from({ length: 18 }, (_, index) => makeScorecardOnlyHole(index, INGREBOURNE_SCORECARD, INGREBOURNE_COURSE_ID))
+  },
+  {
+    id: WARLEY_COURSE_ID,
+    source: "verified",
+    homeAreaId: homeArea.id,
+    name: "Warley Park Golf Club",
+    town: "Little Warley",
+    postcode: "CM13 3DX",
+    country: "England",
+    holesCount: 18,
+    par: "71",
+    distanceMiles: 7.9,
+    website: "https://www.warleyparkgc.co.uk/",
+    phone: "+44 1277 224891",
+    location: { lat: 51.589142, lng: 0.306313 },
+    osm: { type: "way", id: 127582078 },
+    attribution: "Scorecard cross-checked from Warley Park official course page, Golfify, and BlueGolf. Course shell from OpenStreetMap contributors under ODbL.",
+    verification: {
+      status: "verified",
+      updated: "2026-05-04",
+      confidence: "Warley Park is a 27-hole facility; this seed uses the public 18-hole Warley scorecard set with white/yellow/red yardages. Official course page confirms the facility and scorecard tables; Golfify and BlueGolf cross-check the par-71, 6250-yard white card.",
+      sources: [
+        { label: "Official course page", url: "https://www.warleyparkgc.co.uk/golf/the-course/" },
+        { label: "Golfify scorecard", url: "https://www.golfify.io/courses/warley-park-golf-club-warley" },
+        { label: "BlueGolf detailed scorecard", url: "https://course.bluegolf.com/bluegolf/course/course/warleypark/detailedscorecard.htm" },
+        { label: "OpenStreetMap course shell", url: "https://www.openstreetmap.org/way/127582078" }
+      ]
+    },
+    tees: [
+      { id: "white", name: "White", color: "#f8f7f1", rating: "70.0", slope: "110", totalYards: 6250 },
+      { id: "yellow", name: "Yellow", color: "#d7a44d", rating: "69.0", slope: "", totalYards: 5925 },
+      { id: "red", name: "Red", color: "#e85d3f", rating: "71.0", slope: "", totalYards: 5616 }
+    ],
+    holes: Array.from({ length: 18 }, (_, index) => makeScorecardOnlyHole(index, WARLEY_SCORECARD, WARLEY_COURSE_ID))
+  },
+  {
+    id: THORNDON_COURSE_ID,
+    source: "verified",
+    homeAreaId: homeArea.id,
+    name: "Thorndon Park Golf Club",
+    town: "Brentwood",
+    postcode: "CM13 3RH",
+    country: "England",
+    holesCount: 18,
+    par: "71",
+    distanceMiles: 8.4,
+    website: "https://www.thorndonpark.com/",
+    phone: "+44 1277 810345",
+    location: { lat: 51.595948, lng: 0.34113 },
+    osm: { type: "way", id: 128679377 },
+    attribution: "Scorecard from Thorndon Park official course card and cross-checked against BlueGolf and The Social Golfer. Course shell from OpenStreetMap contributors under ODbL.",
+    verification: {
+      status: "verified",
+      updated: "2026-05-04",
+      confidence: "Official course card gives white/yellow/red yardages, ratings, slopes, par, and SI. BlueGolf and The Social Golfer broadly cross-check the par-71 layout; the official card is used where public sources differ slightly on yardages.",
+      sources: [
+        { label: "Official course card", url: "https://www.thorndonpark.com/course-card" },
+        { label: "BlueGolf detailed scorecard", url: "https://course.bluegolf.com/bluegolf/course/course/thorndonparkgc/detailedscorecard.htm" },
+        { label: "The Social Golfer yellow tee scorecard", url: "https://www.thesocialgolfer.com/golf-courses/united-kingdom/thorndon-park-golf-club/scorecard/thorndon-park-golf-club-yellow-tee-scorecard" },
+        { label: "OpenStreetMap course shell", url: "https://www.openstreetmap.org/way/128679377" }
+      ]
+    },
+    tees: [
+      { id: "white", name: "White", color: "#f8f7f1", rating: "71.1", slope: "126", totalYards: 6490 },
+      { id: "yellow", name: "Yellow", color: "#d7a44d", rating: "69.7", slope: "124", totalYards: 6244 },
+      { id: "red", name: "Red", color: "#e85d3f", rating: "71.9", slope: "129", totalYards: 5553 }
+    ],
+    holes: Array.from({ length: 18 }, (_, index) => makeScorecardOnlyHole(index, THORNDON_SCORECARD, THORNDON_COURSE_ID))
+  },
+  {
+    id: BRENTWOOD_COURSE_ID,
+    source: "verified",
+    homeAreaId: homeArea.id,
+    name: "Brentwood Golf Centre at Hartswood",
+    town: "Brentwood",
+    postcode: "CM14 5AE",
+    country: "England",
+    holesCount: 18,
+    par: "70",
+    distanceMiles: 9.1,
+    website: "https://www.brentwood.gov.uk/hartswood-golf-course",
+    phone: "+44 1277 312500",
+    location: { lat: 51.607225, lng: 0.325331 },
+    osm: { type: "relation", id: 3908574 },
+    attribution: "Scorecard cross-checked from Golfify and GolfSherpa. Course shell from OpenStreetMap contributors under ODbL.",
+    verification: {
+      status: "verified",
+      updated: "2026-05-04",
+      confidence: "Golfify provides a full white/yellow/red scorecard and ratings summary; GolfSherpa confirms the Hartswood identity, CM14 5AE postcode, and tee totals. The app currently stores one par per hole, so the yellow par-70 card is used while white/red tee-specific par differences are noted.",
+      sources: [
+        { label: "Golfify scorecard", url: "https://www.golfify.io/courses/the-brentwood-golf-centre-at-hartswood" },
+        { label: "GolfSherpa scorecard", url: "https://golfsherpa.co.uk/courses/england/the-brentwood-golf-centre-at-hartswood" },
+        { label: "OpenStreetMap course shell", url: "https://www.openstreetmap.org/relation/3908574" }
+      ]
+    },
+    tees: [
+      { id: "white", name: "White", color: "#f8f7f1", rating: "69.0", slope: "", totalYards: 6196 },
+      { id: "yellow", name: "Yellow", color: "#d7a44d", rating: "70.0", slope: "113", totalYards: 5679 },
+      { id: "red", name: "Red", color: "#e85d3f", rating: "71.0", slope: "", totalYards: 5495 }
+    ],
+    holes: Array.from({ length: 18 }, (_, index) => makeScorecardOnlyHole(index, BRENTWOOD_SCORECARD, BRENTWOOD_COURSE_ID))
   }
 ];
 
@@ -359,7 +616,7 @@ function makeScorecardOnlyHole(index, scorecard, courseId) {
   );
   const teePoint = schematicTeePoint(number, par);
   const greenPoint = schematicGreenPoint(number, par);
-  const geo = geoFromCoords(courseId === CANVEY_COURSE_ID ? CANVEY_COORDS[index] : null);
+  const geo = geoFromCoords(scorecardCoordsForCourse(courseId)?.[index] || null);
   return {
     ...hole,
     name: `Hole ${number}`,
@@ -380,8 +637,12 @@ function makeScorecardOnlyHole(index, scorecard, courseId) {
     },
     notes: geo.tee
       ? "Satellite alignment seeded from OpenStreetMap hole geometry; use Adjust to fine-tune."
-      : `Scorecard verified; ${courseId === BASILDON_COURSE_ID ? "Basildon" : "Canvey"} tee/green geometry pending.`
+      : "Scorecard verified; tee/green geometry pending. Use OSM holes to map this course when you select it."
   };
+}
+
+function scorecardCoordsForCourse(courseId) {
+  return courseId === CANVEY_COURSE_ID ? CANVEY_COORDS : null;
 }
 
 function geoFromCoords(coords) {
