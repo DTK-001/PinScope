@@ -386,23 +386,22 @@ p {
 }
 
 .shot-track-button {
-  min-width: 112px;
-  min-height: 48px;
-  border: 2px solid rgba(255, 255, 255, 0.9);
+  min-width: 104px;
+  min-height: 34px;
+  border: 1px solid rgba(255, 79, 216, 0.74);
   border-radius: 999px;
-  padding: 0 18px;
-  color: #110b18;
-  background: linear-gradient(180deg, #ffffff, #f0fff7);
-  box-shadow: 0 16px 38px rgba(0, 0, 0, 0.42), 0 0 0 5px rgba(39, 240, 174, 0.18);
+  padding: 0 13px;
+  color: #f8fffb;
+  background: rgba(255, 79, 216, 0.18);
   cursor: pointer;
-  font-size: 0.98rem;
-  font-weight: 950;
+  font-size: 0.72rem;
+  font-weight: 850;
+  text-shadow: inherit;
 }
 
 .shot-tracker.tracking .shot-track-button {
-  color: #fff;
-  background: linear-gradient(180deg, #ff4fd8, #7d57ff);
-  box-shadow: 0 16px 38px rgba(0, 0, 0, 0.42), 0 0 0 5px rgba(255, 79, 216, 0.22);
+  border-color: rgba(53, 240, 193, 0.74);
+  background: rgba(53, 240, 193, 0.18);
 }
 
 .play-round-screen .photo-info-stack {
