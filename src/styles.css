@@ -358,6 +358,52 @@ p {
   object-fit: contain;
 }
 
+.shot-tracker {
+  position: absolute;
+  right: 50%;
+  bottom: calc(94px + env(safe-area-inset-bottom));
+  z-index: 25;
+  display: grid;
+  gap: 7px;
+  justify-items: center;
+  width: min(220px, 46vw);
+  transform: translateX(50%);
+  color: #f8fffb;
+  text-align: center;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.86);
+}
+
+.shot-tracker p {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  border-radius: 999px;
+  padding: 5px 9px;
+  color: rgba(248, 255, 251, 0.94);
+  background: rgba(9, 9, 18, 0.72);
+  backdrop-filter: blur(10px);
+  font-size: 0.72rem;
+  font-weight: 900;
+}
+
+.shot-track-button {
+  min-width: 104px;
+  min-height: 34px;
+  border: 1px solid rgba(255, 79, 216, 0.74);
+  border-radius: 999px;
+  padding: 0 13px;
+  color: #f8fffb;
+  background: rgba(255, 79, 216, 0.18);
+  cursor: pointer;
+  font-size: 0.72rem;
+  font-weight: 850;
+  text-shadow: inherit;
+}
+
+.shot-tracker.tracking .shot-track-button {
+  border-color: rgba(53, 240, 193, 0.74);
+  background: rgba(53, 240, 193, 0.18);
+}
+
 .play-round-screen .photo-info-stack {
   top: calc(126px + env(safe-area-inset-top));
   left: calc(12px + env(safe-area-inset-left));
@@ -639,6 +685,49 @@ p {
   line-height: 1.2;
 }
 
+.round-shot-log {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.round-shot-log details {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.round-shot-log summary {
+  cursor: pointer;
+  color: #f8f3ff;
+  font-size: 0.82rem;
+  font-weight: 900;
+}
+
+.round-shot-list {
+  display: grid;
+  gap: 7px;
+  margin-top: 8px;
+}
+
+.round-shot-list div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 3px 10px;
+}
+
+.round-shot-list strong,
+.round-shot-list span {
+  font-size: 0.8rem;
+}
+
+.round-shot-list small {
+  grid-column: 1 / -1;
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
 .course-meta {
   display: flex;
   flex-wrap: wrap;
@@ -876,6 +965,18 @@ select option {
     #06100f;
 }
 
+.azure-tile-layer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, rgba(115, 185, 86, 0.13), rgba(19, 73, 45, 0.1)),
+    radial-gradient(circle at 50% 42%, rgba(130, 213, 84, 0.12), transparent 62%);
+  mix-blend-mode: soft-light;
+}
+
 .azure-map-tile,
 .azure-map-image {
   position: absolute;
@@ -884,6 +985,8 @@ select option {
   transform-origin: 0 0;
   opacity: 0;
   backface-visibility: hidden;
+  filter: saturate(1.34) contrast(1.1) brightness(1.06) hue-rotate(-8deg);
+  image-rendering: auto;
   transition: opacity 180ms ease;
 }
 
@@ -895,7 +998,7 @@ select option {
 .azure-map-status {
   position: absolute;
   inset: 0;
-  z-index: 1;
+  z-index: 2;
   display: grid;
   place-items: center;
   padding: 20px;
@@ -994,6 +1097,40 @@ select option {
   stroke-width: 0.42;
   stroke-linecap: round;
   vector-effect: non-scaling-stroke;
+}
+
+.tracked-shot-route {
+  stroke: #35f0c1;
+  stroke-width: 0.86;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+  filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.9));
+}
+
+.tracked-shot-route.active {
+  stroke: #ff4fd8;
+  stroke-dasharray: 4 3;
+}
+
+.tracked-shot-landing {
+  fill: #110b18;
+  stroke: #35f0c1;
+  stroke-width: 0.55;
+  vector-effect: non-scaling-stroke;
+}
+
+.tracked-shot-landing.active {
+  stroke: #ff9bed;
+}
+
+.tracked-shot-label {
+  fill: #f8fffb;
+  paint-order: stroke;
+  stroke: rgba(0, 0, 0, 0.84);
+  stroke-width: 0.28;
+  font-size: 4px;
+  font-weight: 900;
+  pointer-events: none;
 }
 
 .photo-gps-marker {
