@@ -2,11 +2,12 @@ import { defaultClubs, seedCourses } from "./course-data.js";
 import { verifiedCourses } from "./verified-courses.js";
 
 const STORAGE_KEY = "local-loop-golf:v1";
+const REMOVED_BUILT_IN_COURSE_IDS = new Set(["demo-starter-nine"]);
 const builtInCourses = [...verifiedCourses, ...seedCourses];
 
 const baseState = {
   schemaVersion: 1,
-  selectedCourseId: verifiedCourses[0]?.id || "demo-starter-nine",
+  selectedCourseId: verifiedCourses[0]?.id || "",
   activeRoundId: "",
   courses: builtInCourses,
   rounds: [],
@@ -20,6 +21,9 @@ export function loadState() {
   const stored = readStoredState();
   const merged = mergeState(baseState, stored || {});
   merged.courses = ensureBuiltInCourses(merged.courses);
+  if (!merged.courses.some((course) => course.id === merged.selectedCourseId)) {
+    merged.selectedCourseId = merged.courses[0]?.id || "";
+  }
   return merged;
 }
 
@@ -51,7 +55,7 @@ function ensureBuiltInCourses(courses) {
   const builtInIds = new Set(builtInCourses.map((course) => course.id));
   const byId = new Map(courses.map((course) => [course.id, course]));
   const mergedBuiltIns = builtInCourses.map((course) => mergeBuiltInCourse(course, byId.get(course.id)));
-  const userCourses = courses.filter((course) => !builtInIds.has(course.id));
+  const userCourses = courses.filter((course) => !builtInIds.has(course.id) && !REMOVED_BUILT_IN_COURSE_IDS.has(course.id));
   return [...mergedBuiltIns, ...userCourses];
 }
 

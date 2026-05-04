@@ -1,7 +1,5 @@
 import { placeholderHole } from "./course-data.js";
-import { belhusPhotoClips, belhusPhotoCropSource } from "./belhus-photo-crops.js";
 import { cranhamMapVisuals } from "./cranham-map-data.js";
-import { cranhamPhotoClips, cranhamPhotoCropSource } from "./cranham-photo-crops.js";
 import { homeArea } from "./local-area.js";
 
 const CRANHAM_SCORECARD = {
@@ -21,6 +19,12 @@ const INGREBOURNE_COURSE_ID = "osm-way-183480485";
 const WARLEY_COURSE_ID = "osm-way-127582078";
 const THORNDON_COURSE_ID = "osm-way-128679377";
 const BRENTWOOD_COURSE_ID = "osm-relation-3908574";
+const MARDYKE_COURSE_ID = "osm-way-350806648";
+const LANGDON_COURSE_ID = "osm-way-262444890";
+const CRONDON_COURSE_ID = "osm-way-205993614";
+const STAPLEFORD_COURSE_ID = "osm-relation-3910795";
+const ABRIDGE_COURSE_ID = "osm-way-231370473";
+const SOUTH_ESSEX_COURSE_ID = "osm-way-23618344";
 
 const BELHUS_SCORECARD = {
   par: [4, 4, 4, 4, 4, 3, 4, 3, 4, 4, 3, 4, 4, 3, 4, 5, 3, 5],
@@ -92,6 +96,56 @@ const BRENTWOOD_SCORECARD = {
   white: [304, 352, 399, 416, 177, 484, 170, 372, 425, 408, 347, 317, 175, 421, 210, 362, 379, 478],
   yellow: [288, 339, 379, 379, 156, 479, 124, 342, 391, 397, 324, 306, 165, 395, 146, 302, 367, 400],
   red: [279, 291, 386, 388, 126, 450, 142, 347, 375, 323, 329, 304, 152, 364, 173, 312, 322, 432]
+};
+
+const MARDYKE_SCORECARD = {
+  par: [4, 4, 4, 4, 3, 5, 4, 4, 3, 4, 4, 3, 4, 5, 4, 4, 3, 4],
+  strokeIndex: [18, 6, 10, 12, 16, 4, 8, 2, 14, 3, 15, 17, 1, 11, 5, 13, 7, 9],
+  white: [283, 418, 416, 357, 170, 567, 336, 328, 163, 418, 352, 176, 384, 485, 291, 403, 218, 436],
+  yellow: [276, 343, 357, 347, 111, 552, 308, 313, 155, 411, 297, 171, 373, 473, 280, 339, 168, 427]
+};
+
+const LANGDON_SCORECARD = {
+  par: [4, 4, 4, 4, 3, 5, 4, 3, 4, 5, 4, 5, 4, 3, 4, 5, 3, 4],
+  strokeIndex: [16, 4, 14, 8, 18, 12, 2, 10, 6, 13, 3, 9, 17, 7, 1, 11, 15, 5],
+  blue: [369, 417, 340, 407, 194, 562, 380, 182, 361, 511, 472, 553, 317, 162, 445, 504, 194, 454],
+  white: [369, 417, 340, 407, 173, 482, 380, 182, 350, 511, 404, 553, 317, 162, 412, 504, 165, 454],
+  yellow: [349, 393, 333, 375, 173, 469, 359, 174, 325, 491, 400, 495, 310, 144, 394, 495, 141, 396],
+  red: [342, 398, 319, 339, 136, 431, 353, 152, 297, 475, 387, 475, 292, 120, 341, 480, 140, 396]
+};
+
+const CRONDON_SCORECARD = {
+  par: [4, 4, 5, 3, 4, 5, 3, 4, 5, 4, 3, 4, 5, 3, 4, 4, 3, 5],
+  strokeIndex: [5, 17, 9, 13, 1, 7, 15, 3, 11, 4, 16, 12, 2, 8, 14, 6, 18, 10],
+  black: [414, 290, 492, 177, 446, 570, 156, 400, 527, 423, 200, 407, 589, 177, 352, 400, 163, 646],
+  white: [400, 290, 480, 160, 430, 570, 125, 400, 514, 406, 155, 391, 589, 165, 352, 367, 163, 586],
+  yellow: [383, 268, 466, 147, 408, 538, 125, 358, 493, 384, 135, 371, 546, 148, 324, 351, 147, 566],
+  red: [344, 239, 428, 130, 406, 489, 112, 341, 473, 361, 129, 355, 521, 131, 300, 400, 134, 543]
+};
+
+const STAPLEFORD_SCORECARD = {
+  par: [4, 3, 5, 4, 4, 3, 5, 4, 4, 4, 4, 4, 3, 5, 3, 4, 4, 5],
+  strokeIndex: [11, 13, 1, 3, 7, 15, 17, 5, 9, 16, 6, 2, 18, 10, 14, 4, 8, 12],
+  white: [422, 190, 521, 403, 400, 175, 464, 350, 324, 302, 400, 445, 127, 487, 153, 398, 427, 513],
+  yellow: [361, 175, 506, 385, 382, 166, 433, 336, 314, 287, 352, 433, 117, 473, 120, 387, 401, 485],
+  red: [277, 158, 471, 345, 369, 129, 433, 319, 303, 269, 341, 402, 94, 461, 120, 326, 340, 452]
+};
+
+const ABRIDGE_SCORECARD = {
+  par: [4, 3, 4, 5, 5, 4, 4, 4, 3, 4, 4, 4, 5, 4, 3, 5, 3, 4],
+  strokeIndex: [6, 18, 2, 14, 4, 8, 12, 10, 16, 7, 3, 5, 13, 1, 11, 9, 17, 15],
+  white: [419, 162, 418, 478, 479, 385, 335, 375, 177, 409, 403, 448, 490, 469, 201, 536, 169, 351],
+  yellow: [399, 142, 394, 461, 468, 345, 304, 361, 152, 378, 373, 407, 470, 433, 169, 480, 135, 317],
+  red: [384, 134, 382, 434, 406, 326, 287, 338, 140, 351, 358, 342, 428, 418, 129, 420, 109, 286]
+};
+
+const SOUTH_ESSEX_HAWK_VIXEN_SCORECARD = {
+  par: [5, 4, 4, 4, 4, 3, 4, 3, 5, 4, 4, 3, 4, 4, 3, 4, 4, 5],
+  strokeIndex: [15, 17, 5, 7, 1, 13, 3, 11, 9, 10, 6, 12, 16, 2, 4, 18, 14, 8],
+  white: [510, 320, 371, 384, 451, 156, 416, 173, 536, 376, 404, 167, 354, 422, 242, 342, 309, 590],
+  yellow: [497, 307, 361, 364, 423, 146, 397, 150, 520, 356, 380, 162, 304, 400, 230, 335, 293, 567],
+  blue: [425, 278, 347, 328, 391, 128, 385, 141, 502, 334, 375, 148, 277, 364, 162, 268, 286, 475],
+  red: [425, 278, 337, 328, 391, 128, 348, 141, 455, 324, 375, 148, 261, 364, 162, 263, 286, 475]
 };
 
 const CRANHAM_COORDS = [
@@ -194,7 +248,6 @@ export const verifiedCourses = [
     phone: "+44 1708 221177",
     location: { lat: 51.555764, lng: 0.282267 },
     attribution: "Identity from Cranham Golf Course official website. Hole geometry from OpenStreetMap contributors under ODbL.",
-    photoSource: cranhamPhotoCropSource,
     verification: {
       status: "verified",
       updated: "2026-04-26",
@@ -229,7 +282,6 @@ export const verifiedCourses = [
     phone: "+44 1708 853545",
     location: { lat: 51.507331, lng: 0.263364 },
     attribution: "Scorecard from Golfify and Belhus Park Golf Club scorecard page. Available tee and green geometry from OpenStreetMap contributors under ODbL.",
-    photoSource: belhusPhotoCropSource,
     verification: {
       status: "verified",
       updated: "2026-04-28",
@@ -515,6 +567,208 @@ export const verifiedCourses = [
       { id: "red", name: "Red", color: "#e85d3f", rating: "71.0", slope: "", totalYards: 5495 }
     ],
     holes: Array.from({ length: 18 }, (_, index) => makeScorecardOnlyHole(index, BRENTWOOD_SCORECARD, BRENTWOOD_COURSE_ID))
+  },
+  {
+    id: MARDYKE_COURSE_ID,
+    source: "verified",
+    homeAreaId: homeArea.id,
+    name: "Mardyke Valley Golf Club",
+    town: "South Ockendon",
+    postcode: "RM15 6RR",
+    country: "England",
+    holesCount: 18,
+    par: "70",
+    distanceMiles: 2.1,
+    website: "https://www.mardykevalley.co.uk/",
+    phone: "+44 1708 855011",
+    location: { lat: 51.503425, lng: 0.303971 },
+    osm: { type: "way", id: 350806648 },
+    attribution: "Scorecard from BlueGolf. Course identity and shell from OpenStreetMap contributors under ODbL.",
+    verification: {
+      status: "verified",
+      updated: "2026-05-04",
+      confidence: "BlueGolf provides a full 18-hole par-70 scorecard with white/yellow yardages and stroke indexes. Local OSM course shell confirms the RM15 6RR Mardyke Valley course identity, website, phone, and location.",
+      sources: [
+        { label: "BlueGolf detailed scorecard", url: "https://course.bluegolf.com/bluegolf/course/course/mardykevalleygcentr/detailedscorecard.htm" },
+        { label: "Official site", url: "https://www.mardykevalley.co.uk/" },
+        { label: "OpenStreetMap course shell", url: "https://www.openstreetmap.org/way/350806648" }
+      ]
+    },
+    tees: [
+      { id: "white", name: "White", color: "#f8f7f1", rating: "70.0", slope: "113", totalYards: 6201 },
+      { id: "yellow", name: "Yellow", color: "#d7a44d", rating: "70.0", slope: "113", totalYards: 5701 }
+    ],
+    holes: Array.from({ length: 18 }, (_, index) => makeScorecardOnlyHole(index, MARDYKE_SCORECARD, MARDYKE_COURSE_ID))
+  },
+  {
+    id: LANGDON_COURSE_ID,
+    source: "verified",
+    homeAreaId: homeArea.id,
+    name: "Langdon Hills Golf and Country Club",
+    town: "Bulphan",
+    postcode: "",
+    country: "England",
+    holesCount: 18,
+    par: "72",
+    distanceMiles: 5.7,
+    website: "https://www.golflangdon.co.uk/",
+    phone: "+44 1268 548444",
+    location: { lat: 51.544871, lng: 0.395428 },
+    osm: { type: "way", id: 262444890 },
+    attribution: "Langdon/Bulphan scorecard cross-checked from BlueGolf and Golfify. Course shell from OpenStreetMap contributors under ODbL.",
+    verification: {
+      status: "verified",
+      updated: "2026-05-04",
+      confidence: "Langdon Hills is a 27-hole venue; this seed verifies the Langdon/Bulphan 18-hole combination. BlueGolf gives the full blue/white/yellow/red card, while Golfify confirms the Lower Dunton Road facility identity, phone, and yellow tee rating/slope.",
+      sources: [
+        { label: "BlueGolf Langdon/Bulphan scorecard", url: "https://course.bluegolf.com/bluegolf/course/course/langdonhillslangdon/detailedscorecard.htm" },
+        { label: "Golfify Langdon scorecard", url: "https://www.golfify.io/courses/langdon-hills-golf-club-langdon" },
+        { label: "OpenStreetMap course shell", url: "https://www.openstreetmap.org/way/262444890" }
+      ]
+    },
+    tees: [
+      { id: "blue", name: "Blue", color: "#4f83ff", rating: "", slope: "", totalYards: 6824 },
+      { id: "white", name: "White", color: "#f8f7f1", rating: "", slope: "", totalYards: 6582 },
+      { id: "yellow", name: "Yellow", color: "#d7a44d", rating: "70.1", slope: "123", totalYards: 6216 },
+      { id: "red", name: "Red", color: "#e85d3f", rating: "", slope: "", totalYards: 5873 }
+    ],
+    holes: Array.from({ length: 18 }, (_, index) => makeScorecardOnlyHole(index, LANGDON_SCORECARD, LANGDON_COURSE_ID))
+  },
+  {
+    id: CRONDON_COURSE_ID,
+    source: "verified",
+    homeAreaId: homeArea.id,
+    name: "Crondon Park Golf & Country Club",
+    town: "Stock",
+    postcode: "",
+    country: "England",
+    holesCount: 18,
+    par: "72",
+    distanceMiles: 14.7,
+    website: "https://www.crondon.com/",
+    phone: "",
+    location: { lat: 51.675416, lng: 0.440505 },
+    osm: { type: "way", id: 205993614 },
+    attribution: "Scorecard cross-checked from Crondon Park members scorecard and BlueGolf. Course shell from OpenStreetMap contributors under ODbL.",
+    verification: {
+      status: "verified",
+      updated: "2026-05-04",
+      confidence: "The members scorecard provides public black/white/yellow/red par and SI, while GolfPass and Albrecht cross-check the 18-hole par-72 championship card and tee totals. Public sources vary slightly on the white yardage; this seed uses the GolfPass/Albrecht totals for consistency.",
+      sources: [
+        { label: "Crondon members scorecard", url: "https://www.crondonmembers.com/scorecard" },
+        { label: "BlueGolf detailed scorecard", url: "https://course.bluegolf.com/bluegolf/course/course/crondonpark/detailedscorecard.htm" },
+        { label: "GolfPass course page", url: "https://www.golfpass.com/travel-advisor/courses/32844-crondon-park-golf-country-club-championship-course" },
+        { label: "OpenStreetMap course shell", url: "https://www.openstreetmap.org/way/205993614" }
+      ]
+    },
+    tees: [
+      { id: "black", name: "Black", color: "#171719", rating: "", slope: "", totalYards: 6829 },
+      { id: "white", name: "White", color: "#f8f7f1", rating: "", slope: "", totalYards: 6543 },
+      { id: "yellow", name: "Yellow", color: "#d7a44d", rating: "", slope: "", totalYards: 6158 },
+      { id: "red", name: "Red", color: "#e85d3f", rating: "", slope: "", totalYards: 5836 }
+    ],
+    holes: Array.from({ length: 18 }, (_, index) => makeScorecardOnlyHole(index, CRONDON_SCORECARD, CRONDON_COURSE_ID))
+  },
+  {
+    id: STAPLEFORD_COURSE_ID,
+    source: "verified",
+    homeAreaId: homeArea.id,
+    name: "Stapleford Abbotts Golf Course",
+    town: "Stapleford Abbotts",
+    postcode: "RM4 1JU",
+    country: "England",
+    holesCount: 18,
+    par: "72",
+    distanceMiles: 12.2,
+    website: "https://staplefordabbottsgolf.co.uk/",
+    phone: "+44 1708 381108",
+    location: { lat: 51.636229, lng: 0.205635 },
+    osm: { type: "relation", id: 3910795 },
+    attribution: "Abbotts course scorecard cross-checked from Golfify and BlueGolf. Course shell from OpenStreetMap contributors under ODbL.",
+    verification: {
+      status: "verified",
+      updated: "2026-05-04",
+      confidence: "Stapleford Abbotts is a multi-course facility; this seed verifies the 18-hole Abbotts course using Golfify for current ratings and BlueGolf as a full scorecard cross-check.",
+      sources: [
+        { label: "Golfify Abbotts scorecard", url: "https://www.golfify.io/courses/stapleford-abbotts-golf-club-abbotts" },
+        { label: "BlueGolf Abbotts scorecard", url: "https://course.bluegolf.com/bluegolf/course/course/staplefordabbottsgc/detailedscorecard.htm" },
+        { label: "OpenStreetMap course shell", url: "https://www.openstreetmap.org/relation/3910795" }
+      ]
+    },
+    tees: [
+      { id: "white", name: "White", color: "#f8f7f1", rating: "71.9", slope: "133", totalYards: 6501 },
+      { id: "yellow", name: "Yellow", color: "#d7a44d", rating: "70.2", slope: "131", totalYards: 6113 },
+      { id: "red", name: "Red", color: "#e85d3f", rating: "73.1", slope: "134", totalYards: 5609 }
+    ],
+    holes: Array.from({ length: 18 }, (_, index) => makeScorecardOnlyHole(index, STAPLEFORD_SCORECARD, STAPLEFORD_COURSE_ID))
+  },
+  {
+    id: ABRIDGE_COURSE_ID,
+    source: "verified",
+    homeAreaId: homeArea.id,
+    name: "Abridge Golf and Country Club",
+    town: "Stapleford Tawney",
+    postcode: "RM4 1ST",
+    country: "England",
+    holesCount: 18,
+    par: "72",
+    distanceMiles: 15.3,
+    website: "https://www.abridgegolf.com/",
+    phone: "+44 1708 688396",
+    location: { lat: 51.66659, lng: 0.147339 },
+    osm: { type: "way", id: 231370473 },
+    attribution: "Scorecard from Golfify. Course shell from OpenStreetMap contributors under ODbL.",
+    verification: {
+      status: "verified",
+      updated: "2026-05-04",
+      confidence: "Golfify provides a full white/yellow/red scorecard, ratings, slopes, Epping Lane location, and phone. The red tee has tee-specific par/SI differences; the current app stores one par/SI per hole, so the men's par/SI is used until tee-specific cards are supported.",
+      sources: [
+        { label: "Golfify scorecard", url: "https://www.golfify.io/courses/abridge-golf-and-country-club" },
+        { label: "OpenStreetMap course shell", url: "https://www.openstreetmap.org/way/231370473" }
+      ]
+    },
+    tees: [
+      { id: "white", name: "White", color: "#f8f7f1", rating: "69.5", slope: "123", totalYards: 6704 },
+      { id: "yellow", name: "Yellow", color: "#d7a44d", rating: "", slope: "", totalYards: 6188 },
+      { id: "red", name: "Red", color: "#e85d3f", rating: "69.1", slope: "117", totalYards: 5672 }
+    ],
+    holes: Array.from({ length: 18 }, (_, index) => makeScorecardOnlyHole(index, ABRIDGE_SCORECARD, ABRIDGE_COURSE_ID))
+  },
+  {
+    id: SOUTH_ESSEX_COURSE_ID,
+    source: "verified",
+    homeAreaId: homeArea.id,
+    name: "The Heron Country Club - Hawk/Vixen",
+    town: "Herongate",
+    postcode: "CM13 3LW",
+    country: "England",
+    holesCount: 18,
+    par: "71",
+    distanceMiles: 7.9,
+    website: "https://www.heroncountryclub.uk/",
+    phone: "+44 1277 811289",
+    location: { lat: 51.587385, lng: 0.366777 },
+    osm: { type: "way", id: 23618344 },
+    attribution: "Hawk and Vixen scorecards cross-checked from The Heron Country Club official pages, Golfify, and GolfPass. Course shell from OpenStreetMap contributors under ODbL.",
+    verification: {
+      status: "verified",
+      updated: "2026-05-04",
+      confidence: "South Essex is now The Heron Country Club and has 27 holes. This seed verifies the Hawk/Vixen 18-hole combination, using official nine-hole Hawk and Vixen scorecards and Golfify/GolfPass for combined 18-hole totals and ratings.",
+      sources: [
+        { label: "Official Hawk scorecard", url: "https://www.heroncountryclub.uk/the_hawk" },
+        { label: "Official Vixen scorecard", url: "https://www.heroncountryclub.uk/the_vixen" },
+        { label: "Golfify Hawk/Vixen scorecard", url: "https://www.golfify.io/courses/south-essex-golf-country-club-hawk-vixen" },
+        { label: "GolfPass Hawk/Vixen course page", url: "https://www.golfpass.com/travel-advisor/courses/34081-south-essex-golf-club-hawk-vixen" },
+        { label: "OpenStreetMap course shell", url: "https://www.openstreetmap.org/way/23618344" }
+      ]
+    },
+    tees: [
+      { id: "white", name: "White", color: "#f8f7f1", rating: "70.8", slope: "123", totalYards: 6523 },
+      { id: "yellow", name: "Yellow", color: "#d7a44d", rating: "69.5", slope: "124", totalYards: 6192 },
+      { id: "blue", name: "Blue", color: "#4f83ff", rating: "72.0", slope: "", totalYards: 5614 },
+      { id: "red", name: "Red", color: "#e85d3f", rating: "72.1", slope: "125", totalYards: 5489 }
+    ],
+    holes: Array.from({ length: 18 }, (_, index) => makeScorecardOnlyHole(index, SOUTH_ESSEX_HAWK_VIXEN_SCORECARD, SOUTH_ESSEX_COURSE_ID))
   }
 ];
 
@@ -523,7 +777,6 @@ function makeCranhamHole(index) {
   const hole = placeholderHole(number);
   const [teeLat, teeLng, greenLat, greenLng] = CRANHAM_COORDS[index];
   const visual = cranhamMapVisuals.find((item) => item.ref === number) || CRANHAM_VISUALS[index];
-  const photoClip = cranhamPhotoClips.find((item) => item.hole === number);
   const par = CRANHAM_SCORECARD.par[index];
   return {
     ...hole,
@@ -544,16 +797,6 @@ function makeCranhamHole(index) {
       ...visual,
       tee: visualPoint(visual.path, 0),
       green: visualPoint(visual.path, -1),
-      photo: photoClip
-        ? {
-            courseId: "osm-way-23454278",
-            sourceId: cranhamPhotoCropSource.id,
-            sourceLabel: cranhamPhotoCropSource.label,
-            crop: photoClip.crop,
-            tee: photoClip.tee,
-            green: photoClip.green
-          }
-        : null,
       render: visual.features ? "mapped-osm" : "schematic"
     },
     notes: visual.signature || ""
@@ -563,10 +806,9 @@ function makeCranhamHole(index) {
 function makeBelhusHole(index) {
   const number = index + 1;
   const hole = placeholderHole(number);
-  const photoClip = belhusPhotoClips.find((item) => item.hole === number);
   const par = BELHUS_SCORECARD.par[index];
-  const teePoint = photoClip?.tee || [50, 82];
-  const greenPoint = photoClip?.green || [50, 18];
+  const teePoint = schematicTeePoint(number, par);
+  const greenPoint = schematicGreenPoint(number, par);
   const geo = geoFromCoords(BELHUS_COORDS[index]);
   return {
     ...hole,
@@ -586,18 +828,8 @@ function makeBelhusHole(index) {
     visual: {
       tee: teePoint,
       green: greenPoint,
-      photo: photoClip
-        ? {
-            courseId: BELHUS_COURSE_ID,
-            sourceId: belhusPhotoCropSource.id,
-            sourceLabel: belhusPhotoCropSource.label,
-            sourceUrl: belhusPhotoCropSource.url,
-            crop: photoClip.crop,
-            tee: photoClip.tee,
-            green: photoClip.green
-          }
-        : null,
-      render: "user-photo"
+      path: schematicPath(teePoint, greenPoint, number),
+      render: "scorecard-schematic"
     },
     notes: geo.tee
       ? "Satellite alignment seeded from OpenStreetMap hole geometry; use Adjust to fine-tune."
