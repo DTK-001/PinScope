@@ -37,6 +37,7 @@ const SATELLITE_ANCHOR_EDITS_STORAGE = "pinscope:satellite-anchor-edits:v1";
 const AZURE_MAPS_QUERY_KEY = "azureMapsKey";
 const AZURE_MAPS_QUERY_ENABLED = "azureMaps";
 const AZURE_MAPS_TILE_SIZE = 256;
+const AZURE_MAPS_REQUEST_TILE_SIZE = 512;
 const AZURE_MAPS_ZOOM = 17;
 const SATELLITE_PANEL_RATIO = 13 / 9;
 const ESRI_WORLD_IMAGERY_URL = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile";
@@ -87,7 +88,17 @@ window.addEventListener("hashchange", () => {
   view = getViewFromHash();
   render();
 });
-window.addEventListener("resize", queuePhotoCanvasRender);
+
+function handleWindowResize() {
+  queuePhotoCanvasRender();
+  if (view === "play" && getActiveRound(state)) {
+    window.clearTimeout(handleWindowResize.pending);
+    handleWindowResize.pending = window.setTimeout(render, 90);
+  }
+}
+
+window.addEventListener("resize", handleWindowResize);
+window.addEventListener("orientationchange", () => window.setTimeout(render, 120));
 app.addEventListener("load", handleAzureTileLoad, true);
 app.addEventListener("error", handleAzureTileError, true);
 window.addEventListener("pointermove", handlePhotoPointerMove);
@@ -666,16 +677,17 @@ function renderAzureHoleVisual(hole, course) {
   const courseId = course?.id || photoCourseId(hole);
   const anchors = azureHoleAnchors(hole, course);
   const marker = photoTargetMarkers(hole.par);
-  const map = azureMapViewForHole(anchors, marker);
+  const panelRatio = satellitePanelRatio();
+  const map = azureMapViewForHole(anchors, marker, panelRatio);
   if (!map) {
     return renderMappedHoleVisual(hole);
   }
   const tee = { x: marker.tee[0], y: marker.tee[1] };
   const green = { x: marker.green[0], y: marker.green[1] };
-  const greenShapeSvg = renderAzureGreenShapeSvg(hole, anchors, marker);
-  const gpsPoint = gps.status === "ready" && gps.position ? azureGeoToTargetPoint(anchors, gps.position, marker) : null;
+  const greenShapeSvg = renderAzureGreenShapeSvg(hole, anchors, marker, panelRatio);
+  const gpsPoint = gps.status === "ready" && gps.position ? azureGeoToTargetPoint(anchors, gps.position, marker, panelRatio) : null;
   const start = gpsPoint || tee;
-  const shotPlan = resolveAzureShotPlan(courseId, hole, anchors, marker);
+  const shotPlan = resolveAzureShotPlan(courseId, hole, anchors, marker, panelRatio);
   const routePoints = shotPlan
     ? [start, ...shotPlan.viewPoints, green].map((point) => `${point.x},${point.y}`).join(" ")
     : "";
@@ -687,7 +699,7 @@ function renderAzureHoleVisual(hole, course) {
   const editClass = photoEditMode ? " editing" : "";
   const hasAnchorEdit = Boolean(satelliteAnchorEdit(courseId, hole.number));
   return `
-    <section class="hole-visual photo-hole azure-hole${shotPlan ? " planning" : ""}${zoomClass}${editClass}" style="--photo-marker-scale:${markerScale};" data-azure-hole="${hole.number}" data-azure-course-id="${courseId}" aria-label="${escapeAttribute(course?.name || "Course")} Azure satellite hole ${hole.number}">
+    <section class="hole-visual photo-hole azure-hole${shotPlan ? " planning" : ""}${zoomClass}${editClass}" style="--photo-marker-scale:${markerScale}; --satellite-panel-ratio:${panelRatio};" data-azure-hole="${hole.number}" data-azure-course-id="${courseId}" aria-label="${escapeAttribute(course?.name || "Course")} Azure satellite hole ${hole.number}">
       <div class="photo-pan-layer" style="transform:${photoPanTransform(pan)};">
         <div class="photo-zoom-layer" style="transform:scale(${zoom});">
           <div class="azure-tile-layer" data-azure-tile-layer>
@@ -933,19 +945,19 @@ function renderPhotoGreenCenterDot(marker) {
   `;
 }
 
-function renderAzureGreenShapeSvg(hole, anchors, marker) {
+function renderAzureGreenShapeSvg(hole, anchors, marker, panelRatio = satellitePanelRatio()) {
   const polygon = holeGreenPolygon(hole);
   if (!polygon.length) {
     return "";
   }
   const points = polygon
-    .map((point) => azureGeoToTargetPoint(anchors, point, marker))
+    .map((point) => azureGeoToTargetPoint(anchors, point, marker, panelRatio))
     .filter(Boolean);
   if (points.length < 3) {
     return "";
   }
   const path = points.map((point) => `${point.x},${point.y}`).join(" ");
-  const center = azureGeoToTargetPoint(anchors, hole.greenCenter || anchors.green, marker) || { x: marker.green[0], y: marker.green[1] };
+  const center = azureGeoToTargetPoint(anchors, hole.greenCenter || anchors.green, marker, panelRatio) || { x: marker.green[0], y: marker.green[1] };
   return `
     <polygon class="photo-osm-green-shape" points="${path}"></polygon>
     <circle class="photo-osm-green-centre" cx="${center.x}" cy="${center.y}" r="1.8"></circle>
@@ -1119,7 +1131,7 @@ function azureTileUrl(x, y, zoom) {
     zoom: String(zoom),
     x: String(x),
     y: String(y),
-    tileSize: String(AZURE_MAPS_TILE_SIZE),
+    tileSize: String(AZURE_MAPS_REQUEST_TILE_SIZE),
     view: "Auto",
     "subscription-key": azureMapsKey
   });
@@ -1177,28 +1189,29 @@ function azureHoleAnchors(hole, course = activeVisualCourse()) {
   return { tee, green, estimated: true };
 }
 
-function azureMapViewForHole(anchors, marker = photoTargetMarkers(4)) {
+function azureMapViewForHole(anchors, marker = photoTargetMarkers(4), panelRatio = satellitePanelRatio()) {
   if (!anchors?.tee || !anchors?.green) {
     return null;
   }
   const zoom = AZURE_MAPS_ZOOM;
   const tee = geoToWorldPixel(anchors.tee, zoom);
   const green = geoToWorldPixel(anchors.green, zoom);
-  const transform = satelliteWorldTransform(tee, green, marker);
+  const ratio = normalizedSatelliteRatio(panelRatio);
+  const transform = satelliteWorldTransform(tee, green, marker, ratio);
   if (!transform) {
     return null;
   }
   const worldCorners = [
-    satelliteTargetToWorld({ x: -12, y: -12 }, transform, marker),
-    satelliteTargetToWorld({ x: 112, y: -12 }, transform, marker),
-    satelliteTargetToWorld({ x: 112, y: 112 }, transform, marker),
-    satelliteTargetToWorld({ x: -12, y: 112 }, transform, marker)
+    satelliteTargetToWorld({ x: -12, y: -12 }, transform, marker, ratio),
+    satelliteTargetToWorld({ x: 112, y: -12 }, transform, marker, ratio),
+    satelliteTargetToWorld({ x: 112, y: 112 }, transform, marker, ratio),
+    satelliteTargetToWorld({ x: -12, y: 112 }, transform, marker, ratio)
   ].filter(Boolean);
   if (worldCorners.length !== 4) {
     return null;
   }
   if (!azureMapsKey) {
-    const image = satelliteExportImage(worldCorners, transform, marker);
+    const image = satelliteExportImage(worldCorners, transform, marker, ratio);
     return image ? { zoom, image, tiles: [], attribution: SATELLITE_ATTRIBUTION } : null;
   }
   const minTileX = Math.floor(Math.min(...worldCorners.map((point) => point.x)) / AZURE_MAPS_TILE_SIZE);
@@ -1211,14 +1224,14 @@ function azureMapViewForHole(anchors, marker = photoTargetMarkers(4)) {
       const origin = satelliteWorldToTarget({
         x: x * AZURE_MAPS_TILE_SIZE,
         y: y * AZURE_MAPS_TILE_SIZE
-      }, transform, marker);
+      }, transform, marker, ratio);
       tiles.push({
         x,
         y,
         left: Number(origin.x.toFixed(4)),
         top: Number(origin.y.toFixed(4)),
         width: Number((AZURE_MAPS_TILE_SIZE * transform.scale + 0.12).toFixed(4)),
-        height: Number(((AZURE_MAPS_TILE_SIZE * transform.scale + 0.12) / SATELLITE_PANEL_RATIO).toFixed(4)),
+        height: Number(((AZURE_MAPS_TILE_SIZE * transform.scale + 0.12) / ratio).toFixed(4)),
         rotation: Number(transform.rotation.toFixed(4))
       });
     }
@@ -1226,16 +1239,17 @@ function azureMapViewForHole(anchors, marker = photoTargetMarkers(4)) {
   return { zoom, tiles, attribution: "Imagery: Azure Maps" };
 }
 
-function satelliteExportImage(worldCorners, transform, marker) {
+function satelliteExportImage(worldCorners, transform, marker, panelRatio = SATELLITE_PANEL_RATIO) {
   const left = Math.min(...worldCorners.map((point) => point.x));
   const right = Math.max(...worldCorners.map((point) => point.x));
   const top = Math.min(...worldCorners.map((point) => point.y));
   const bottom = Math.max(...worldCorners.map((point) => point.y));
   const width = Math.max(1, right - left);
   const height = Math.max(1, bottom - top);
-  const topLeft = satelliteWorldToTarget({ x: left, y: top }, transform, marker);
-  const maxImageEdge = 1400;
-  const imageScale = Math.min(2, maxImageEdge / Math.max(width, height));
+  const ratio = normalizedSatelliteRatio(panelRatio);
+  const topLeft = satelliteWorldToTarget({ x: left, y: top }, transform, marker, ratio);
+  const maxImageEdge = 1800;
+  const imageScale = Math.min(2.5, maxImageEdge / Math.max(width, height));
   const imageWidth = Math.max(256, Math.round(width * imageScale));
   const imageHeight = Math.max(256, Math.round(height * imageScale));
   const mercatorTopLeft = worldPixelToWebMercator({ x: left, y: top }, AZURE_MAPS_ZOOM);
@@ -1255,16 +1269,17 @@ function satelliteExportImage(worldCorners, transform, marker) {
     left: Number(topLeft.x.toFixed(4)),
     top: Number(topLeft.y.toFixed(4)),
     width: Number((width * transform.scale).toFixed(4)),
-    height: Number(((height * transform.scale) / SATELLITE_PANEL_RATIO).toFixed(4)),
+    height: Number(((height * transform.scale) / ratio).toFixed(4)),
     rotation: Number(transform.rotation.toFixed(4))
   };
 }
 
-function satelliteWorldTransform(tee, green, marker = photoTargetMarkers(4)) {
+function satelliteWorldTransform(tee, green, marker = photoTargetMarkers(4), panelRatio = SATELLITE_PANEL_RATIO) {
   const dx = green.x - tee.x;
   const dy = green.y - tee.y;
   const length = Math.sqrt(dx * dx + dy * dy);
-  const targetLength = (marker.tee[1] - marker.green[1]) * SATELLITE_PANEL_RATIO;
+  const ratio = normalizedSatelliteRatio(panelRatio);
+  const targetLength = (marker.tee[1] - marker.green[1]) * ratio;
   if (length < 1 || targetLength < 1) {
     return null;
   }
@@ -1276,24 +1291,26 @@ function satelliteWorldTransform(tee, green, marker = photoTargetMarkers(4)) {
   };
 }
 
-function satelliteWorldToTarget(world, transform, marker = photoTargetMarkers(4)) {
+function satelliteWorldToTarget(world, transform, marker = photoTargetMarkers(4), panelRatio = SATELLITE_PANEL_RATIO) {
   const delta = {
     x: world.x - transform.tee.x,
     y: world.y - transform.tee.y
   };
   const progressPixels = delta.x * transform.unit.x + delta.y * transform.unit.y;
   const crossPixels = delta.x * -transform.unit.y + delta.y * transform.unit.x;
+  const ratio = normalizedSatelliteRatio(panelRatio);
   return {
     x: marker.tee[0] + crossPixels * transform.scale,
-    y: (marker.tee[1] * SATELLITE_PANEL_RATIO - progressPixels * transform.scale) / SATELLITE_PANEL_RATIO
+    y: (marker.tee[1] * ratio - progressPixels * transform.scale) / ratio
   };
 }
 
-function satelliteTargetToWorld(point, transform, marker = photoTargetMarkers(4)) {
+function satelliteTargetToWorld(point, transform, marker = photoTargetMarkers(4), panelRatio = SATELLITE_PANEL_RATIO) {
   if (!transform) {
     return null;
   }
-  const progressPixels = ((marker.tee[1] - Number(point.y)) * SATELLITE_PANEL_RATIO) / transform.scale;
+  const ratio = normalizedSatelliteRatio(panelRatio);
+  const progressPixels = ((marker.tee[1] - Number(point.y)) * ratio) / transform.scale;
   const crossPixels = (Number(point.x) - marker.tee[0]) / transform.scale;
   return {
     x: transform.tee.x + transform.unit.x * progressPixels - transform.unit.y * crossPixels,
@@ -1310,7 +1327,7 @@ function azureEventToPosition(panel, anchors, marker, event) {
     x: ((event.clientX - rect.left) / rect.width) * 100,
     y: ((event.clientY - rect.top) / rect.height) * 100
   };
-  return azureTargetPointToGeo(anchors, point, marker);
+  return azureTargetPointToGeo(anchors, point, marker, rect.height / rect.width);
 }
 
 function geoToWorldPixel(position, zoom) {
@@ -1366,7 +1383,7 @@ function azureShotPlanKey(courseId, holeNumber) {
   return `${courseId || "course"}:${String(holeNumber || "")}`;
 }
 
-function resolveAzureShotPlan(courseId, hole, anchors, marker) {
+function resolveAzureShotPlan(courseId, hole, anchors, marker, panelRatio = satellitePanelRatio()) {
   const saved = azureShotPlans[azureShotPlanKey(courseId, hole.number)];
   const points = sortAzurePlanPoints(anchors, saved?.points || []);
   if (!points.length) {
@@ -1383,7 +1400,7 @@ function resolveAzureShotPlan(courseId, hole, anchors, marker) {
   });
   return {
     points,
-    viewPoints: points.map((point) => azureGeoToTargetPoint(anchors, point, marker)),
+    viewPoints: points.map((point) => azureGeoToTargetPoint(anchors, point, marker, panelRatio)),
     segments
   };
 }
@@ -1406,7 +1423,7 @@ function sortAzurePlanPoints(anchors, points) {
     .slice(0, 4);
 }
 
-function azureGeoToTargetPoint(anchors, position, marker = photoTargetMarkers(4)) {
+function azureGeoToTargetPoint(anchors, position, marker = photoTargetMarkers(4), panelRatio = SATELLITE_PANEL_RATIO) {
   if (!anchors?.tee || !anchors?.green || !position) {
     return null;
   }
@@ -1423,14 +1440,14 @@ function azureGeoToTargetPoint(anchors, position, marker = photoTargetMarkers(4)
   const progress = (currentVector.x * fairway.x + currentVector.y * fairway.y) / lengthSquared;
   const crossMeters = ((currentVector.x * fairway.y) - (currentVector.y * fairway.x)) / length;
   const targetLength = marker.tee[1] - marker.green[1];
-  const crossScale = targetLength / length;
+  const crossScale = (targetLength * normalizedSatelliteRatio(panelRatio)) / length;
   return {
     x: Number(clamp(marker.tee[0] + crossMeters * crossScale, -8, 108).toFixed(2)),
     y: Number(clamp(marker.tee[1] - progress * targetLength, -8, 108).toFixed(2))
   };
 }
 
-function azureTargetPointToGeo(anchors, point, marker = photoTargetMarkers(4)) {
+function azureTargetPointToGeo(anchors, point, marker = photoTargetMarkers(4), panelRatio = SATELLITE_PANEL_RATIO) {
   if (!anchors?.tee || !anchors?.green || !point) {
     return null;
   }
@@ -1442,7 +1459,7 @@ function azureTargetPointToGeo(anchors, point, marker = photoTargetMarkers(4)) {
     return null;
   }
   const progress = (marker.tee[1] - Number(point.y)) / targetLength;
-  const crossMeters = (Number(point.x) - marker.tee[0]) * (length / targetLength);
+  const crossMeters = (Number(point.x) - marker.tee[0]) * (length / (targetLength * normalizedSatelliteRatio(panelRatio)));
   const geoPerp = {
     x: fairway.y / length,
     y: -fairway.x / length
@@ -1451,6 +1468,19 @@ function azureTargetPointToGeo(anchors, point, marker = photoTargetMarkers(4)) {
     x: fairway.x * progress + geoPerp.x * crossMeters,
     y: fairway.y * progress + geoPerp.y * crossMeters
   });
+}
+
+function satellitePanelRatio() {
+  const activeRound = getActiveRound(state);
+  if (activeRound && view === "play" && typeof window !== "undefined" && window.innerWidth && window.innerHeight) {
+    return normalizedSatelliteRatio(window.innerHeight / window.innerWidth);
+  }
+  return SATELLITE_PANEL_RATIO;
+}
+
+function normalizedSatelliteRatio(value) {
+  const ratio = Number(value);
+  return Number.isFinite(ratio) && ratio > 0 ? clamp(ratio, 0.45, 3.1) : SATELLITE_PANEL_RATIO;
 }
 
 function clearAzureShotPlan(courseId, holeNumber) {
@@ -3235,7 +3265,8 @@ function finishSatelliteAnchorDrag(event) {
   photoDrag = null;
   drag.handle.classList.remove("dragging");
   const point = drag.latestPoint || eventToPanelPercent(drag.panel, event);
-  const position = point ? azureTargetPointToGeo(drag.anchors, point, drag.marker) : null;
+  const rect = drag.panel?.getBoundingClientRect?.();
+  const position = point ? azureTargetPointToGeo(drag.anchors, point, drag.marker, rect?.width && rect?.height ? rect.height / rect.width : satellitePanelRatio()) : null;
   if (!position) {
     render();
     return;
