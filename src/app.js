@@ -1268,7 +1268,7 @@ function initAzureMapsEnabled() {
     }
     return enabled;
   }
-  return readLocalStorage(AZURE_MAPS_ENABLED_STORAGE, "0") === "1";
+  return true;
 }
 
 function saveAzureMapsEnabled() {
