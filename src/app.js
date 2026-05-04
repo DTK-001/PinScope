@@ -37,7 +37,9 @@ const SATELLITE_ANCHOR_EDITS_STORAGE = "pinscope:satellite-anchor-edits:v1";
 const AZURE_MAPS_QUERY_KEY = "azureMapsKey";
 const AZURE_MAPS_QUERY_ENABLED = "azureMaps";
 const AZURE_MAPS_TILE_SIZE = 256;
+const AZURE_MAPS_REQUEST_TILE_SIZE = 512;
 const AZURE_MAPS_ZOOM = 17;
+const SATELLITE_PRELOAD_CONCURRENCY = 2;
 const SATELLITE_PANEL_RATIO = 13 / 9;
 const ESRI_WORLD_IMAGERY_URL = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile";
 const ESRI_WORLD_IMAGERY_EXPORT_URL = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/export";
@@ -77,6 +79,11 @@ let gps = {
   error: "",
   watchId: null
 };
+let satellitePreloadQueue = [];
+let satellitePreloadActive = 0;
+let satellitePreloadCourseId = "";
+let satellitePreloadedUrls = new Set();
+let satellitePreloadingUrls = new Set();
 let notice = "";
 let scoreCardOpen = false;
 
@@ -87,7 +94,17 @@ window.addEventListener("hashchange", () => {
   view = getViewFromHash();
   render();
 });
-window.addEventListener("resize", queuePhotoCanvasRender);
+
+function handleWindowResize() {
+  queuePhotoCanvasRender();
+  if (view === "play" && getActiveRound(state)) {
+    window.clearTimeout(handleWindowResize.pending);
+    handleWindowResize.pending = window.setTimeout(render, 90);
+  }
+}
+
+window.addEventListener("resize", handleWindowResize);
+window.addEventListener("orientationchange", () => window.setTimeout(render, 120));
 app.addEventListener("load", handleAzureTileLoad, true);
 app.addEventListener("error", handleAzureTileError, true);
 window.addEventListener("pointermove", handlePhotoPointerMove);
@@ -404,6 +421,7 @@ function renderPlay() {
     return `<section class="empty-state"><h2>Course missing</h2><p>Select a saved course to continue.</p></section>`;
   }
   const hole = course.holes.find((item) => item.number === activeRound.currentHole) || course.holes[0];
+  queueCourseSatellitePreload(course, hole.number);
   const players = getRoundPlayers(activeRound);
   const leadTotals = roundTotals(activeRound, course, players[0]?.id);
   const teeInfo = photoPlanningTee(hole);
@@ -435,6 +453,7 @@ function renderPlay() {
       <button class="score-fab" type="button" data-action="open-score-card" aria-label="Enter scores">
         <img src="${SCORE_BUTTON_IMAGE_SRC}" alt="" aria-hidden="true" />
       </button>
+      ${renderShotTracker(activeRound, hole)}
     </section>
   `;
 }
@@ -467,6 +486,139 @@ function renderPlayDistanceHud(hole) {
       `).join("")}
     </div>
   `;
+}
+
+function renderShotTracker(round, hole) {
+  const shotState = shotTrackingState(round, hole.number);
+  const label = `Shot ${shotState.nextNumber}`;
+  return `
+    <div class="shot-tracker ${shotState.active ? "tracking" : ""}" aria-live="polite">
+      ${shotState.status ? `<p>${escapeHtml(shotState.status)}</p>` : ""}
+      <button class="shot-track-button" type="button" data-action="track-shot">
+        ${escapeHtml(label)}
+      </button>
+    </div>
+  `;
+}
+
+function shotTrackingState(round, holeNumber) {
+  const entry = trackedRoundEntry(round, holeNumber);
+  const shots = trackedShots(entry);
+  const active = trackedActiveShot(entry);
+  const nextNumber = active?.number || shots.length + 1;
+  if (!gps.position || gps.status !== "ready") {
+    return {
+      active: Boolean(active),
+      nextNumber,
+      status: active ? "GPS needed to land this shot." : ""
+    };
+  }
+  if (active) {
+    const yards = yardsBetween(active.start, gps.position);
+    return {
+      active: true,
+      nextNumber,
+      status: yards === null ? "Walk to your ball, tap again to land it." : `${yards} yd so far`
+    };
+  }
+  const lastShot = shots.at(-1);
+  return {
+    active: false,
+    nextNumber,
+    status: lastShot?.yards ? `Last shot ${lastShot.yards} yd` : ""
+  };
+}
+
+function trackedRoundEntry(round, holeNumber) {
+  return round?.entries?.find((entry) => Number(entry.holeNumber) === Number(holeNumber)) || null;
+}
+
+function trackedShots(entry) {
+  return Array.isArray(entry?.shots) ? entry.shots : [];
+}
+
+function trackedActiveShot(entry) {
+  return entry?.activeShot && entry.activeShot.start ? entry.activeShot : null;
+}
+
+function ensureTrackedShotState(entry) {
+  if (!entry) {
+    return;
+  }
+  if (!Array.isArray(entry.shots)) {
+    entry.shots = [];
+  }
+  if (entry.activeShot && !entry.activeShot.start) {
+    entry.activeShot = null;
+  }
+}
+
+function currentGpsPoint() {
+  if (gps.status !== "ready" || !gps.position) {
+    return null;
+  }
+  return {
+    lat: gps.position.lat,
+    lng: gps.position.lng,
+    accuracy: gps.position.accuracy || 0
+  };
+}
+
+function trackedShotScore(entry) {
+  return trackedShots(entry).length + (trackedActiveShot(entry) ? 1 : 0);
+}
+
+function syncTrackedScore(round, holeNumber) {
+  const entry = trackedRoundEntry(round, holeNumber);
+  const players = getRoundPlayers(round);
+  const leadPlayer = players[0]?.id || "player-1";
+  const playerEntry = getPlayerEntry(round, holeNumber, leadPlayer) || getRoundEntry(round, holeNumber);
+  const score = trackedShotScore(entry);
+  if (playerEntry && score > 0) {
+    playerEntry.score = clamp(score, 1, 12);
+  }
+}
+
+function trackShot() {
+  const round = getActiveRound(state);
+  if (!round) {
+    return;
+  }
+  const position = currentGpsPoint();
+  if (!position) {
+    startGps();
+    flash("Start GPS, then tap Shot 1 at your ball.");
+    return;
+  }
+  const entry = trackedRoundEntry(round, round.currentHole);
+  ensureTrackedShotState(entry);
+  if (!entry) {
+    return;
+  }
+  const activeShot = trackedActiveShot(entry);
+  const now = new Date().toISOString();
+  if (activeShot) {
+    const yards = yardsBetween(activeShot.start, position);
+    entry.shots.push({
+      ...activeShot,
+      end: position,
+      endedAt: now,
+      yards: yards ?? 0
+    });
+    entry.activeShot = null;
+    syncTrackedScore(round, round.currentHole);
+    persist(yards === null ? `Shot ${activeShot.number} landed.` : `Shot ${activeShot.number}: ${yards} yd.`);
+    return;
+  }
+  const number = trackedShots(entry).length + 1;
+  entry.activeShot = {
+    id: `shot-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+    number,
+    start: position,
+    startedAt: now
+  };
+  syncTrackedScore(round, round.currentHole);
+  persist(`Shot ${number} started. Tap again at your ball.`);
 }
 
 function savedHomeCourseCount() {
@@ -666,16 +818,18 @@ function renderAzureHoleVisual(hole, course) {
   const courseId = course?.id || photoCourseId(hole);
   const anchors = azureHoleAnchors(hole, course);
   const marker = photoTargetMarkers(hole.par);
-  const map = azureMapViewForHole(anchors, marker);
+  const panelRatio = satellitePanelRatio();
+  const map = azureMapViewForHole(anchors, marker, panelRatio);
   if (!map) {
     return renderMappedHoleVisual(hole);
   }
   const tee = { x: marker.tee[0], y: marker.tee[1] };
   const green = { x: marker.green[0], y: marker.green[1] };
-  const greenShapeSvg = renderAzureGreenShapeSvg(hole, anchors, marker);
-  const gpsPoint = gps.status === "ready" && gps.position ? azureGeoToTargetPoint(anchors, gps.position, marker) : null;
+  const greenShapeSvg = renderAzureGreenShapeSvg(hole, anchors, marker, panelRatio);
+  const gpsPoint = gps.status === "ready" && gps.position ? azureGeoToTargetPoint(anchors, gps.position, marker, panelRatio) : null;
   const start = gpsPoint || tee;
-  const shotPlan = resolveAzureShotPlan(courseId, hole, anchors, marker);
+  const shotPlan = resolveAzureShotPlan(courseId, hole, anchors, marker, panelRatio);
+  const trackedShotOverlay = renderTrackedShotOverlay(hole, anchors, marker, panelRatio);
   const routePoints = shotPlan
     ? [start, ...shotPlan.viewPoints, green].map((point) => `${point.x},${point.y}`).join(" ")
     : "";
@@ -685,9 +839,8 @@ function renderAzureHoleVisual(hole, course) {
   const markerScale = Number((1 / Math.max(1, zoom)).toFixed(4));
   const zoomClass = zoom > 1 ? " zoomed" : "";
   const editClass = photoEditMode ? " editing" : "";
-  const hasAnchorEdit = Boolean(satelliteAnchorEdit(courseId, hole.number));
   return `
-    <section class="hole-visual photo-hole azure-hole${shotPlan ? " planning" : ""}${zoomClass}${editClass}" style="--photo-marker-scale:${markerScale};" data-azure-hole="${hole.number}" data-azure-course-id="${courseId}" aria-label="${escapeAttribute(course?.name || "Course")} Azure satellite hole ${hole.number}">
+    <section class="hole-visual photo-hole azure-hole${shotPlan ? " planning" : ""}${zoomClass}${editClass}" style="--photo-marker-scale:${markerScale}; --satellite-panel-ratio:${panelRatio};" data-azure-hole="${hole.number}" data-azure-course-id="${courseId}" aria-label="${escapeAttribute(course?.name || "Course")} Azure satellite hole ${hole.number}">
       <div class="photo-pan-layer" style="transform:${photoPanTransform(pan)};">
         <div class="photo-zoom-layer" style="transform:scale(${zoom});">
           <div class="azure-tile-layer" data-azure-tile-layer>
@@ -703,6 +856,7 @@ function renderAzureHoleVisual(hole, course) {
             </defs>
             ${greenShapeSvg}
             ${guide}
+            ${trackedShotOverlay}
             ${shotPlan ? `<polyline class="photo-plan-route" points="${routePoints}" stroke="url(#azure-shot-gradient-${hole.number})"></polyline>` : ""}
             ${shotPlan?.viewPoints.map((point, index) => `
               <circle class="photo-plan-point" cx="${point.x}" cy="${point.y}" r="1.9"></circle>
@@ -733,13 +887,37 @@ function renderAzureHoleVisual(hole, course) {
       ${renderGpsTestControls(hole, courseId)}
       ${renderPhotoZoomControls(courseId, hole.number, zoom)}
       <div class="satellite-attribution">${escapeHtml(map.attribution || SATELLITE_ATTRIBUTION)}</div>
-      <div class="photo-align-toolbar">
-        <button class="photo-tool-button" type="button" data-action="toggle-azure-maps">Photo</button>
-        <button class="photo-tool-button" type="button" data-action="toggle-photo-edit">${photoEditMode ? "Done" : "Adjust"}</button>
-        ${photoEditMode && hasAnchorEdit ? `<button class="photo-tool-button" type="button" data-action="reset-satellite-anchor" data-course-id="${courseId}" data-hole="${hole.number}">Reset</button>` : ""}
-        ${shotPlan ? `<button class="photo-tool-button" type="button" data-action="clear-azure-shot-plan" data-course-id="${courseId}" data-hole="${hole.number}">Clear</button>` : ""}
-      </div>
     </section>
+  `;
+}
+
+function renderTrackedShotOverlay(hole, anchors, marker, panelRatio) {
+  const round = getActiveRound(state);
+  const entry = round ? trackedRoundEntry(round, hole.number) : null;
+  const shots = trackedShots(entry);
+  const activeShot = trackedActiveShot(entry);
+  const completed = shots
+    .map((shot) => ({
+      shot,
+      start: azureGeoToTargetPoint(anchors, shot.start, marker, panelRatio),
+      end: azureGeoToTargetPoint(anchors, shot.end, marker, panelRatio)
+    }))
+    .filter((item) => item.start && item.end);
+  const activeStart = activeShot ? azureGeoToTargetPoint(anchors, activeShot.start, marker, panelRatio) : null;
+  const activeEnd = activeShot && gps.status === "ready" && gps.position
+    ? azureGeoToTargetPoint(anchors, gps.position, marker, panelRatio)
+    : null;
+
+  return `
+    ${completed.map(({ shot, start, end }) => `
+      <line class="tracked-shot-route" x1="${start.x}" y1="${start.y}" x2="${end.x}" y2="${end.y}"></line>
+      <circle class="tracked-shot-landing" cx="${end.x}" cy="${end.y}" r="1.55"></circle>
+      <text class="tracked-shot-label" x="${end.x + 1.8}" y="${end.y - 1.8}">${shot.number}</text>
+    `).join("")}
+    ${activeStart && activeEnd ? `
+      <line class="tracked-shot-route active" x1="${activeStart.x}" y1="${activeStart.y}" x2="${activeEnd.x}" y2="${activeEnd.y}"></line>
+      <circle class="tracked-shot-landing active" cx="${activeStart.x}" cy="${activeStart.y}" r="1.4"></circle>
+    ` : ""}
   `;
 }
 
@@ -752,6 +930,96 @@ function renderAzureTiles(map) {
   return map.tiles.map((tile) => `
     <img class="azure-map-tile" src="${satelliteTileUrl(tile.x, tile.y, map.zoom)}" alt="" aria-hidden="true" loading="eager" decoding="async" referrerpolicy="no-referrer" data-azure-tile data-fallback-src="${escapeAttribute(esriTileUrl(tile.x, tile.y, map.zoom))}" style="left:${tile.left}%; top:${tile.top}%; width:${tile.width}%; height:${tile.height}%; transform:rotate(${tile.rotation}deg);" />
   `).join("");
+}
+
+function queueCourseSatellitePreload(course, currentHoleNumber = 1) {
+  if (!course?.holes?.length || !azureMapsEnabled) {
+    return;
+  }
+  if (satellitePreloadCourseId !== course.id) {
+    satellitePreloadCourseId = course.id;
+    satellitePreloadQueue = [];
+    satellitePreloadedUrls = new Set();
+    satellitePreloadingUrls = new Set();
+    satellitePreloadActive = 0;
+  }
+  const ratio = satellitePanelRatio();
+  const orderedHoles = course.holes
+    .slice()
+    .sort((a, b) => {
+      const aDistance = Math.abs(Number(a.number) - Number(currentHoleNumber));
+      const bDistance = Math.abs(Number(b.number) - Number(currentHoleNumber));
+      return aDistance - bDistance || Number(a.number) - Number(b.number);
+    });
+  const queuedUrls = new Set([...satellitePreloadQueue.map((item) => item.src), ...satellitePreloadingUrls]);
+  orderedHoles.forEach((hole) => {
+    const anchors = azureHoleAnchors(hole, course);
+    const map = azureMapViewForHole(anchors, photoTargetMarkers(hole.par), ratio);
+    satelliteMapPreloadItems(map).forEach((item) => {
+      if (!item.src || satellitePreloadedUrls.has(item.src) || queuedUrls.has(item.src)) {
+        return;
+      }
+      queuedUrls.add(item.src);
+      satellitePreloadQueue.push(item);
+    });
+  });
+  scheduleSatellitePreload();
+}
+
+function satelliteMapPreloadItems(map) {
+  if (!map) {
+    return [];
+  }
+  if (map.image?.src) {
+    return [{ src: map.image.src }];
+  }
+  return (map.tiles || []).map((tile) => ({
+    src: satelliteTileUrl(tile.x, tile.y, map.zoom),
+    fallbackSrc: azureMapsKey ? esriTileUrl(tile.x, tile.y, map.zoom) : ""
+  }));
+}
+
+function scheduleSatellitePreload() {
+  const scheduler = window.requestIdleCallback || ((callback) => window.setTimeout(callback, 80));
+  scheduler(runSatellitePreloadQueue);
+}
+
+function runSatellitePreloadQueue() {
+  while (satellitePreloadActive < SATELLITE_PRELOAD_CONCURRENCY && satellitePreloadQueue.length) {
+    const item = satellitePreloadQueue.shift();
+    if (!item?.src || satellitePreloadedUrls.has(item.src)) {
+      continue;
+    }
+    satellitePreloadingUrls.add(item.src);
+    satellitePreloadActive += 1;
+    preloadSatelliteImage(item.src, item.fallbackSrc).finally(() => {
+      satellitePreloadingUrls.delete(item.src);
+      satellitePreloadedUrls.add(item.src);
+      satellitePreloadActive = Math.max(0, satellitePreloadActive - 1);
+      if (satellitePreloadQueue.length) {
+        scheduleSatellitePreload();
+      }
+    });
+  }
+}
+
+function preloadSatelliteImage(src, fallbackSrc = "") {
+  return new Promise((resolve) => {
+    const image = new Image();
+    let triedFallback = false;
+    image.decoding = "async";
+    image.referrerPolicy = "no-referrer";
+    image.onload = () => resolve();
+    image.onerror = () => {
+      if (fallbackSrc && !triedFallback) {
+        triedFallback = true;
+        image.src = fallbackSrc;
+        return;
+      }
+      resolve();
+    };
+    image.src = src;
+  });
 }
 
 function renderAzureShotInfo(courseId, hole, shotPlan) {
@@ -933,19 +1201,19 @@ function renderPhotoGreenCenterDot(marker) {
   `;
 }
 
-function renderAzureGreenShapeSvg(hole, anchors, marker) {
+function renderAzureGreenShapeSvg(hole, anchors, marker, panelRatio = satellitePanelRatio()) {
   const polygon = holeGreenPolygon(hole);
   if (!polygon.length) {
     return "";
   }
   const points = polygon
-    .map((point) => azureGeoToTargetPoint(anchors, point, marker))
+    .map((point) => azureGeoToTargetPoint(anchors, point, marker, panelRatio))
     .filter(Boolean);
   if (points.length < 3) {
     return "";
   }
   const path = points.map((point) => `${point.x},${point.y}`).join(" ");
-  const center = azureGeoToTargetPoint(anchors, hole.greenCenter || anchors.green, marker) || { x: marker.green[0], y: marker.green[1] };
+  const center = azureGeoToTargetPoint(anchors, hole.greenCenter || anchors.green, marker, panelRatio) || { x: marker.green[0], y: marker.green[1] };
   return `
     <polygon class="photo-osm-green-shape" points="${path}"></polygon>
     <circle class="photo-osm-green-centre" cx="${center.x}" cy="${center.y}" r="1.8"></circle>
@@ -1097,7 +1365,7 @@ function initAzureMapsEnabled() {
     }
     return enabled;
   }
-  return readLocalStorage(AZURE_MAPS_ENABLED_STORAGE, "0") === "1";
+  return true;
 }
 
 function saveAzureMapsEnabled() {
@@ -1119,7 +1387,7 @@ function azureTileUrl(x, y, zoom) {
     zoom: String(zoom),
     x: String(x),
     y: String(y),
-    tileSize: String(AZURE_MAPS_TILE_SIZE),
+    tileSize: String(AZURE_MAPS_REQUEST_TILE_SIZE),
     view: "Auto",
     "subscription-key": azureMapsKey
   });
@@ -1177,28 +1445,29 @@ function azureHoleAnchors(hole, course = activeVisualCourse()) {
   return { tee, green, estimated: true };
 }
 
-function azureMapViewForHole(anchors, marker = photoTargetMarkers(4)) {
+function azureMapViewForHole(anchors, marker = photoTargetMarkers(4), panelRatio = satellitePanelRatio()) {
   if (!anchors?.tee || !anchors?.green) {
     return null;
   }
   const zoom = AZURE_MAPS_ZOOM;
   const tee = geoToWorldPixel(anchors.tee, zoom);
   const green = geoToWorldPixel(anchors.green, zoom);
-  const transform = satelliteWorldTransform(tee, green, marker);
+  const ratio = normalizedSatelliteRatio(panelRatio);
+  const transform = satelliteWorldTransform(tee, green, marker, ratio);
   if (!transform) {
     return null;
   }
   const worldCorners = [
-    satelliteTargetToWorld({ x: -12, y: -12 }, transform, marker),
-    satelliteTargetToWorld({ x: 112, y: -12 }, transform, marker),
-    satelliteTargetToWorld({ x: 112, y: 112 }, transform, marker),
-    satelliteTargetToWorld({ x: -12, y: 112 }, transform, marker)
+    satelliteTargetToWorld({ x: -12, y: -12 }, transform, marker, ratio),
+    satelliteTargetToWorld({ x: 112, y: -12 }, transform, marker, ratio),
+    satelliteTargetToWorld({ x: 112, y: 112 }, transform, marker, ratio),
+    satelliteTargetToWorld({ x: -12, y: 112 }, transform, marker, ratio)
   ].filter(Boolean);
   if (worldCorners.length !== 4) {
     return null;
   }
   if (!azureMapsKey) {
-    const image = satelliteExportImage(worldCorners, transform, marker);
+    const image = satelliteExportImage(worldCorners, transform, marker, ratio);
     return image ? { zoom, image, tiles: [], attribution: SATELLITE_ATTRIBUTION } : null;
   }
   const minTileX = Math.floor(Math.min(...worldCorners.map((point) => point.x)) / AZURE_MAPS_TILE_SIZE);
@@ -1211,14 +1480,14 @@ function azureMapViewForHole(anchors, marker = photoTargetMarkers(4)) {
       const origin = satelliteWorldToTarget({
         x: x * AZURE_MAPS_TILE_SIZE,
         y: y * AZURE_MAPS_TILE_SIZE
-      }, transform, marker);
+      }, transform, marker, ratio);
       tiles.push({
         x,
         y,
         left: Number(origin.x.toFixed(4)),
         top: Number(origin.y.toFixed(4)),
         width: Number((AZURE_MAPS_TILE_SIZE * transform.scale + 0.12).toFixed(4)),
-        height: Number(((AZURE_MAPS_TILE_SIZE * transform.scale + 0.12) / SATELLITE_PANEL_RATIO).toFixed(4)),
+        height: Number(((AZURE_MAPS_TILE_SIZE * transform.scale + 0.12) / ratio).toFixed(4)),
         rotation: Number(transform.rotation.toFixed(4))
       });
     }
@@ -1226,16 +1495,17 @@ function azureMapViewForHole(anchors, marker = photoTargetMarkers(4)) {
   return { zoom, tiles, attribution: "Imagery: Azure Maps" };
 }
 
-function satelliteExportImage(worldCorners, transform, marker) {
+function satelliteExportImage(worldCorners, transform, marker, panelRatio = SATELLITE_PANEL_RATIO) {
   const left = Math.min(...worldCorners.map((point) => point.x));
   const right = Math.max(...worldCorners.map((point) => point.x));
   const top = Math.min(...worldCorners.map((point) => point.y));
   const bottom = Math.max(...worldCorners.map((point) => point.y));
   const width = Math.max(1, right - left);
   const height = Math.max(1, bottom - top);
-  const topLeft = satelliteWorldToTarget({ x: left, y: top }, transform, marker);
-  const maxImageEdge = 1400;
-  const imageScale = Math.min(2, maxImageEdge / Math.max(width, height));
+  const ratio = normalizedSatelliteRatio(panelRatio);
+  const topLeft = satelliteWorldToTarget({ x: left, y: top }, transform, marker, ratio);
+  const maxImageEdge = 1800;
+  const imageScale = Math.min(2.5, maxImageEdge / Math.max(width, height));
   const imageWidth = Math.max(256, Math.round(width * imageScale));
   const imageHeight = Math.max(256, Math.round(height * imageScale));
   const mercatorTopLeft = worldPixelToWebMercator({ x: left, y: top }, AZURE_MAPS_ZOOM);
@@ -1255,16 +1525,17 @@ function satelliteExportImage(worldCorners, transform, marker) {
     left: Number(topLeft.x.toFixed(4)),
     top: Number(topLeft.y.toFixed(4)),
     width: Number((width * transform.scale).toFixed(4)),
-    height: Number(((height * transform.scale) / SATELLITE_PANEL_RATIO).toFixed(4)),
+    height: Number(((height * transform.scale) / ratio).toFixed(4)),
     rotation: Number(transform.rotation.toFixed(4))
   };
 }
 
-function satelliteWorldTransform(tee, green, marker = photoTargetMarkers(4)) {
+function satelliteWorldTransform(tee, green, marker = photoTargetMarkers(4), panelRatio = SATELLITE_PANEL_RATIO) {
   const dx = green.x - tee.x;
   const dy = green.y - tee.y;
   const length = Math.sqrt(dx * dx + dy * dy);
-  const targetLength = (marker.tee[1] - marker.green[1]) * SATELLITE_PANEL_RATIO;
+  const ratio = normalizedSatelliteRatio(panelRatio);
+  const targetLength = (marker.tee[1] - marker.green[1]) * ratio;
   if (length < 1 || targetLength < 1) {
     return null;
   }
@@ -1276,24 +1547,26 @@ function satelliteWorldTransform(tee, green, marker = photoTargetMarkers(4)) {
   };
 }
 
-function satelliteWorldToTarget(world, transform, marker = photoTargetMarkers(4)) {
+function satelliteWorldToTarget(world, transform, marker = photoTargetMarkers(4), panelRatio = SATELLITE_PANEL_RATIO) {
   const delta = {
     x: world.x - transform.tee.x,
     y: world.y - transform.tee.y
   };
   const progressPixels = delta.x * transform.unit.x + delta.y * transform.unit.y;
   const crossPixels = delta.x * -transform.unit.y + delta.y * transform.unit.x;
+  const ratio = normalizedSatelliteRatio(panelRatio);
   return {
     x: marker.tee[0] + crossPixels * transform.scale,
-    y: (marker.tee[1] * SATELLITE_PANEL_RATIO - progressPixels * transform.scale) / SATELLITE_PANEL_RATIO
+    y: (marker.tee[1] * ratio - progressPixels * transform.scale) / ratio
   };
 }
 
-function satelliteTargetToWorld(point, transform, marker = photoTargetMarkers(4)) {
+function satelliteTargetToWorld(point, transform, marker = photoTargetMarkers(4), panelRatio = SATELLITE_PANEL_RATIO) {
   if (!transform) {
     return null;
   }
-  const progressPixels = ((marker.tee[1] - Number(point.y)) * SATELLITE_PANEL_RATIO) / transform.scale;
+  const ratio = normalizedSatelliteRatio(panelRatio);
+  const progressPixels = ((marker.tee[1] - Number(point.y)) * ratio) / transform.scale;
   const crossPixels = (Number(point.x) - marker.tee[0]) / transform.scale;
   return {
     x: transform.tee.x + transform.unit.x * progressPixels - transform.unit.y * crossPixels,
@@ -1310,7 +1583,7 @@ function azureEventToPosition(panel, anchors, marker, event) {
     x: ((event.clientX - rect.left) / rect.width) * 100,
     y: ((event.clientY - rect.top) / rect.height) * 100
   };
-  return azureTargetPointToGeo(anchors, point, marker);
+  return azureTargetPointToGeo(anchors, point, marker, rect.height / rect.width);
 }
 
 function geoToWorldPixel(position, zoom) {
@@ -1366,7 +1639,7 @@ function azureShotPlanKey(courseId, holeNumber) {
   return `${courseId || "course"}:${String(holeNumber || "")}`;
 }
 
-function resolveAzureShotPlan(courseId, hole, anchors, marker) {
+function resolveAzureShotPlan(courseId, hole, anchors, marker, panelRatio = satellitePanelRatio()) {
   const saved = azureShotPlans[azureShotPlanKey(courseId, hole.number)];
   const points = sortAzurePlanPoints(anchors, saved?.points || []);
   if (!points.length) {
@@ -1383,7 +1656,7 @@ function resolveAzureShotPlan(courseId, hole, anchors, marker) {
   });
   return {
     points,
-    viewPoints: points.map((point) => azureGeoToTargetPoint(anchors, point, marker)),
+    viewPoints: points.map((point) => azureGeoToTargetPoint(anchors, point, marker, panelRatio)),
     segments
   };
 }
@@ -1406,7 +1679,7 @@ function sortAzurePlanPoints(anchors, points) {
     .slice(0, 4);
 }
 
-function azureGeoToTargetPoint(anchors, position, marker = photoTargetMarkers(4)) {
+function azureGeoToTargetPoint(anchors, position, marker = photoTargetMarkers(4), panelRatio = SATELLITE_PANEL_RATIO) {
   if (!anchors?.tee || !anchors?.green || !position) {
     return null;
   }
@@ -1423,14 +1696,14 @@ function azureGeoToTargetPoint(anchors, position, marker = photoTargetMarkers(4)
   const progress = (currentVector.x * fairway.x + currentVector.y * fairway.y) / lengthSquared;
   const crossMeters = ((currentVector.x * fairway.y) - (currentVector.y * fairway.x)) / length;
   const targetLength = marker.tee[1] - marker.green[1];
-  const crossScale = targetLength / length;
+  const crossScale = (targetLength * normalizedSatelliteRatio(panelRatio)) / length;
   return {
     x: Number(clamp(marker.tee[0] + crossMeters * crossScale, -8, 108).toFixed(2)),
     y: Number(clamp(marker.tee[1] - progress * targetLength, -8, 108).toFixed(2))
   };
 }
 
-function azureTargetPointToGeo(anchors, point, marker = photoTargetMarkers(4)) {
+function azureTargetPointToGeo(anchors, point, marker = photoTargetMarkers(4), panelRatio = SATELLITE_PANEL_RATIO) {
   if (!anchors?.tee || !anchors?.green || !point) {
     return null;
   }
@@ -1442,7 +1715,7 @@ function azureTargetPointToGeo(anchors, point, marker = photoTargetMarkers(4)) {
     return null;
   }
   const progress = (marker.tee[1] - Number(point.y)) / targetLength;
-  const crossMeters = (Number(point.x) - marker.tee[0]) * (length / targetLength);
+  const crossMeters = (Number(point.x) - marker.tee[0]) * (length / (targetLength * normalizedSatelliteRatio(panelRatio)));
   const geoPerp = {
     x: fairway.y / length,
     y: -fairway.x / length
@@ -1451,6 +1724,19 @@ function azureTargetPointToGeo(anchors, point, marker = photoTargetMarkers(4)) {
     x: fairway.x * progress + geoPerp.x * crossMeters,
     y: fairway.y * progress + geoPerp.y * crossMeters
   });
+}
+
+function satellitePanelRatio() {
+  const activeRound = getActiveRound(state);
+  if (activeRound && view === "play" && typeof window !== "undefined" && window.innerWidth && window.innerHeight) {
+    return normalizedSatelliteRatio(window.innerHeight / window.innerWidth);
+  }
+  return SATELLITE_PANEL_RATIO;
+}
+
+function normalizedSatelliteRatio(value) {
+  const ratio = Number(value);
+  return Number.isFinite(ratio) && ratio > 0 ? clamp(ratio, 0.45, 3.1) : SATELLITE_PANEL_RATIO;
 }
 
 function clearAzureShotPlan(courseId, holeNumber) {
@@ -2318,8 +2604,46 @@ function renderRoundRow(round) {
           return `${escapeHtml(player.name)} ${totals.score} (${formatToPar(totals.toPar)})`;
         }).join(" - ")}</p>
       </div>
+      ${renderRoundShotLog(round)}
     </article>
   `;
+}
+
+function renderRoundShotLog(round) {
+  const holes = (round.entries || [])
+    .map((entry) => ({
+      holeNumber: entry.holeNumber,
+      shots: trackedShots(entry)
+    }))
+    .filter((entry) => entry.shots.length);
+  if (!holes.length) {
+    return "";
+  }
+  return `
+    <div class="round-shot-log">
+      ${holes.map((entry) => `
+        <details>
+          <summary>Hole ${entry.holeNumber} - ${entry.shots.length} shot${entry.shots.length === 1 ? "" : "s"}</summary>
+          <div class="round-shot-list">
+            ${entry.shots.map((shot) => `
+              <div>
+                <strong>Shot ${shot.number}</strong>
+                <span>${Number.isFinite(Number(shot.yards)) ? Number(shot.yards) : "-"} yd</span>
+                ${shot.end ? `<small>${formatShotLanding(shot.end)}</small>` : ""}
+              </div>
+            `).join("")}
+          </div>
+        </details>
+      `).join("")}
+    </div>
+  `;
+}
+
+function formatShotLanding(point) {
+  if (!point || typeof point.lat !== "number" || typeof point.lng !== "number") {
+    return "";
+  }
+  return `${point.lat.toFixed(6)}, ${point.lng.toFixed(6)}`;
 }
 
 function renderBag() {
@@ -2348,6 +2672,10 @@ function handleClick(event) {
 
   if (action === "gps") {
     startGps();
+  }
+
+  if (action === "track-shot") {
+    trackShot();
   }
 
   if (action === "gps-test-position") {
@@ -3235,7 +3563,8 @@ function finishSatelliteAnchorDrag(event) {
   photoDrag = null;
   drag.handle.classList.remove("dragging");
   const point = drag.latestPoint || eventToPanelPercent(drag.panel, event);
-  const position = point ? azureTargetPointToGeo(drag.anchors, point, drag.marker) : null;
+  const rect = drag.panel?.getBoundingClientRect?.();
+  const position = point ? azureTargetPointToGeo(drag.anchors, point, drag.marker, rect?.width && rect?.height ? rect.height / rect.width : satellitePanelRatio()) : null;
   if (!position) {
     render();
     return;
@@ -3444,14 +3773,17 @@ function startRound(courseId, teeId = "") {
   state.selectedCourseId = course.id;
   view = "play";
   window.location.hash = "play";
+  queueCourseSatellitePreload(course, round.currentHole);
   persist("Round started.");
 }
 
 function openRoundSetup(courseId) {
+  const course = getCourse(state, courseId);
   state.selectedCourseId = courseId;
   state.activeRoundId = "";
   view = "play";
   window.location.hash = "play";
+  queueCourseSatellitePreload(course, 1);
   persist("Course ready.");
 }
 
