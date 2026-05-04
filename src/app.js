@@ -673,11 +673,10 @@ function renderAzureHoleVisual(hole, course) {
           <circle class="photo-plan-point" cx="${point.x}" cy="${point.y}" r="1.9"></circle>
           <path class="photo-plan-cross" d="M ${point.x - 1.4} ${point.y} L ${point.x + 1.4} ${point.y} M ${point.x} ${point.y - 1.4} L ${point.x} ${point.y + 1.4}"></path>
         `).join("") || ""}
-        <circle class="photo-green-marker" cx="${green.x}" cy="${green.y}" r="4.1"></circle>
-        <circle class="photo-green-core" cx="${green.x}" cy="${green.y}" r="1.15"></circle>
-        <circle class="${gpsPoint ? "photo-tee-marker reference" : "photo-tee-marker"}" cx="${tee.x}" cy="${tee.y}" r="${gpsPoint ? "1.45" : "2.3"}"></circle>
-        ${gpsPoint ? renderPhotoGpsMarker(gpsPoint) : ""}
       </svg>
+      ${renderPhotoGreenMarkerElement(green, hole.par)}
+      ${renderPhotoTeeMarkerElement(tee, Boolean(gpsPoint))}
+      ${renderPhotoGpsMarker(gpsPoint)}
       ${photoEditMode ? `
         <button class="photo-drag-handle tee" type="button" style="left:${tee.x}%; top:${tee.y}%;" data-azure-handle="tee" data-course-id="${courseId}" data-hole="${hole.number}" aria-label="Drag satellite tee anchor">T</button>
         <button class="photo-drag-handle green" type="button" style="left:${green.x}%; top:${green.y}%;" data-azure-handle="green" data-course-id="${courseId}" data-hole="${hole.number}" aria-label="Drag satellite green anchor">G</button>
@@ -773,7 +772,6 @@ function renderPhotoHoleVisual(hole) {
   const zoomClass = zoom > 1 ? " zoomed" : "";
   const gpsMarker = photoEditMode ? null : photoGpsMarker(hole, courseId);
   const shotStartMarker = gpsMarker || { x: marker.tee[0], y: marker.tee[1] };
-  const teeMarkerClass = gpsMarker ? "photo-tee-marker reference" : "photo-tee-marker";
 
   return `
     <section class="hole-visual photo-hole${editClass}${planningClass}${zoomClass}" aria-label="${escapeAttribute(course?.name || "Course")} focused top-down cut-out for hole ${hole.number}">
@@ -796,11 +794,11 @@ function renderPhotoHoleVisual(hole) {
               </linearGradient>
             </defs>
             ${shotPlan ? "" : renderPhotoGuideRoute(marker, shotStartMarker)}
-            ${renderPhotoGreenLayer(marker, hole.par)}
             ${renderPhotoPlanRoute(marker, shotPlan, hole.number)}
-            <circle class="${teeMarkerClass}" cx="${marker.tee[0]}" cy="${marker.tee[1]}" r="${gpsMarker ? "1.45" : "2.3"}"></circle>
-            ${renderPhotoGpsMarker(gpsMarker)}
           </svg>
+          ${renderPhotoGreenMarkerElement({ x: marker.green[0], y: marker.green[1] }, hole.par)}
+          ${renderPhotoTeeMarkerElement({ x: marker.tee[0], y: marker.tee[1] }, Boolean(gpsMarker))}
+          ${renderPhotoGpsMarker(gpsMarker)}
         </div>
       </div>
       ${photoEditMode ? `
@@ -842,14 +840,6 @@ function renderPhotoGuideRoute(marker, start = null) {
   `;
 }
 
-function renderPhotoGreenLayer(marker, par) {
-  const radius = Number(par) === 3 ? 4.6 : 4.1;
-  return `
-    <circle class="photo-green-marker" cx="${marker.green[0]}" cy="${marker.green[1]}" r="${radius}"></circle>
-    <circle class="photo-green-core" cx="${marker.green[0]}" cy="${marker.green[1]}" r="1.15"></circle>
-  `;
-}
-
 function renderPhotoPlanRoute(marker, shotPlan, holeNumber) {
   if (!shotPlan) {
     return "";
@@ -878,12 +868,26 @@ function renderPhotoGpsMarker(marker) {
     ? ` data-gps-test-marker="true" role="button" tabindex="0" aria-label="Drag GPS test marker"`
     : "";
   return `
-    <g class="photo-gps-marker${gpsTestEnabled() ? " draggable" : ""}" transform="translate(${marker.x} ${marker.y})"${dragAttributes}>
-      <circle class="photo-gps-hit" r="7.4"></circle>
-      <circle class="photo-gps-pulse" r="4.8"></circle>
-      <circle class="photo-gps-dot" r="1.65"></circle>
-    </g>
+    <span class="photo-gps-marker${gpsTestEnabled() ? " draggable" : ""}" style="left:${marker.x}%; top:${marker.y}%;"${dragAttributes}>
+      <span class="photo-gps-hit"></span>
+      <span class="photo-gps-pulse"></span>
+      <span class="photo-gps-dot"></span>
+    </span>
   `;
+}
+
+function renderPhotoGreenMarkerElement(marker, par) {
+  const size = Number(par) === 3 ? 36 : 32;
+  return `
+    <span class="photo-green-marker" style="left:${marker.x}%; top:${marker.y}%; --marker-size:${size}px;">
+      <span class="photo-green-core"></span>
+    </span>
+  `;
+}
+
+function renderPhotoTeeMarkerElement(marker, reference = false) {
+  const size = reference ? 12 : 18;
+  return `<span class="photo-tee-marker${reference ? " reference" : ""}" style="left:${marker.x}%; top:${marker.y}%; --marker-size:${size}px;"></span>`;
 }
 
 function renderGpsTestControls(hole, courseId) {

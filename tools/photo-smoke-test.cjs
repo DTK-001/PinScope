@@ -196,7 +196,7 @@ function stopStaticServer(server) {
   await page.waitForSelector('.photo-gps-marker');
   const belhus = await page.evaluate(() => ({
     source: document.querySelector('canvas.photo-hole-canvas')?.dataset.photoCourseId || '',
-    marker: document.querySelector('.photo-gps-marker')?.getAttribute('transform') || '',
+    marker: document.querySelector('.photo-gps-marker')?.getAttribute('style') || '',
     editKeyV1: localStorage.getItem('pinscope:course-photo-edits:verified-belhus-park:v1'),
     editKeyV2: localStorage.getItem('pinscope:course-photo-edits:verified-belhus-park:v2')
   }));

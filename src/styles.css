@@ -967,6 +967,7 @@ select option {
 .photo-guide-route {
   stroke: #c970ff;
   stroke-width: 0.58;
+  vector-effect: non-scaling-stroke;
 }
 
 .photo-plan-route {
@@ -977,12 +978,14 @@ select option {
 
 .photo-plan-route {
   stroke-width: 0.82;
+  vector-effect: non-scaling-stroke;
 }
 
 .photo-plan-point {
   fill: rgba(255, 79, 216, 0.12);
   stroke: #ff9bed;
   stroke-width: 0.42;
+  vector-effect: non-scaling-stroke;
 }
 
 .photo-plan-cross {
@@ -990,10 +993,18 @@ select option {
   stroke: #f8f3ff;
   stroke-width: 0.42;
   stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
 }
 
 .photo-gps-marker {
+  position: absolute;
+  z-index: 3;
+  display: block;
+  width: 28px;
+  height: 28px;
+  transform: translate(-50%, -50%);
   filter: drop-shadow(0 0 4px rgba(255, 79, 216, 0.92));
+  pointer-events: none;
 }
 
 .photo-gps-marker.draggable {
@@ -1006,45 +1017,76 @@ select option {
 }
 
 .photo-gps-hit {
-  fill: transparent;
+  position: absolute;
+  inset: -8px;
+  border-radius: 999px;
+  background: transparent;
   pointer-events: all;
 }
 
 .photo-gps-pulse {
-  fill: rgba(255, 79, 216, 0.2);
-  stroke: rgba(248, 243, 255, 0.9);
-  stroke-width: 0.28;
+  position: absolute;
+  inset: 3px;
+  border: 2px solid rgba(248, 243, 255, 0.9);
+  border-radius: 999px;
+  background: rgba(255, 79, 216, 0.2);
 }
 
 .photo-gps-dot {
-  fill: #ff4fd8;
-  stroke: #f8f3ff;
-  stroke-width: 0.42;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 9px;
+  height: 9px;
+  border: 2px solid #f8f3ff;
+  border-radius: 999px;
+  background: #ff4fd8;
+  transform: translate(-50%, -50%);
 }
 
 .photo-tee-marker {
-  fill: #f8f3ff;
-  stroke: rgba(255, 79, 216, 0.78);
-  stroke-width: 0.7;
+  position: absolute;
+  z-index: 3;
+  display: block;
+  width: var(--marker-size, 18px);
+  height: var(--marker-size, 18px);
+  border: 3px solid rgba(255, 79, 216, 0.78);
+  border-radius: 999px;
+  background: #f8f3ff;
   filter: drop-shadow(0 0 2px rgba(255, 79, 216, 0.62));
+  transform: translate(-50%, -50%);
+  pointer-events: none;
 }
 
 .photo-tee-marker.reference {
   opacity: 0.38;
-  stroke: rgba(248, 243, 255, 0.72);
+  border-color: rgba(248, 243, 255, 0.72);
   filter: none;
 }
 
 .photo-green-marker {
-  fill: rgba(174, 241, 126, 0.16);
-  stroke: rgba(248, 243, 255, 0.88);
-  stroke-width: 0.46;
+  position: absolute;
+  z-index: 3;
+  display: block;
+  width: var(--marker-size, 32px);
+  height: var(--marker-size, 32px);
+  border: 3px solid rgba(248, 243, 255, 0.88);
+  border-radius: 999px;
+  background: rgba(174, 241, 126, 0.16);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
 }
 
 .photo-green-core {
-  fill: #aff17e;
-  stroke: #f8f3ff;
-  stroke-width: 0.18;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 9px;
+  height: 9px;
+  border: 1px solid #f8f3ff;
+  border-radius: 999px;
+  background: #aff17e;
+  transform: translate(-50%, -50%);
 }
 
 .photo-drag-handle {
