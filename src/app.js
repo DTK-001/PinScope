@@ -446,6 +446,7 @@ function renderPlay() {
       <button class="score-fab" type="button" data-action="open-score-card" aria-label="Enter scores">
         <img src="${SCORE_BUTTON_IMAGE_SRC}" alt="" aria-hidden="true" />
       </button>
+      ${renderShotTracker(activeRound, hole)}
     </section>
   `;
 }
@@ -478,6 +479,139 @@ function renderPlayDistanceHud(hole) {
       `).join("")}
     </div>
   `;
+}
+
+function renderShotTracker(round, hole) {
+  const shotState = shotTrackingState(round, hole.number);
+  const label = `Shot ${shotState.nextNumber}`;
+  return `
+    <div class="shot-tracker ${shotState.active ? "tracking" : ""}" aria-live="polite">
+      ${shotState.status ? `<p>${escapeHtml(shotState.status)}</p>` : ""}
+      <button class="shot-track-button" type="button" data-action="track-shot">
+        ${escapeHtml(label)}
+      </button>
+    </div>
+  `;
+}
+
+function shotTrackingState(round, holeNumber) {
+  const entry = trackedRoundEntry(round, holeNumber);
+  const shots = trackedShots(entry);
+  const active = trackedActiveShot(entry);
+  const nextNumber = active?.number || shots.length + 1;
+  if (!gps.position || gps.status !== "ready") {
+    return {
+      active: Boolean(active),
+      nextNumber,
+      status: active ? "GPS needed to land this shot." : ""
+    };
+  }
+  if (active) {
+    const yards = yardsBetween(active.start, gps.position);
+    return {
+      active: true,
+      nextNumber,
+      status: yards === null ? "Walk to your ball, tap again to land it." : `${yards} yd so far`
+    };
+  }
+  const lastShot = shots.at(-1);
+  return {
+    active: false,
+    nextNumber,
+    status: lastShot?.yards ? `Last shot ${lastShot.yards} yd` : ""
+  };
+}
+
+function trackedRoundEntry(round, holeNumber) {
+  return round?.entries?.find((entry) => Number(entry.holeNumber) === Number(holeNumber)) || null;
+}
+
+function trackedShots(entry) {
+  return Array.isArray(entry?.shots) ? entry.shots : [];
+}
+
+function trackedActiveShot(entry) {
+  return entry?.activeShot && entry.activeShot.start ? entry.activeShot : null;
+}
+
+function ensureTrackedShotState(entry) {
+  if (!entry) {
+    return;
+  }
+  if (!Array.isArray(entry.shots)) {
+    entry.shots = [];
+  }
+  if (entry.activeShot && !entry.activeShot.start) {
+    entry.activeShot = null;
+  }
+}
+
+function currentGpsPoint() {
+  if (gps.status !== "ready" || !gps.position) {
+    return null;
+  }
+  return {
+    lat: gps.position.lat,
+    lng: gps.position.lng,
+    accuracy: gps.position.accuracy || 0
+  };
+}
+
+function trackedShotScore(entry) {
+  return trackedShots(entry).length + (trackedActiveShot(entry) ? 1 : 0);
+}
+
+function syncTrackedScore(round, holeNumber) {
+  const entry = trackedRoundEntry(round, holeNumber);
+  const players = getRoundPlayers(round);
+  const leadPlayer = players[0]?.id || "player-1";
+  const playerEntry = getPlayerEntry(round, holeNumber, leadPlayer) || getRoundEntry(round, holeNumber);
+  const score = trackedShotScore(entry);
+  if (playerEntry && score > 0) {
+    playerEntry.score = clamp(score, 1, 12);
+  }
+}
+
+function trackShot() {
+  const round = getActiveRound(state);
+  if (!round) {
+    return;
+  }
+  const position = currentGpsPoint();
+  if (!position) {
+    startGps();
+    flash("Start GPS, then tap Shot 1 at your ball.");
+    return;
+  }
+  const entry = trackedRoundEntry(round, round.currentHole);
+  ensureTrackedShotState(entry);
+  if (!entry) {
+    return;
+  }
+  const activeShot = trackedActiveShot(entry);
+  const now = new Date().toISOString();
+  if (activeShot) {
+    const yards = yardsBetween(activeShot.start, position);
+    entry.shots.push({
+      ...activeShot,
+      end: position,
+      endedAt: now,
+      yards: yards ?? 0
+    });
+    entry.activeShot = null;
+    syncTrackedScore(round, round.currentHole);
+    persist(yards === null ? `Shot ${activeShot.number} landed.` : `Shot ${activeShot.number}: ${yards} yd.`);
+    return;
+  }
+  const number = trackedShots(entry).length + 1;
+  entry.activeShot = {
+    id: `shot-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+    number,
+    start: position,
+    startedAt: now
+  };
+  syncTrackedScore(round, round.currentHole);
+  persist(`Shot ${number} started. Tap again at your ball.`);
 }
 
 function savedHomeCourseCount() {
@@ -688,6 +822,7 @@ function renderAzureHoleVisual(hole, course) {
   const gpsPoint = gps.status === "ready" && gps.position ? azureGeoToTargetPoint(anchors, gps.position, marker, panelRatio) : null;
   const start = gpsPoint || tee;
   const shotPlan = resolveAzureShotPlan(courseId, hole, anchors, marker, panelRatio);
+  const trackedShotOverlay = renderTrackedShotOverlay(hole, anchors, marker, panelRatio);
   const routePoints = shotPlan
     ? [start, ...shotPlan.viewPoints, green].map((point) => `${point.x},${point.y}`).join(" ")
     : "";
@@ -697,7 +832,6 @@ function renderAzureHoleVisual(hole, course) {
   const markerScale = Number((1 / Math.max(1, zoom)).toFixed(4));
   const zoomClass = zoom > 1 ? " zoomed" : "";
   const editClass = photoEditMode ? " editing" : "";
-  const hasAnchorEdit = Boolean(satelliteAnchorEdit(courseId, hole.number));
   return `
     <section class="hole-visual photo-hole azure-hole${shotPlan ? " planning" : ""}${zoomClass}${editClass}" style="--photo-marker-scale:${markerScale}; --satellite-panel-ratio:${panelRatio};" data-azure-hole="${hole.number}" data-azure-course-id="${courseId}" aria-label="${escapeAttribute(course?.name || "Course")} Azure satellite hole ${hole.number}">
       <div class="photo-pan-layer" style="transform:${photoPanTransform(pan)};">
@@ -715,6 +849,7 @@ function renderAzureHoleVisual(hole, course) {
             </defs>
             ${greenShapeSvg}
             ${guide}
+            ${trackedShotOverlay}
             ${shotPlan ? `<polyline class="photo-plan-route" points="${routePoints}" stroke="url(#azure-shot-gradient-${hole.number})"></polyline>` : ""}
             ${shotPlan?.viewPoints.map((point, index) => `
               <circle class="photo-plan-point" cx="${point.x}" cy="${point.y}" r="1.9"></circle>
@@ -745,13 +880,37 @@ function renderAzureHoleVisual(hole, course) {
       ${renderGpsTestControls(hole, courseId)}
       ${renderPhotoZoomControls(courseId, hole.number, zoom)}
       <div class="satellite-attribution">${escapeHtml(map.attribution || SATELLITE_ATTRIBUTION)}</div>
-      <div class="photo-align-toolbar">
-        <button class="photo-tool-button" type="button" data-action="toggle-azure-maps">Photo</button>
-        <button class="photo-tool-button" type="button" data-action="toggle-photo-edit">${photoEditMode ? "Done" : "Adjust"}</button>
-        ${photoEditMode && hasAnchorEdit ? `<button class="photo-tool-button" type="button" data-action="reset-satellite-anchor" data-course-id="${courseId}" data-hole="${hole.number}">Reset</button>` : ""}
-        ${shotPlan ? `<button class="photo-tool-button" type="button" data-action="clear-azure-shot-plan" data-course-id="${courseId}" data-hole="${hole.number}">Clear</button>` : ""}
-      </div>
     </section>
+  `;
+}
+
+function renderTrackedShotOverlay(hole, anchors, marker, panelRatio) {
+  const round = getActiveRound(state);
+  const entry = round ? trackedRoundEntry(round, hole.number) : null;
+  const shots = trackedShots(entry);
+  const activeShot = trackedActiveShot(entry);
+  const completed = shots
+    .map((shot) => ({
+      shot,
+      start: azureGeoToTargetPoint(anchors, shot.start, marker, panelRatio),
+      end: azureGeoToTargetPoint(anchors, shot.end, marker, panelRatio)
+    }))
+    .filter((item) => item.start && item.end);
+  const activeStart = activeShot ? azureGeoToTargetPoint(anchors, activeShot.start, marker, panelRatio) : null;
+  const activeEnd = activeShot && gps.status === "ready" && gps.position
+    ? azureGeoToTargetPoint(anchors, gps.position, marker, panelRatio)
+    : null;
+
+  return `
+    ${completed.map(({ shot, start, end }) => `
+      <line class="tracked-shot-route" x1="${start.x}" y1="${start.y}" x2="${end.x}" y2="${end.y}"></line>
+      <circle class="tracked-shot-landing" cx="${end.x}" cy="${end.y}" r="1.55"></circle>
+      <text class="tracked-shot-label" x="${end.x + 1.8}" y="${end.y - 1.8}">${shot.number}</text>
+    `).join("")}
+    ${activeStart && activeEnd ? `
+      <line class="tracked-shot-route active" x1="${activeStart.x}" y1="${activeStart.y}" x2="${activeEnd.x}" y2="${activeEnd.y}"></line>
+      <circle class="tracked-shot-landing active" cx="${activeStart.x}" cy="${activeStart.y}" r="1.4"></circle>
+    ` : ""}
   `;
 }
 
@@ -2348,8 +2507,46 @@ function renderRoundRow(round) {
           return `${escapeHtml(player.name)} ${totals.score} (${formatToPar(totals.toPar)})`;
         }).join(" - ")}</p>
       </div>
+      ${renderRoundShotLog(round)}
     </article>
   `;
+}
+
+function renderRoundShotLog(round) {
+  const holes = (round.entries || [])
+    .map((entry) => ({
+      holeNumber: entry.holeNumber,
+      shots: trackedShots(entry)
+    }))
+    .filter((entry) => entry.shots.length);
+  if (!holes.length) {
+    return "";
+  }
+  return `
+    <div class="round-shot-log">
+      ${holes.map((entry) => `
+        <details>
+          <summary>Hole ${entry.holeNumber} - ${entry.shots.length} shot${entry.shots.length === 1 ? "" : "s"}</summary>
+          <div class="round-shot-list">
+            ${entry.shots.map((shot) => `
+              <div>
+                <strong>Shot ${shot.number}</strong>
+                <span>${Number.isFinite(Number(shot.yards)) ? Number(shot.yards) : "-"} yd</span>
+                ${shot.end ? `<small>${formatShotLanding(shot.end)}</small>` : ""}
+              </div>
+            `).join("")}
+          </div>
+        </details>
+      `).join("")}
+    </div>
+  `;
+}
+
+function formatShotLanding(point) {
+  if (!point || typeof point.lat !== "number" || typeof point.lng !== "number") {
+    return "";
+  }
+  return `${point.lat.toFixed(6)}, ${point.lng.toFixed(6)}`;
 }
 
 function renderBag() {
@@ -2378,6 +2575,10 @@ function handleClick(event) {
 
   if (action === "gps") {
     startGps();
+  }
+
+  if (action === "track-shot") {
+    trackShot();
   }
 
   if (action === "gps-test-position") {

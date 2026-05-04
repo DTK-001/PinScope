@@ -91,6 +91,8 @@ export function createRound(course, teeId) {
     currentHole: 1,
     entries: course.holes.map((hole) => ({
       holeNumber: hole.number,
+      shots: [],
+      activeShot: null,
       playerEntries: players.map((player) => makePlayerEntry(hole, player.id))
     }))
   };
