@@ -451,7 +451,7 @@ function renderSelectedCourseActions(course) {
 }
 
 function courseMappedHoleCount(course) {
-  return (course?.holes || []).filter((hole) => validGeoPoint(hole?.tee) && validGeoPoint(hole?.greenCenter)).length;
+  return (course?.holes || []).filter((hole) => confirmedHoleAnchors(course, hole)).length;
 }
 
 function courseSnapshotHoleCount(course) {
@@ -1672,6 +1672,18 @@ function azureHoleAnchors(hole, course = activeVisualCourse()) {
   return { tee, green, estimated: true };
 }
 
+function confirmedHoleAnchors(course, hole) {
+  const courseId = course?.id || photoCourseId(hole);
+  const edited = satelliteAnchorEdit(courseId, hole?.number);
+  if (validGeoPoint(edited?.tee) && validGeoPoint(edited?.green)) {
+    return { tee: edited.tee, green: edited.green, edited: true };
+  }
+  if (validGeoPoint(hole?.tee) && validGeoPoint(hole?.greenCenter)) {
+    return { tee: hole.tee, green: hole.greenCenter, edited: false };
+  }
+  return null;
+}
+
 function azureMapViewForHole(anchors, marker = photoTargetMarkers(4), panelRatio = satellitePanelRatio()) {
   if (!anchors?.tee || !anchors?.green) {
     return null;
@@ -2233,6 +2245,38 @@ function setSatelliteAnchorEdit(courseId, holeNumber, field, position, anchors) 
     }
   };
   saveSatelliteAnchorEdits();
+  applySatelliteAnchorEditToHole(courseId, holeNumber);
+}
+
+function applySatelliteAnchorEditToHole(courseId, holeNumber) {
+  const course = getCourse(state, courseId);
+  const hole = course?.holes?.find((item) => Number(item.number) === Number(holeNumber));
+  const edited = satelliteAnchorEdit(courseId, holeNumber);
+  if (!course || !hole || !validGeoPoint(edited?.tee) || !validGeoPoint(edited?.green)) {
+    return false;
+  }
+  const currentSignature = snapshotGeometrySignature(course.id, hole);
+  hole.tee = edited.tee;
+  hole.greenCenter = edited.green;
+  const estimated = estimateGreenFrontBackFromPolygon(
+    edited.tee,
+    edited.green,
+    Array.isArray(hole.geometry?.greenPolygon) ? hole.geometry.greenPolygon : [],
+    null,
+    null
+  );
+  hole.greenFront = estimated.front || hole.greenFront || edited.green;
+  hole.greenBack = estimated.back || hole.greenBack || edited.green;
+  hole.mapping = pruneEmpty({
+    ...(hole.mapping || {}),
+    source: "PinScope satellite alignment",
+    updatedAt: new Date().toISOString()
+  });
+  if (hole.snapshot && currentSignature !== snapshotGeometrySignature(course.id, hole)) {
+    hole.snapshot = null;
+  }
+  saveState(state);
+  return true;
 }
 
 function resetSatelliteAnchorEdit(courseId, holeNumber) {
@@ -4436,9 +4480,14 @@ async function publishMappedCourse(courseId, options = {}) {
     applyPublishedCourseDefaults(publishedCourses);
     saveState(state);
     const snapshotCount = Array.isArray(result?.snapshots?.generated) ? result.snapshots.generated.length : 0;
+    const skippedCount = Array.isArray(result?.snapshots?.skipped) ? result.snapshots.skipped.length : 0;
+    const errorCount = Array.isArray(result?.snapshots?.errors) ? result.snapshots.errors.length : 0;
+    const snapshotIssueText = skippedCount || errorCount
+      ? ` ${skippedCount ? `${skippedCount} skipped` : ""}${skippedCount && errorCount ? ", " : ""}${errorCount ? `${errorCount} failed` : ""}.`
+      : "";
     remoteCourseSyncStatus = snapshotCount
-      ? `Published ${course.name || "course"} with ${snapshotCount} saved satellite snapshot${snapshotCount === 1 ? "" : "s"}. New devices will load this course automatically.`
-      : `Published ${course.name || "course"}. New devices will load this course automatically.${result?.snapshots?.error ? ` Snapshot generation needs attention: ${result.snapshots.error}` : ""}`;
+      ? `Published ${course.name || "course"} with ${snapshotCount} saved satellite snapshot${snapshotCount === 1 ? "" : "s"}.${snapshotIssueText} New devices will load this course automatically.`
+      : `Published ${course.name || "course"}.${snapshotIssueText} New devices will load this course automatically.${result?.snapshots?.error ? ` Snapshot generation needs attention: ${result.snapshots.error}` : ""}`;
     flash(remoteCourseSyncStatus);
     return true;
   } catch (error) {
@@ -4559,7 +4608,7 @@ function courseToSharedDefault(course) {
     return null;
   }
 
-  const holes = course.holes.map(holeToSharedDefault).filter(Boolean);
+  const holes = course.holes.map((hole) => holeToSharedDefault(hole, course)).filter(Boolean);
   const hasMappedHole = holes.some((hole) => validGeoPoint(hole.tee) || validGeoPoint(hole.greenCenter) || hole.geometry?.greenPolygon?.length);
   const shouldExport = hasMappedHole || ["osm", "manual", "shared"].includes(course.source);
   if (!shouldExport) {
@@ -4590,24 +4639,37 @@ function courseToSharedDefault(course) {
   });
 }
 
-function holeToSharedDefault(hole) {
+function holeToSharedDefault(hole, course = null) {
   if (!hole || !Number.isFinite(Number(hole.number))) {
     return null;
   }
 
+  const anchors = confirmedHoleAnchors(course, hole);
+  const tee = anchors?.tee || hole.tee;
+  const greenCenter = anchors?.green || hole.greenCenter;
   const geometry = normalizeExportGeometry(hole.geometry, hole.greenPolygon);
+  const estimated = estimateGreenFrontBackFromPolygon(
+    tee,
+    greenCenter,
+    geometry.greenPolygon || [],
+    anchors?.edited ? null : hole.greenFront,
+    anchors?.edited ? null : hole.greenBack
+  );
   return pruneEmpty({
     number: Number(hole.number),
     name: hole.name || "",
     par: Number.isFinite(Number(hole.par)) ? Number(hole.par) : null,
     strokeIndex: Number.isFinite(Number(hole.strokeIndex)) ? Number(hole.strokeIndex) : null,
     yards: normalizeExportObject(hole.yards),
-    tee: normalizeExportPoint(hole.tee),
-    greenCenter: normalizeExportPoint(hole.greenCenter),
-    greenFront: normalizeExportPoint(hole.greenFront),
-    greenBack: normalizeExportPoint(hole.greenBack),
+    tee: normalizeExportPoint(tee),
+    greenCenter: normalizeExportPoint(greenCenter),
+    greenFront: normalizeExportPoint(estimated.front),
+    greenBack: normalizeExportPoint(estimated.back),
     geometry,
-    mapping: normalizeExportObject(hole.mapping),
+    mapping: pruneEmpty({
+      ...normalizeExportObject(hole.mapping),
+      satelliteAligned: Boolean(anchors?.edited)
+    }),
     osm: hole.osm || null,
     snapshot: normalizeExportSnapshot(hole.snapshot),
     visual: sanitizeVisualCoordinates(hole.visual)
@@ -4630,7 +4692,8 @@ function normalizeExportSnapshot(snapshot) {
     tileset: normalized.tileset || "microsoft.imagery",
     attribution: normalized.attribution || "Imagery: Azure Maps",
     generatedAt: normalized.generatedAt || "",
-    fingerprint: normalized.fingerprint || ""
+    fingerprint: normalized.fingerprint || "",
+    geometrySignature: normalized.geometrySignature || ""
   });
 }
 
