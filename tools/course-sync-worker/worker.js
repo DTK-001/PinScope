@@ -182,6 +182,7 @@ async function createHoleSnapshot(course, hole, request, env) {
   if (!plan) {
     return null;
   }
+  const geometrySignature = snapshotGeometrySignature(course, hole);
   const fingerprint = snapshotFingerprint(course, hole, plan);
   const key = `courses/${safeKeyPart(course.id)}/holes/${String(hole.number).padStart(2, "0")}-${fingerprint}.jpg`;
   const existing = await env.PINSCOPE_SNAPSHOTS.head(key);
@@ -221,7 +222,8 @@ async function createHoleSnapshot(course, hole, request, env) {
     tileset: "microsoft.imagery",
     attribution: "Imagery: Azure Maps",
     generatedAt: new Date().toISOString(),
-    fingerprint
+    fingerprint,
+    geometrySignature
   };
 }
 
@@ -302,6 +304,19 @@ function snapshotFingerprint(course, hole, plan) {
     back: normalizePoint(hole.greenBack),
     polygon: Array.isArray(hole?.geometry?.greenPolygon) ? hole.geometry.greenPolygon.map(normalizePoint).filter(Boolean) : [],
     plan
+  });
+  return fnv1a(source).toString(16).padStart(8, "0");
+}
+
+function snapshotGeometrySignature(course, hole) {
+  const source = JSON.stringify({
+    course: course.id,
+    hole: Number(hole.number),
+    tee: normalizePoint(hole.tee),
+    green: normalizePoint(hole.greenCenter),
+    front: normalizePoint(hole.greenFront),
+    back: normalizePoint(hole.greenBack),
+    polygon: Array.isArray(hole?.geometry?.greenPolygon) ? hole.geometry.greenPolygon.map(normalizePoint).filter(Boolean) : []
   });
   return fnv1a(source).toString(16).padStart(8, "0");
 }

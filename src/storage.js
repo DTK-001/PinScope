@@ -176,31 +176,41 @@ function mergeBuiltInHole(defaultHole, storedHole) {
     return defaultHole;
   }
 
-  // Source/default data should win once you publish shared verified GPS data.
-  // Local storage only fills holes/fields that are still missing from source.
+  const storedIsNewer = mappingTimestamp(storedHole.mapping) > mappingTimestamp(defaultHole.mapping);
   const next = { ...defaultHole };
 
   GPS_FIELDS.forEach((key) => {
-    if (validGeoPoint(defaultHole[key])) {
+    if (storedIsNewer && validGeoPoint(storedHole[key])) {
+      next[key] = roundGeoPoint(storedHole[key]);
+    } else if (validGeoPoint(defaultHole[key])) {
       next[key] = roundGeoPoint(defaultHole[key]);
     } else if (validGeoPoint(storedHole[key])) {
       next[key] = roundGeoPoint(storedHole[key]);
     }
   });
 
-  next.geometry = mergeGeometry(storedHole.geometry, defaultHole.geometry);
+  next.geometry = storedIsNewer
+    ? mergeGeometry(defaultHole.geometry, storedHole.geometry)
+    : mergeGeometry(storedHole.geometry, defaultHole.geometry);
 
-  if (validSnapshot(defaultHole.snapshot)) {
+  if (!storedIsNewer && validSnapshot(defaultHole.snapshot)) {
     next.snapshot = defaultHole.snapshot;
   } else if (validSnapshot(storedHole.snapshot)) {
     next.snapshot = storedHole.snapshot;
+  } else {
+    delete next.snapshot;
   }
 
   if (storedHole.mapping && typeof storedHole.mapping === "object") {
-    next.mapping = {
-      ...storedHole.mapping,
-      ...(defaultHole.mapping && typeof defaultHole.mapping === "object" ? defaultHole.mapping : {})
-    };
+    next.mapping = storedIsNewer
+      ? {
+          ...(defaultHole.mapping && typeof defaultHole.mapping === "object" ? defaultHole.mapping : {}),
+          ...storedHole.mapping
+        }
+      : {
+          ...storedHole.mapping,
+          ...(defaultHole.mapping && typeof defaultHole.mapping === "object" ? defaultHole.mapping : {})
+        };
   }
 
   if (Array.isArray(storedHole.tees) && storedHole.tees.length && !Array.isArray(defaultHole.tees)) {
@@ -263,6 +273,11 @@ function mergeGeometry(localGeometry, defaultGeometry) {
     return undefined;
   }
   return { ...(local || {}), ...(defaults || {}) };
+}
+
+function mappingTimestamp(mapping) {
+  const time = Date.parse(mapping?.updatedAt || mapping?.publishedAt || "");
+  return Number.isFinite(time) ? time : 0;
 }
 
 function validGeoPoint(point) {

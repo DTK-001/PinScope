@@ -455,7 +455,7 @@ function courseMappedHoleCount(course) {
 }
 
 function courseSnapshotHoleCount(course) {
-  return (course?.holes || []).filter((hole) => validHoleSnapshot(hole?.snapshot)).length;
+  return (course?.holes || []).filter((hole) => validHoleSnapshot(hole?.snapshot, hole, course)).length;
 }
 
 function renderTeeSummary(course) {
@@ -1519,11 +1519,19 @@ function activeVisualCourse() {
 }
 
 function snapshotAvailableForHole(hole, course = activeVisualCourse()) {
-  return Boolean(normalizeHoleSnapshot(hole?.snapshot) && azureHoleAnchors(hole, course));
+  return Boolean(validHoleSnapshot(hole?.snapshot, hole, course) && azureHoleAnchors(hole, course));
 }
 
-function validHoleSnapshot(snapshot) {
-  return Boolean(normalizeHoleSnapshot(snapshot));
+function validHoleSnapshot(snapshot, hole = null, course = null) {
+  const normalized = normalizeHoleSnapshot(snapshot);
+  if (!normalized) {
+    return false;
+  }
+  if (!hole) {
+    return true;
+  }
+  const signature = snapshotGeometrySignature(course?.id || "", hole);
+  return !normalized.geometrySignature || normalized.geometrySignature === signature;
 }
 
 function normalizeHoleSnapshot(snapshot) {
@@ -1544,7 +1552,8 @@ function normalizeHoleSnapshot(snapshot) {
     center,
     zoom,
     width,
-    height
+    height,
+    geometrySignature: String(snapshot.geometrySignature || "").trim()
   };
 }
 
@@ -1945,6 +1954,35 @@ function snapshotTargetPointToGeo(snapshot, point, transform = null) {
     y: centerWorld.y + ((Number(imagePoint.y) - 50) / 100) * normalized.height
   };
   return worldPixelToGeo(world, normalized.zoom, AZURE_MAPS_STATIC_TILE_SIZE);
+}
+
+function snapshotGeometrySignature(courseId, hole) {
+  if (!hole) {
+    return "";
+  }
+  return fnv1a(JSON.stringify({
+    course: courseId || "",
+    hole: Number(hole.number),
+    tee: normalizeSignaturePoint(hole.tee),
+    green: normalizeSignaturePoint(hole.greenCenter),
+    front: normalizeSignaturePoint(hole.greenFront),
+    back: normalizeSignaturePoint(hole.greenBack),
+    polygon: holeGreenPolygon(hole).map(normalizeSignaturePoint).filter(Boolean)
+  })).toString(16).padStart(8, "0");
+}
+
+function fnv1a(value) {
+  let hash = 0x811c9dc5;
+  for (let index = 0; index < value.length; index += 1) {
+    hash ^= value.charCodeAt(index);
+    hash = Math.imul(hash, 0x01000193) >>> 0;
+  }
+  return hash >>> 0;
+}
+
+function normalizeSignaturePoint(point) {
+  const normalized = normalizeGeoPoint(point);
+  return normalized ? { lat: normalized.lat, lng: normalized.lng } : null;
 }
 
 function snapshotDisplayTransform(snapshot, anchors, marker = photoTargetMarkers(4), panelRatio = SATELLITE_PANEL_RATIO) {
@@ -4809,6 +4847,7 @@ function applyCourseGeometry(courseId, payload, options = {}) {
     return {
       ...cleaned,
       name: update.name || cleaned.name,
+      snapshot: null,
       tee: update.tee || cleaned.tee || null,
       greenCenter: update.greenCenter || cleaned.greenCenter || null,
       greenFront: update.greenFront || cleaned.greenFront || null,

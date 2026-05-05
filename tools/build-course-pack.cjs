@@ -261,6 +261,7 @@ function normalizeHole(raw, index) {
 }
 
 async function ensureSnapshot(course, hole, plan, options, azureKey, summary) {
+  const geometrySignature = snapshotGeometrySignature(course, hole);
   const fingerprint = snapshotFingerprint(course, hole, plan);
   const fileName = `hole-${String(hole.number).padStart(2, "0")}-${fingerprint}.jpg`;
   const courseDir = path.join(options.snapshots, safeKeyPart(course.id));
@@ -269,7 +270,7 @@ async function ensureSnapshot(course, hole, plan, options, azureKey, summary) {
 
   if (fs.existsSync(filePath) && !options.force) {
     summary.reused += 1;
-    return snapshotMetadata(imageUrl, filePath, plan, fingerprint);
+    return snapshotMetadata(imageUrl, filePath, plan, fingerprint, geometrySignature);
   }
 
   if (!azureKey) {
@@ -279,7 +280,7 @@ async function ensureSnapshot(course, hole, plan, options, azureKey, summary) {
 
   if (options.dryRun) {
     summary.generated += 1;
-    return snapshotMetadata(imageUrl, filePath, plan, fingerprint);
+    return snapshotMetadata(imageUrl, filePath, plan, fingerprint, geometrySignature);
   }
 
   fs.mkdirSync(courseDir, { recursive: true });
@@ -295,10 +296,10 @@ async function ensureSnapshot(course, hole, plan, options, azureKey, summary) {
 
   fs.writeFileSync(filePath, Buffer.from(await response.arrayBuffer()));
   summary.generated += 1;
-  return snapshotMetadata(imageUrl, filePath, plan, fingerprint);
+  return snapshotMetadata(imageUrl, filePath, plan, fingerprint, geometrySignature);
 }
 
-function snapshotMetadata(imageUrl, filePath, plan, fingerprint) {
+function snapshotMetadata(imageUrl, filePath, plan, fingerprint, geometrySignature) {
   return {
     imageUrl,
     storageKey: path.relative(repoRoot, filePath).replaceAll(path.sep, "/"),
@@ -310,7 +311,8 @@ function snapshotMetadata(imageUrl, filePath, plan, fingerprint) {
     tileset: "microsoft.imagery",
     attribution: "Imagery: Azure Maps",
     generatedAt: new Date().toISOString(),
-    fingerprint
+    fingerprint,
+    geometrySignature
   };
 }
 
@@ -465,6 +467,27 @@ function snapshotFingerprint(course, hole, plan) {
     }))
     .digest("hex")
     .slice(0, 10);
+}
+
+function snapshotGeometrySignature(course, hole) {
+  return fnv1a(JSON.stringify({
+    course: course.id,
+    hole: Number(hole.number),
+    tee: normalizePoint(hole.tee),
+    green: normalizePoint(hole.greenCenter),
+    front: normalizePoint(hole.greenFront),
+    back: normalizePoint(hole.greenBack),
+    polygon: Array.isArray(hole?.geometry?.greenPolygon) ? hole.geometry.greenPolygon.map(normalizePoint).filter(Boolean) : []
+  })).toString(16).padStart(8, "0");
+}
+
+function fnv1a(value) {
+  let hash = 0x811c9dc5;
+  for (let index = 0; index < value.length; index += 1) {
+    hash ^= value.charCodeAt(index);
+    hash = Math.imul(hash, 0x01000193) >>> 0;
+  }
+  return hash >>> 0;
 }
 
 function worldBounds(points) {
