@@ -1024,9 +1024,13 @@ function renderAzureHoleVisual(hole, course) {
         </div>
         ${renderAzureShotInfo(courseId, hole, shotPlan)}
       </div>
-      ${renderPhotoClubPanel(hole, shotPlan)}
-      ${renderGpsTestControls(hole, courseId)}
-      ${renderPhotoZoomControls(courseId, hole.number, zoom)}
+      ${photoEditMode ? "" : renderPhotoClubPanel(hole, shotPlan)}
+      ${photoEditMode ? "" : renderGpsTestControls(hole, courseId)}
+      ${photoEditMode ? "" : renderPhotoZoomControls(courseId, hole.number, zoom)}
+      <div class="photo-align-toolbar">
+        <button class="photo-tool-button" type="button" data-action="toggle-photo-edit">${photoEditMode ? "Done" : "Adjust"}</button>
+        ${photoEditMode && anchors.edited ? `<button class="photo-tool-button" type="button" data-action="reset-satellite-anchor" data-course-id="${courseId}" data-hole="${hole.number}">Reset</button>` : ""}
+      </div>
       <div class="satellite-attribution">${escapeHtml(map.attribution || SATELLITE_ATTRIBUTION)}</div>
     </section>
   `;
