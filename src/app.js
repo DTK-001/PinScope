@@ -883,17 +883,20 @@ function renderSnapshotHoleVisual(hole, course) {
   const courseId = course?.id || photoCourseId(hole);
   const snapshot = normalizeHoleSnapshot(hole?.snapshot);
   const anchors = azureHoleAnchors(hole, course);
-  if (!snapshot || !anchors) {
+  const marker = photoTargetMarkers(hole.par);
+  const panelRatio = snapshot.height / snapshot.width;
+  const transform = snapshotDisplayTransform(snapshot, anchors, marker, panelRatio);
+  if (!snapshot || !anchors || !transform) {
     return renderAzureHoleVisual(hole, course);
   }
 
-  const tee = snapshotGeoToTargetPoint(snapshot, anchors.tee) || { x: 50, y: 82 };
-  const green = snapshotGeoToTargetPoint(snapshot, anchors.green) || { x: 50, y: 24 };
-  const greenShapeSvg = renderSnapshotGreenShapeSvg(hole, snapshot);
-  const gpsPoint = gps.status === "ready" && gps.position ? snapshotGeoToTargetPoint(snapshot, gps.position) : null;
+  const tee = { x: marker.tee[0], y: marker.tee[1] };
+  const green = { x: marker.green[0], y: marker.green[1] };
+  const greenShapeSvg = renderSnapshotGreenShapeSvg(hole, snapshot, transform);
+  const gpsPoint = gps.status === "ready" && gps.position ? snapshotGeoToTargetPoint(snapshot, gps.position, transform) : null;
   const start = gpsPoint || tee;
-  const shotPlan = resolveSnapshotShotPlan(courseId, hole, anchors, snapshot);
-  const trackedShotOverlay = renderSnapshotTrackedShotOverlay(hole, snapshot);
+  const shotPlan = resolveSnapshotShotPlan(courseId, hole, anchors, snapshot, transform);
+  const trackedShotOverlay = renderSnapshotTrackedShotOverlay(hole, snapshot, transform);
   const routePoints = shotPlan
     ? [start, ...shotPlan.viewPoints, green].map((point) => `${point.x},${point.y}`).join(" ")
     : "";
@@ -904,11 +907,13 @@ function renderSnapshotHoleVisual(hole, course) {
   const zoomClass = zoom > 1 ? " zoomed" : "";
   const attribution = snapshot.attribution || "Imagery: Azure Maps";
   return `
-    <section class="hole-visual photo-hole azure-hole snapshot-hole${shotPlan ? " planning" : ""}${zoomClass}" style="--photo-marker-scale:${markerScale}; --satellite-panel-ratio:${snapshot.height / snapshot.width};" data-snapshot-hole="${hole.number}" data-azure-hole="${hole.number}" data-azure-course-id="${courseId}" aria-label="${escapeAttribute(course?.name || "Course")} saved satellite snapshot hole ${hole.number}">
+    <section class="hole-visual photo-hole azure-hole snapshot-hole${shotPlan ? " planning" : ""}${zoomClass}" style="--photo-marker-scale:${markerScale}; --satellite-panel-ratio:${panelRatio};" data-snapshot-hole="${hole.number}" data-azure-hole="${hole.number}" data-azure-course-id="${courseId}" aria-label="${escapeAttribute(course?.name || "Course")} saved satellite snapshot hole ${hole.number}">
       <div class="photo-pan-layer" style="transform:${photoPanTransform(pan)};">
         <div class="photo-zoom-layer" style="transform:scale(${zoom});">
           <div class="azure-tile-layer loaded snapshot-tile-layer" data-azure-tile-layer>
-            <img class="azure-map-image snapshot-map-image" src="${escapeAttribute(snapshot.imageUrl)}" alt="" aria-hidden="true" loading="eager" decoding="async" referrerpolicy="no-referrer" data-azure-tile data-loaded="1" style="left:0%; top:0%; width:100%; height:100%; transform:rotate(0deg);" />
+            <svg class="snapshot-map-svg" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+              <image class="snapshot-map-image" href="${escapeAttribute(snapshot.imageUrl)}" x="0" y="0" width="100" height="100" preserveAspectRatio="none" transform="${snapshotImageTransform(transform)}" data-azure-tile data-loaded="1"></image>
+            </svg>
           </div>
           <svg class="photo-hole-overlay" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
             <defs>
@@ -1318,23 +1323,23 @@ function renderPhotoGpsMarker(marker) {
   `;
 }
 
-function renderSnapshotGreenShapeSvg(hole, snapshot) {
+function renderSnapshotGreenShapeSvg(hole, snapshot, transform) {
   const polygon = Array.isArray(hole?.geometry?.greenPolygon) ? hole.geometry.greenPolygon : [];
   const points = polygon
-    .map((point) => snapshotGeoToTargetPoint(snapshot, point))
+    .map((point) => snapshotGeoToTargetPoint(snapshot, point, transform))
     .filter(Boolean);
   if (!points.length) {
     return "";
   }
   const path = points.map((point) => `${point.x},${point.y}`).join(" ");
-  const center = snapshotGeoToTargetPoint(snapshot, hole.greenCenter) || { x: 50, y: 50 };
+  const center = snapshotGeoToTargetPoint(snapshot, hole.greenCenter, transform) || { x: 50, y: 50 };
   return `
     <polygon class="photo-osm-green-shape" points="${path}"></polygon>
     <circle class="photo-osm-green-centre" cx="${center.x}" cy="${center.y}" r="1.8"></circle>
   `;
 }
 
-function renderSnapshotTrackedShotOverlay(hole, snapshot) {
+function renderSnapshotTrackedShotOverlay(hole, snapshot, transform) {
   const round = getActiveRound(state);
   const entry = round ? trackedRoundEntry(round, hole.number) : null;
   const shots = trackedShots(entry);
@@ -1342,13 +1347,13 @@ function renderSnapshotTrackedShotOverlay(hole, snapshot) {
   const completed = shots
     .map((shot) => ({
       shot,
-      start: snapshotGeoToTargetPoint(snapshot, shot.start),
-      end: snapshotGeoToTargetPoint(snapshot, shot.end)
+      start: snapshotGeoToTargetPoint(snapshot, shot.start, transform),
+      end: snapshotGeoToTargetPoint(snapshot, shot.end, transform)
     }))
     .filter((item) => item.start && item.end);
-  const activeStart = activeShot ? snapshotGeoToTargetPoint(snapshot, activeShot.start) : null;
+  const activeStart = activeShot ? snapshotGeoToTargetPoint(snapshot, activeShot.start, transform) : null;
   const activeEnd = activeShot && gps.status === "ready" && gps.position
-    ? snapshotGeoToTargetPoint(snapshot, gps.position)
+    ? snapshotGeoToTargetPoint(snapshot, gps.position, transform)
     : null;
 
   return `
@@ -1874,7 +1879,7 @@ function resolveAzureShotPlan(courseId, hole, anchors, marker, panelRatio = sate
   };
 }
 
-function resolveSnapshotShotPlan(courseId, hole, anchors, snapshot) {
+function resolveSnapshotShotPlan(courseId, hole, anchors, snapshot, transform) {
   const saved = azureShotPlans[azureShotPlanKey(courseId, hole.number)];
   const points = sortAzurePlanPoints(anchors, saved?.points || []);
   if (!points.length) {
@@ -1891,12 +1896,23 @@ function resolveSnapshotShotPlan(courseId, hole, anchors, snapshot) {
   });
   return {
     points,
-    viewPoints: points.map((point) => snapshotGeoToTargetPoint(snapshot, point)).filter(Boolean),
+    viewPoints: points.map((point) => snapshotGeoToTargetPoint(snapshot, point, transform)).filter(Boolean),
     segments
   };
 }
 
-function snapshotGeoToTargetPoint(snapshot, position) {
+function snapshotGeoToTargetPoint(snapshot, position, transform = null) {
+  const imagePoint = snapshotGeoToImagePoint(snapshot, position);
+  if (!imagePoint) {
+    return null;
+  }
+  if (transform) {
+    return snapshotImagePointToTarget(imagePoint, transform);
+  }
+  return imagePoint;
+}
+
+function snapshotGeoToImagePoint(snapshot, position) {
   const normalized = normalizeHoleSnapshot(snapshot);
   if (!normalized || !validGeoPoint(position)) {
     return null;
@@ -1914,17 +1930,139 @@ function snapshotGeoToTargetPoint(snapshot, position) {
   };
 }
 
-function snapshotTargetPointToGeo(snapshot, point) {
+function snapshotTargetPointToGeo(snapshot, point, transform = null) {
   const normalized = normalizeHoleSnapshot(snapshot);
   if (!normalized || !point) {
     return null;
   }
+  const imagePoint = transform ? snapshotTargetPointToImage(point, transform) : point;
+  if (!imagePoint) {
+    return null;
+  }
   const centerWorld = geoToWorldPixel(normalized.center, normalized.zoom, AZURE_MAPS_STATIC_TILE_SIZE);
   const world = {
-    x: centerWorld.x + ((Number(point.x) - 50) / 100) * normalized.width,
-    y: centerWorld.y + ((Number(point.y) - 50) / 100) * normalized.height
+    x: centerWorld.x + ((Number(imagePoint.x) - 50) / 100) * normalized.width,
+    y: centerWorld.y + ((Number(imagePoint.y) - 50) / 100) * normalized.height
   };
   return worldPixelToGeo(world, normalized.zoom, AZURE_MAPS_STATIC_TILE_SIZE);
+}
+
+function snapshotDisplayTransform(snapshot, anchors, marker = photoTargetMarkers(4), panelRatio = SATELLITE_PANEL_RATIO) {
+  const normalized = normalizeHoleSnapshot(snapshot);
+  const tee = snapshotGeoToImagePoint(normalized, anchors?.tee);
+  const green = snapshotGeoToImagePoint(normalized, anchors?.green);
+  if (!normalized || !tee || !green || !marker?.tee || !marker?.green) {
+    return null;
+  }
+
+  const ratio = normalizedSatelliteRatio(panelRatio);
+  const sourceTee = { x: tee.x, y: tee.y * ratio };
+  const sourceGreen = { x: green.x, y: green.y * ratio };
+  const targetTee = { x: Number(marker.tee[0]), y: Number(marker.tee[1]) * ratio };
+  const targetGreen = { x: Number(marker.green[0]), y: Number(marker.green[1]) * ratio };
+  const sourceVector = {
+    x: sourceGreen.x - sourceTee.x,
+    y: sourceGreen.y - sourceTee.y
+  };
+  const targetVector = {
+    x: targetGreen.x - targetTee.x,
+    y: targetGreen.y - targetTee.y
+  };
+  const lengthSquared = sourceVector.x * sourceVector.x + sourceVector.y * sourceVector.y;
+  if (lengthSquared < 0.01) {
+    return null;
+  }
+
+  const a = (targetVector.x * sourceVector.x + targetVector.y * sourceVector.y) / lengthSquared;
+  const b = (targetVector.y * sourceVector.x - targetVector.x * sourceVector.y) / lengthSquared;
+  const matrix = {
+    a,
+    b,
+    c: -b,
+    d: a,
+    tx: targetTee.x - (a * sourceTee.x - b * sourceTee.y),
+    ty: targetTee.y - (b * sourceTee.x + a * sourceTee.y)
+  };
+  return {
+    ratio,
+    matrix,
+    inverse: invertSnapshotMatrix(matrix)
+  };
+}
+
+function snapshotImagePointToTarget(point, transform) {
+  if (!point || !transform?.matrix) {
+    return null;
+  }
+  const source = {
+    x: Number(point.x),
+    y: Number(point.y) * transform.ratio
+  };
+  const target = applySnapshotMatrix(source, transform.matrix);
+  return {
+    x: Number(clamp(target.x, -32, 132).toFixed(2)),
+    y: Number(clamp(target.y / transform.ratio, -32, 132).toFixed(2))
+  };
+}
+
+function snapshotTargetPointToImage(point, transform) {
+  if (!point || !transform?.inverse) {
+    return null;
+  }
+  const target = {
+    x: Number(point.x),
+    y: Number(point.y) * transform.ratio
+  };
+  const source = applySnapshotMatrix(target, transform.inverse);
+  return {
+    x: Number(source.x.toFixed(2)),
+    y: Number((source.y / transform.ratio).toFixed(2))
+  };
+}
+
+function snapshotImageTransform(transform) {
+  if (!transform?.matrix) {
+    return "";
+  }
+  const { a, b, c, d, tx, ty } = transform.matrix;
+  const ratio = transform.ratio || 1;
+  const svgA = a;
+  const svgB = b / ratio;
+  const svgC = c * ratio;
+  const svgD = d;
+  const svgTx = tx;
+  const svgTy = ty / ratio;
+  return `matrix(${formatTransformNumber(svgA)} ${formatTransformNumber(svgB)} ${formatTransformNumber(svgC)} ${formatTransformNumber(svgD)} ${formatTransformNumber(svgTx)} ${formatTransformNumber(svgTy)})`;
+}
+
+function applySnapshotMatrix(point, matrix) {
+  return {
+    x: matrix.a * point.x + matrix.c * point.y + matrix.tx,
+    y: matrix.b * point.x + matrix.d * point.y + matrix.ty
+  };
+}
+
+function invertSnapshotMatrix(matrix) {
+  const determinant = matrix.a * matrix.d - matrix.b * matrix.c;
+  if (!Number.isFinite(determinant) || Math.abs(determinant) < 0.000001) {
+    return null;
+  }
+  const a = matrix.d / determinant;
+  const b = -matrix.b / determinant;
+  const c = -matrix.c / determinant;
+  const d = matrix.a / determinant;
+  return {
+    a,
+    b,
+    c,
+    d,
+    tx: -(a * matrix.tx + c * matrix.ty),
+    ty: -(b * matrix.tx + d * matrix.ty)
+  };
+}
+
+function formatTransformNumber(value) {
+  return Number(Number(value).toFixed(6));
 }
 
 function snapshotEventToPosition(panel, hole, event) {
@@ -1936,10 +2074,15 @@ function snapshotEventToPosition(panel, hole, event) {
   if (!rect.width || !rect.height) {
     return null;
   }
+  const courseId = panel.dataset.azureCourseId || state.selectedCourseId;
+  const course = getCourse(state, courseId);
+  const anchors = azureHoleAnchors(hole, course);
+  const marker = photoTargetMarkers(hole.par);
+  const transform = snapshotDisplayTransform(snapshot, anchors, marker, rect.height / rect.width);
   return snapshotTargetPointToGeo(snapshot, {
     x: ((event.clientX - rect.left) / rect.width) * 100,
     y: ((event.clientY - rect.top) / rect.height) * 100
-  });
+  }, transform);
 }
 
 function sortAzurePlanPoints(anchors, points) {

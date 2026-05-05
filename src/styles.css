@@ -978,7 +978,8 @@ select option {
 }
 
 .azure-map-tile,
-.azure-map-image {
+.azure-map-image,
+.snapshot-map-image {
   position: absolute;
   display: block;
   object-fit: fill;
@@ -991,11 +992,23 @@ select option {
 }
 
 .snapshot-map-image {
+  position: static;
   filter: saturate(1.34) contrast(1.1) brightness(1.06) hue-rotate(-8deg);
 }
 
+.snapshot-map-svg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
 .azure-map-tile[data-loaded="1"],
-.azure-map-image[data-loaded="1"] {
+.azure-map-image[data-loaded="1"],
+.snapshot-map-image[data-loaded="1"] {
   opacity: 1;
 }
 
