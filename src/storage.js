@@ -293,6 +293,10 @@ function validSnapshot(snapshot) {
   );
 }
 
+function roundGeoPoint(point) {
+  return { lat: Number(Number(point.lat).toFixed(6)), lng: Number(Number(point.lng).toFixed(6)) };
+}
+
 function mergeAttribution(primary = "", extra = "") {
   if (!extra || primary.includes(extra)) {
     return primary;
