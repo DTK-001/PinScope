@@ -78,7 +78,8 @@ export async function publishRemoteCourseDefault(course, options = {}) {
     body: JSON.stringify({
       course,
       publishedAt: new Date().toISOString(),
-      generateSnapshots: options.generateSnapshots !== false
+      generateSnapshots: options.generateSnapshots !== false,
+      forceSnapshots: options.forceSnapshots === true
     })
   });
 

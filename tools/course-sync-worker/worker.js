@@ -41,7 +41,9 @@ export default {
 
         let snapshots = { generated: [], skipped: [], errors: [] };
         if (body.generateSnapshots !== false) {
-          const snapshotResult = await generateCourseSnapshots(incomingCourses, request, env);
+          const snapshotResult = await generateCourseSnapshots(incomingCourses, request, env, {
+            force: body.forceSnapshots === true
+          });
           incomingCourses = snapshotResult.courses;
           snapshots = snapshotResult.snapshots;
         }
@@ -132,7 +134,7 @@ function normalizeIncomingCourses(body) {
     }));
 }
 
-async function generateCourseSnapshots(courses, request, env) {
+async function generateCourseSnapshots(courses, request, env, options = {}) {
   const snapshots = { generated: [], skipped: [], errors: [] };
   if (!env.AZURE_MAPS_KEY) {
     return {
@@ -160,7 +162,7 @@ async function generateCourseSnapshots(courses, request, env) {
     for (const hole of course.holes) {
       const nextHole = { ...hole };
       try {
-        const snapshot = await createHoleSnapshot(course, hole, request, env);
+        const snapshot = await createHoleSnapshot(course, hole, request, env, options);
         if (snapshot) {
           nextHole.snapshot = snapshot;
           snapshots.generated.push({ courseId: course.id, hole: Number(hole.number), imageUrl: snapshot.imageUrl });
@@ -177,7 +179,7 @@ async function generateCourseSnapshots(courses, request, env) {
   return { courses: nextCourses, snapshots };
 }
 
-async function createHoleSnapshot(course, hole, request, env) {
+async function createHoleSnapshot(course, hole, request, env, options = {}) {
   const plan = planHoleSnapshot(hole);
   if (!plan) {
     return null;
@@ -185,7 +187,7 @@ async function createHoleSnapshot(course, hole, request, env) {
   const geometrySignature = snapshotGeometrySignature(course, hole);
   const fingerprint = snapshotFingerprint(course, hole, plan);
   const key = `courses/${safeKeyPart(course.id)}/holes/${String(hole.number).padStart(2, "0")}-${fingerprint}.jpg`;
-  const existing = await env.PINSCOPE_SNAPSHOTS.head(key);
+  const existing = options.force ? null : await env.PINSCOPE_SNAPSHOTS.head(key);
   if (!existing) {
     const response = await fetch(azureStaticImageUrl(plan, env.AZURE_MAPS_KEY), {
       headers: { Accept: "image/jpeg" }

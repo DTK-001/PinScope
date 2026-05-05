@@ -437,12 +437,11 @@ function renderCourseGeometryStatus(course) {
 }
 
 function renderSelectedCourseActions(course) {
-  const canPublish = remoteCourseSyncCanPublish();
   return `
     <div class="course-actions">
       <button class="secondary-action" type="button" data-action="quick-start" data-course-id="${course.id}">Start Round</button>
       <button class="secondary-action" type="button" data-action="refresh-course-layout" data-course-id="${course.id}">OSM holes</button>
-      <button class="secondary-action" type="button" data-action="publish-course-defaults" data-course-id="${course.id}" ${canPublish ? "" : "disabled"}>Save snapshots</button>
+      <button class="secondary-action" type="button" data-action="publish-course-defaults" data-course-id="${course.id}">Save snapshots</button>
       <label class="file-action secondary-action">
         Import mapper JSON
         <input type="file" accept="application/json,.json" data-action="course-geometry-file" data-course-id="${course.id}" />
@@ -3229,7 +3228,10 @@ function handleClick(event) {
   }
 
   if (action === "publish-course-defaults") {
-    publishMappedCourse(button.dataset.courseId || state.selectedCourseId, { manual: true });
+    publishMappedCourse(button.dataset.courseId || state.selectedCourseId, {
+      manual: true,
+      forceSnapshots: true
+    });
   }
 
   if (action === "load-published-courses") {
@@ -4476,7 +4478,10 @@ async function publishMappedCourse(courseId, options = {}) {
   render();
 
   try {
-    const result = await publishRemoteCourseDefault(sharedCourse, { generateSnapshots: true });
+    const result = await publishRemoteCourseDefault(sharedCourse, {
+      generateSnapshots: true,
+      forceSnapshots: options.forceSnapshots === true
+    });
     const publishedCourses = Array.isArray(result?.courses)
       ? result.courses
       : result?.course
@@ -4865,6 +4870,8 @@ async function refreshCourseLayout(courseId) {
     const layout = await fetchOsmCourseLayout(course);
     applyCourseGeometry(course.id, layout, {
       source: "OpenStreetMap",
+      forcePublish: true,
+      forceSnapshots: true,
       message: layout.mappedCount || layout.greenShapeCount
         ? `Mapped ${layout.mappedCount || 0} tee/green hole${(layout.mappedCount || 0) === 1 ? "" : "s"} and ${layout.greenShapeCount || 0} green shape${(layout.greenShapeCount || 0) === 1 ? "" : "s"} from course-locked OSM${layout.courseArea ? " boundary" : " area"}${layout.counts ? ` (${layout.counts.holeLines} hole lines, ${layout.counts.greens} greens, ${layout.counts.tees} tees found inside the course)` : ""}. Saving fresh snapshots now.`
         : "No OSM hole geometry found for this course."
@@ -4879,6 +4886,8 @@ async function importCourseGeometryFile(file, courseId) {
     const payload = JSON.parse(await file.text());
     applyCourseGeometry(courseId, payload, {
       source: payload.source || payload.schema || "PinScope Green Mapper",
+      forcePublish: true,
+      forceSnapshots: true,
       message: "Imported mapper geometry. Saving fresh snapshots now."
     });
   } catch (error) {
@@ -4934,8 +4943,11 @@ function applyCourseGeometry(courseId, payload, options = {}) {
   course.attribution = mergeAttribution(course.attribution, payload.attribution);
   clearSatelliteAnchorEditsForHoles(course.id, changedHoleNumbers);
   persist(options.message || `Updated ${changed} mapped hole${changed === 1 ? "" : "s"}.`);
-  if (changed > 0 && options.autoPublish !== false) {
-    publishMappedCourse(course.id, { automatic: true });
+  if (options.autoPublish !== false && (changed > 0 || options.forcePublish)) {
+    publishMappedCourse(course.id, {
+      automatic: true,
+      forceSnapshots: options.forceSnapshots === true
+    });
   }
 }
 
