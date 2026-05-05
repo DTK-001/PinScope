@@ -1,4 +1,4 @@
-const CACHE_NAME = "local-loop-golf-v62";
+const CACHE_NAME = "local-loop-golf-v63";
 
 const APP_SHELL = [
   "./",
@@ -14,8 +14,6 @@ const APP_SHELL = [
   "./src/local-area.js",
   "./src/osm.js",
   "./src/storage.js",
-  "./src/sync-config.js",
-  "./src/remote-course-sync.js",
   "./src/styles.css",
   "./src/verified-courses.js",
   "./src/verified-green-defaults.js",

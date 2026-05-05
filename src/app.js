@@ -15,15 +15,6 @@ import {
 import { homeArea } from "./local-area.js";
 import { fetchOsmCourseLayout, findNearbyOsmCourses } from "./osm.js";
 import { loadState, saveState } from "./storage.js";
-import {
-  captureRemoteCourseSyncSettingsFromUrl,
-  fetchRemoteCourseDefaults,
-  getRemoteCourseSyncSettings,
-  publishRemoteCourseDefault,
-  remoteCourseSyncCanPublish,
-  remoteCourseSyncIsConfigured,
-  saveRemoteCourseSyncSettings
-} from "./remote-course-sync.js";
 
 const CRANHAM_COURSE_ID = "osm-way-23454278";
 const BELHUS_COURSE_ID = "verified-belhus-park";
@@ -62,10 +53,7 @@ const BELHUS_PHOTO_GEO_BOUNDS = {
 };
 
 const app = document.querySelector("#app");
-captureRemoteCourseSyncSettingsFromUrl();
 let state = loadState();
-let remoteCourseSyncStatus = "";
-let remoteCourseSyncBusy = false;
 let coursePhotoSources = loadCoursePhotoSources();
 let coursePhotoEdits = loadCoursePhotoEdits();
 let coursePhotoImages = new Map();
@@ -102,7 +90,6 @@ let scoreCardOpen = false;
 
 render();
 registerServiceWorker();
-loadPublishedCoursesOnStart();
 
 window.addEventListener("hashchange", () => {
   view = getViewFromHash();
@@ -270,45 +257,7 @@ function renderCourses() {
     <section class="course-list">
       ${filteredCourses.length ? filteredCourses.map(renderCourseCard).join("") : `<p class="empty-copy">No courses match that search.</p>`}
     </section>
-    ${renderRemoteCourseSyncPanel()}
-    <p class="source-note">OpenStreetMap imports require ODbL attribution. Published course geometry loads automatically from your shared PinScope cloud endpoint when configured.</p>
-  `;
-}
-
-function renderRemoteCourseSyncPanel() {
-  const settings = getRemoteCourseSyncSettings();
-  const connected = Boolean(settings.endpoint);
-  const canPublish = Boolean(settings.endpoint && settings.adminToken);
-  const showAdminPanel = !connected || canPublish || new URLSearchParams(window.location.search || "").has("pinscopeAdmin");
-  if (!showAdminPanel) {
-    return "";
-  }
-  const status = remoteCourseSyncStatus || (connected
-    ? canPublish
-      ? "Cloud sync is connected. OSM holes and mapper imports will save fresh snapshots automatically."
-      : "Cloud sync is connected for reading. Add your admin token on this device to save snapshots."
-    : "Cloud sync is not configured yet.");
-
-  return `
-    <details class="tool-panel sync-panel">
-      <summary>Cloud course sync</summary>
-      <form class="stack" data-form="sync-settings">
-        <p class="source-note">Use this once for your own admin setup. OSM holes and mapper JSON update the GPS, clear old images, then automatically save fresh mapped snapshots.</p>
-        <label>
-          <span>Sync endpoint</span>
-          <input name="endpoint" type="url" inputmode="url" value="${escapeAttribute(settings.endpoint)}" placeholder="https://your-worker.your-domain.workers.dev" />
-        </label>
-        <label>
-          <span>Admin token on this device only</span>
-          <input name="adminToken" type="password" value="${escapeAttribute(settings.adminToken)}" placeholder="Leave blank on public/user devices" autocomplete="off" />
-        </label>
-        <div class="course-actions">
-          <button class="primary-action" type="submit">Save sync settings</button>
-          <button class="secondary-action" type="button" data-action="load-published-courses" ${connected && !remoteCourseSyncBusy ? "" : "disabled"}>Load published courses</button>
-        </div>
-        <p class="source-note">${escapeHtml(status)}</p>
-      </form>
-    </details>
+    <p class="source-note">OpenStreetMap imports require ODbL attribution. Export the mapped course pack, put it in data/course-pack, then run the build script to bake snapshots into the downloadable app.</p>
   `;
 }
 
@@ -441,7 +390,7 @@ function renderSelectedCourseActions(course) {
     <div class="course-actions">
       <button class="secondary-action" type="button" data-action="quick-start" data-course-id="${course.id}">Start Round</button>
       <button class="secondary-action" type="button" data-action="refresh-course-layout" data-course-id="${course.id}">OSM holes</button>
-      <button class="secondary-action" type="button" data-action="publish-course-defaults" data-course-id="${course.id}">Save snapshots</button>
+      <button class="secondary-action" type="button" data-action="export-course-pack-json">Export course pack</button>
       <label class="file-action secondary-action">
         Import mapper JSON
         <input type="file" accept="application/json,.json" data-action="course-geometry-file" data-course-id="${course.id}" />
@@ -3223,19 +3172,8 @@ function handleClick(event) {
     refreshCourseLayout(button.dataset.courseId || state.selectedCourseId);
   }
 
-  if (action === "export-shared-course-defaults") {
-    exportSharedCourseDefaults();
-  }
-
-  if (action === "publish-course-defaults") {
-    publishMappedCourse(button.dataset.courseId || state.selectedCourseId, {
-      manual: true,
-      forceSnapshots: true
-    });
-  }
-
-  if (action === "load-published-courses") {
-    loadPublishedCourseDefaults({ manual: true });
+  if (action === "export-course-pack-json" || action === "export-shared-course-defaults") {
+    exportCoursePackJson();
   }
 
   if (action === "select-course") {
@@ -3357,21 +3295,6 @@ function handleSubmit(event) {
     persist("Bag saved.");
   }
 
-  if (form.dataset.form === "sync-settings") {
-    saveRemoteCourseSyncSettings({
-      endpoint: String(data.get("endpoint") || ""),
-      adminToken: String(data.get("adminToken") || "")
-    });
-    remoteCourseSyncStatus = remoteCourseSyncCanPublish()
-      ? "Cloud sync saved. OSM holes and mapper imports will save fresh snapshots automatically."
-      : remoteCourseSyncIsConfigured()
-        ? "Cloud sync saved for reading. Add your admin token on this device to save snapshots."
-        : "Cloud sync settings cleared.";
-    render();
-    if (remoteCourseSyncIsConfigured()) {
-      loadPublishedCourseDefaults({ manual: true });
-    }
-  }
 }
 
 function handleInput(event) {
@@ -4400,217 +4323,23 @@ function moveHole(delta) {
   persist();
 }
 
-function loadPublishedCoursesOnStart() {
-  if (!remoteCourseSyncIsConfigured()) {
-    return;
-  }
-  loadPublishedCourseDefaults({ manual: false });
-}
-
-async function loadPublishedCourseDefaults(options = {}) {
-  if (!remoteCourseSyncIsConfigured()) {
-    if (options.manual) {
-      flash("Add your cloud course sync endpoint first.");
-    }
-    return;
-  }
-
-  remoteCourseSyncBusy = true;
-  remoteCourseSyncStatus = "Loading published course data...";
-  render();
-
-  try {
-    const publishedCourses = await fetchRemoteCourseDefaults();
-    const changed = applyPublishedCourseDefaults(publishedCourses);
-    remoteCourseSyncStatus = publishedCourses.length
-      ? `Loaded ${publishedCourses.length} published course${publishedCourses.length === 1 ? "" : "s"}${changed ? " and updated this device." : "."}`
-      : "Cloud sync is connected, but no published courses are stored yet.";
-    saveState(state);
-    if (options.manual) {
-      flash(remoteCourseSyncStatus);
-    } else {
-      render();
-    }
-  } catch (error) {
-    remoteCourseSyncStatus = error.message || "Could not load published courses.";
-    if (options.manual) {
-      flash(remoteCourseSyncStatus);
-    } else {
-      render();
-    }
-  } finally {
-    remoteCourseSyncBusy = false;
-    render();
-  }
-}
-
-async function publishMappedCourse(courseId, options = {}) {
-  const course = getCourse(state, courseId);
-  if (!course) {
-    if (options.manual) {
-      flash("Select a course before saving snapshots.");
-    }
-    return false;
-  }
-
-  const sharedCourse = courseToSharedDefault(course);
-  if (!sharedCourse) {
-    if (options.manual) {
-      flash("This course does not have mapped tee/green data to snapshot yet.");
-    }
-    return false;
-  }
-
-  if (!remoteCourseSyncCanPublish()) {
-    remoteCourseSyncStatus = remoteCourseSyncIsConfigured()
-      ? "Course is mapped locally. Add your admin token on this device to save snapshots for every device."
-      : "Course is mapped locally. Add a cloud sync endpoint and admin token to save snapshots for every device.";
-    if (options.manual) {
-      flash(remoteCourseSyncStatus);
-    } else {
-      render();
-    }
-    return false;
-  }
-
-  remoteCourseSyncBusy = true;
-  remoteCourseSyncStatus = `Saving snapshots for ${course.name || "course"}...`;
-  render();
-
-  try {
-    const result = await publishRemoteCourseDefault(sharedCourse, {
-      generateSnapshots: true,
-      forceSnapshots: options.forceSnapshots === true
-    });
-    const publishedCourses = Array.isArray(result?.courses)
-      ? result.courses
-      : result?.course
-        ? [result.course]
-        : [sharedCourse];
-    applyPublishedCourseDefaults(publishedCourses);
-    saveState(state);
-    const snapshotCount = Array.isArray(result?.snapshots?.generated) ? result.snapshots.generated.length : 0;
-    const skippedCount = Array.isArray(result?.snapshots?.skipped) ? result.snapshots.skipped.length : 0;
-    const errorCount = Array.isArray(result?.snapshots?.errors) ? result.snapshots.errors.length : 0;
-    const snapshotIssueText = skippedCount || errorCount
-      ? ` ${skippedCount ? `${skippedCount} skipped` : ""}${skippedCount && errorCount ? ", " : ""}${errorCount ? `${errorCount} failed` : ""}.`
-      : "";
-    remoteCourseSyncStatus = snapshotCount
-      ? `Saved ${snapshotCount} satellite snapshot${snapshotCount === 1 ? "" : "s"} for ${course.name || "course"}.${snapshotIssueText} New devices will load this course automatically.`
-      : `Saved ${course.name || "course"} course data.${snapshotIssueText} New devices will load this course automatically.${result?.snapshots?.error ? ` Snapshot generation needs attention: ${result.snapshots.error}` : ""}`;
-    flash(remoteCourseSyncStatus);
-    return true;
-  } catch (error) {
-    remoteCourseSyncStatus = error.message || "Could not save snapshots.";
-    flash(`Mapped locally, but snapshot saving failed: ${remoteCourseSyncStatus}`);
-    return false;
-  } finally {
-    remoteCourseSyncBusy = false;
-    render();
-  }
-}
-
-function applyPublishedCourseDefaults(publishedCourses) {
-  if (!Array.isArray(publishedCourses) || !publishedCourses.length) {
-    return false;
-  }
-
-  const normalized = publishedCourses
-    .filter((course) => course && typeof course === "object" && course.id && Array.isArray(course.holes))
-    .map((course) => ({
-      ...course,
-      source: course.source || "shared",
-      geometrySource: course.geometrySource || "PinScope Cloud"
-    }));
-
-  if (!normalized.length) {
-    return false;
-  }
-
-  const publishedById = new Map(normalized.map((course) => [course.id, course]));
-  const existingIds = new Set(state.courses.map((course) => course.id));
-  let changed = false;
-
-  state.courses = state.courses.map((course) => {
-    const published = publishedById.get(course.id);
-    if (!published) {
-      return course;
-    }
-    changed = true;
-    return mergePublishedCourse(course, published);
-  });
-
-  normalized.forEach((course) => {
-    if (!existingIds.has(course.id)) {
-      changed = true;
-      state.courses.push({
-        ...course,
-        source: course.source || "shared",
-        geometrySource: course.geometrySource || "PinScope Cloud"
-      });
-    }
-  });
-
-  if (changed) {
-    state.courses = state.courses.sort(compareCourses);
-    if (!state.courses.some((course) => course.id === state.selectedCourseId)) {
-      state.selectedCourseId = state.courses[0]?.id || "";
-    }
-  }
-
-  return changed;
-}
-
-function mergePublishedCourse(existing, published) {
-  const existingHoles = Array.isArray(existing.holes) ? existing.holes : [];
-  const publishedHoles = Array.isArray(published.holes) ? published.holes : [];
-  const publishedByNumber = new Map(publishedHoles.map((hole) => [Number(hole.number), hole]));
-  const existingNumbers = new Set(existingHoles.map((hole) => Number(hole.number)));
-  const mergedHoles = existingHoles.map((hole) => mergePublishedHole(hole, publishedByNumber.get(Number(hole.number))));
-
-  publishedHoles.forEach((hole) => {
-    if (!existingNumbers.has(Number(hole.number))) {
-      mergedHoles.push(hole);
-    }
-  });
-
-  return {
-    ...existing,
-    ...published,
-    source: existing.source === "verified" ? existing.source : published.source || existing.source || "shared",
-    attribution: mergeAttribution(existing.attribution, published.attribution),
-    geometrySource: published.geometrySource || existing.geometrySource || "PinScope Cloud",
-    holes: mergedHoles.sort((a, b) => Number(a.number) - Number(b.number))
-  };
-}
-
-function mergePublishedHole(existing, published) {
-  if (!published) {
-    return existing;
-  }
-  return pruneEmpty({
-    ...existing,
-    ...published,
-    yards: { ...(existing.yards || {}), ...(published.yards || {}) },
-    geometry: { ...(existing.geometry || {}), ...(published.geometry || {}) },
-    mapping: { ...(existing.mapping || {}), ...(published.mapping || {}) },
-    visual: published.visual || existing.visual
-  });
-}
-
-function exportSharedCourseDefaults() {
+function exportCoursePackJson() {
   const defaults = state.courses
     .map(courseToSharedDefault)
     .filter(Boolean);
 
   if (!defaults.length) {
-    flash("No saved courses are ready to export yet.");
+    flash("No mapped courses are ready to export yet.");
     return;
   }
 
-  const moduleText = `// Generated from PinScope saved courses on ${new Date().toISOString()}\n// Replace src/shared-course-defaults.js with this file, then deploy.\n\nexport const sharedCourseDefaults = ${JSON.stringify(defaults, null, 2)};\n`;
-  downloadTextFile("shared-course-defaults.js", moduleText, "text/javascript");
-  flash(`Exported shared defaults for ${defaults.length} course${defaults.length === 1 ? "" : "s"}. Replace src/shared-course-defaults.js, then deploy.`);
+  const payload = {
+    schema: "pinscope-course-pack-v1",
+    exportedAt: new Date().toISOString(),
+    courses: defaults
+  };
+  downloadTextFile("pinscope-course-pack.json", JSON.stringify(payload, null, 2), "application/json");
+  flash(`Exported course pack JSON for ${defaults.length} course${defaults.length === 1 ? "" : "s"}. Put it in data/course-pack, then run the snapshot builder.`);
 }
 
 function courseToSharedDefault(course) {
@@ -4870,10 +4599,8 @@ async function refreshCourseLayout(courseId) {
     const layout = await fetchOsmCourseLayout(course);
     applyCourseGeometry(course.id, layout, {
       source: "OpenStreetMap",
-      forcePublish: true,
-      forceSnapshots: true,
       message: layout.mappedCount || layout.greenShapeCount
-        ? `Mapped ${layout.mappedCount || 0} tee/green hole${(layout.mappedCount || 0) === 1 ? "" : "s"} and ${layout.greenShapeCount || 0} green shape${(layout.greenShapeCount || 0) === 1 ? "" : "s"} from course-locked OSM${layout.courseArea ? " boundary" : " area"}${layout.counts ? ` (${layout.counts.holeLines} hole lines, ${layout.counts.greens} greens, ${layout.counts.tees} tees found inside the course)` : ""}. Saving fresh snapshots now.`
+        ? `Mapped ${layout.mappedCount || 0} tee/green hole${(layout.mappedCount || 0) === 1 ? "" : "s"} and ${layout.greenShapeCount || 0} green shape${(layout.greenShapeCount || 0) === 1 ? "" : "s"} from course-locked OSM${layout.courseArea ? " boundary" : " area"}${layout.counts ? ` (${layout.counts.holeLines} hole lines, ${layout.counts.greens} greens, ${layout.counts.tees} tees found inside the course)` : ""}. Export the course pack, then run the snapshot builder.`
         : "No OSM hole geometry found for this course."
     });
   } catch (error) {
@@ -4886,9 +4613,7 @@ async function importCourseGeometryFile(file, courseId) {
     const payload = JSON.parse(await file.text());
     applyCourseGeometry(courseId, payload, {
       source: payload.source || payload.schema || "PinScope Green Mapper",
-      forcePublish: true,
-      forceSnapshots: true,
-      message: "Imported mapper geometry. Saving fresh snapshots now."
+      message: "Imported mapper geometry. Export the course pack, then run the snapshot builder."
     });
   } catch (error) {
     flash(error.message || "Could not import that geometry JSON.");
@@ -4943,12 +4668,6 @@ function applyCourseGeometry(courseId, payload, options = {}) {
   course.attribution = mergeAttribution(course.attribution, payload.attribution);
   clearSatelliteAnchorEditsForHoles(course.id, changedHoleNumbers);
   persist(options.message || `Updated ${changed} mapped hole${changed === 1 ? "" : "s"}.`);
-  if (options.autoPublish !== false && (changed > 0 || options.forcePublish)) {
-    publishMappedCourse(course.id, {
-      automatic: true,
-      forceSnapshots: options.forceSnapshots === true
-    });
-  }
 }
 
 function normalizeCourseGeometryPayload(payload) {

@@ -1,6 +1,7 @@
 # PinScope Course Pack Inputs
 
-Put finished mapper or OSM-derived course JSON files in this folder, then run:
+Put exported PinScope course-pack JSON, mapper JSON, or OSM-derived course JSON
+files in this folder, then run:
 
 ```powershell
 node tools\build-course-pack.cjs --force
@@ -8,6 +9,10 @@ node tools\build-course-pack.cjs --force
 
 The generator writes saved hole images to `assets/snapshots/` and updates
 `src/shared-course-defaults.js`.
+
+In the app, run `OSM holes` or `Import mapper JSON`, then use `Export course
+pack` to download `pinscope-course-pack.json`. Drop that file here before
+running the generator.
 
 Every hole with confirmed GPS for both `tee` and `greenCenter` gets a saved
 Azure satellite snapshot. Holes without both points are skipped and keep using

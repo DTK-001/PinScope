@@ -19,7 +19,7 @@ For future Codex conversations, start with [`PROJECT_CONTEXT.md`](PROJECT_CONTEX
 - Active round scoring with score, putts, penalties, fairways, GIR, and tee club.
 - GPS hooks for front, middle, back, and hazard yardages when a course has coordinates.
 - Local device storage for rounds and club distances.
-- Cloud-published course geometry so mapped OSM/JSON holes can load automatically on every device.
+- Build-time course packs so mapped OSM/JSON holes and satellite snapshots ship inside the downloadable app.
 - A neutral course schema that can later accept richer OSM tee, fairway, green, bunker, and water data.
 
 ## Run it locally
@@ -54,58 +54,39 @@ Then open `http://<your-computer-ip>:5173` on the phone.
 
 ## Data stance
 
-OpenStreetMap data is open under ODbL and needs attribution. Published/shared course geometry should keep source attribution visible and be treated as a derived course database.
+OpenStreetMap data is open under ODbL and needs attribution. Baked course geometry should keep source attribution visible and be treated as a derived course database.
 
 ## Next step
 
-Publish the static app to an HTTPS host such as GitHub Pages, Netlify, Vercel, or Cloudflare Pages so phone GPS can work reliably. After that, the next engineering layer is adding more verified local course packs and improving the round-planning/club recommendation flow on real phone GPS.
+Build out the course pack inputs in `data/course-pack/`, run the snapshot generator, then publish or package the static app so phone GPS can work reliably.
 
 ## Geometry import / OSM hole mapping
 
-This build adds a selected-course geometry workflow for accurate satellite tee/green placement:
+The app includes a selected-course geometry workflow for creating course-pack source JSON:
 
 1. Select a course from the course list.
 2. Click **OSM holes** to pull `golf=hole`, `golf=green`, and `golf=tee` geometry from OpenStreetMap around the course centre.
 3. Or click **Import mapper JSON** and choose an export from the standalone PinScope Green Mapper.
-4. Start a round and enable the satellite view. Holes with both `tee` and `greenCenter` now use those real GPS points instead of estimated placeholders.
+4. Click **Export course pack** to download `pinscope-course-pack.json`.
+5. Put that JSON file in `data/course-pack/`.
+6. Run `node tools\build-course-pack.cjs --force` to generate saved satellite snapshots and rewrite `src/shared-course-defaults.js`.
 
-Imported geometry is saved locally in the browser with the rest of the course data. The app deliberately keeps real GPS coordinates in `hole.tee`, `hole.greenCenter`, `hole.greenFront`, and `hole.greenBack`; it no longer treats `visual.tee` or `visual.green` as GPS coordinates because those are screen/image percentage positions.
+Imported geometry is saved locally in the browser until you export it. The app deliberately keeps real GPS coordinates in `hole.tee`, `hole.greenCenter`, `hole.greenFront`, and `hole.greenBack`; it does not treat `visual.tee` or `visual.green` as GPS coordinates because those are screen/image percentage positions.
 
-## Sharing mapped courses across devices
+## Baked hole snapshots
 
-This build now supports a real publish/read workflow instead of copying export files between devices.
-
-Recommended production workflow:
-
-1. Deploy the small Cloudflare Worker in `tools/course-sync-worker/`.
-2. Put the worker URL into `src/sync-config.js` as `endpoint`, or paste it in the in-app **Cloud course sync** panel.
-3. Keep `adminToken` blank in public source code. Save the admin token only on your own device through the **Cloud course sync** panel. If the public endpoint is already configured and the panel is hidden, open the app once with `?pinscopeAdmin=1` or `?pinscopeSyncToken=YOUR_TOKEN`.
-4. On your admin device, run **OSM holes** and/or **Import mapper JSON** for a course.
-5. PinScope automatically publishes that mapped course to the sync endpoint.
-6. Any other device that opens the app loads the published holes automatically. Regular users do not need to run OSM mapping, import JSON, or copy files.
-
-The old `src/shared-course-defaults.js` file still works as an offline fallback, but the preferred approach is the cloud sync endpoint because it lets you update course data without rebuilding the app every time. The service worker cache has been bumped to `local-loop-golf-v54`.
-
-## Cloud saved hole snapshots
-
-PinScope can now publish finished hole data and saved Azure satellite snapshots through the Cloudflare Worker in `tools/course-sync-worker/`.
-
-For the simplest static deployment, use the build-time course pack generator instead:
+PinScope snapshots are generated at build time and shipped as ordinary image assets.
 
 ```powershell
-$env:AZURE_MAPS_KEY="your_azure_maps_key"
-node tools\build-course-pack.cjs
+node tools\build-course-pack.cjs --force
 ```
 
-Place mapper/OSM course JSON files in `data/course-pack/`. The generator saves one static image per mapped hole under `assets/snapshots/` and writes `src/shared-course-defaults.js`, so the app opens with those holes and images already populated. Existing snapshot files are reused unless you pass `--force`.
+Place mapper/OSM course JSON files in `data/course-pack/`. The generator saves one static image per mapped hole under `assets/snapshots/` and writes `src/shared-course-defaults.js`, so the app opens with those holes and images already populated. Use `--force` after changing/remapping holes to retake every confirmed snapshot.
 
 The intended workflow is:
 
-1. Deploy the worker with KV, R2, `PINSCOPE_ADMIN_TOKEN`, and `AZURE_MAPS_KEY` configured.
-2. Put the worker URL in `src/sync-config.js` as the public endpoint.
-3. On your own admin device, save the admin token in the in-app **Cloud course sync** panel.
-4. Run **OSM holes** or **Import mapper JSON** once for each course.
-5. The app publishes the tee/green/green-shape data and the worker generates one saved Azure satellite snapshot per mapped hole.
-6. Public users open the app and load the saved hole image plus the correct green data automatically. They do not need to run OSM, import JSON, or have your Azure key.
-
-Keep `adminToken` blank in `src/sync-config.js` for public builds. The Azure Maps key belongs only in the worker secret named `AZURE_MAPS_KEY`.
+1. Run **OSM holes** or **Import mapper JSON** for each course in the app.
+2. Export the course pack JSON.
+3. Put the exported JSON in `data/course-pack/`.
+4. Run `node tools\build-course-pack.cjs --force`.
+5. Commit/deploy the updated `src/shared-course-defaults.js` and `assets/snapshots/` files.
