@@ -15,6 +15,15 @@ import {
 import { homeArea } from "./local-area.js";
 import { fetchOsmCourseLayout, findNearbyOsmCourses } from "./osm.js";
 import { loadState, saveState } from "./storage.js";
+import {
+  captureRemoteCourseSyncSettingsFromUrl,
+  fetchRemoteCourseDefaults,
+  getRemoteCourseSyncSettings,
+  publishRemoteCourseDefault,
+  remoteCourseSyncCanPublish,
+  remoteCourseSyncIsConfigured,
+  saveRemoteCourseSyncSettings
+} from "./remote-course-sync.js";
 
 const CRANHAM_COURSE_ID = "osm-way-23454278";
 const BELHUS_COURSE_ID = "verified-belhus-park";
@@ -52,7 +61,10 @@ const BELHUS_PHOTO_GEO_BOUNDS = {
 };
 
 const app = document.querySelector("#app");
+captureRemoteCourseSyncSettingsFromUrl();
 let state = loadState();
+let remoteCourseSyncStatus = "";
+let remoteCourseSyncBusy = false;
 let coursePhotoSources = loadCoursePhotoSources();
 let coursePhotoEdits = loadCoursePhotoEdits();
 let coursePhotoImages = new Map();
@@ -89,6 +101,7 @@ let scoreCardOpen = false;
 
 render();
 registerServiceWorker();
+loadPublishedCoursesOnStart();
 
 window.addEventListener("hashchange", () => {
   view = getViewFromHash();
@@ -256,7 +269,45 @@ function renderCourses() {
     <section class="course-list">
       ${filteredCourses.length ? filteredCourses.map(renderCourseCard).join("") : `<p class="empty-copy">No courses match that search.</p>`}
     </section>
-    <p class="source-note">OpenStreetMap imports require ODbL attribution. Imported shells are saved locally on this device.</p>
+    ${renderRemoteCourseSyncPanel()}
+    <p class="source-note">OpenStreetMap imports require ODbL attribution. Published course geometry loads automatically from your shared PinScope cloud endpoint when configured.</p>
+  `;
+}
+
+function renderRemoteCourseSyncPanel() {
+  const settings = getRemoteCourseSyncSettings();
+  const connected = Boolean(settings.endpoint);
+  const canPublish = Boolean(settings.endpoint && settings.adminToken);
+  const showAdminPanel = !connected || canPublish || new URLSearchParams(window.location.search || "").has("pinscopeAdmin");
+  if (!showAdminPanel) {
+    return "";
+  }
+  const status = remoteCourseSyncStatus || (connected
+    ? canPublish
+      ? "Cloud sync is connected. This device can publish mapped courses."
+      : "Cloud sync is connected for reading. Add your admin token on this device to publish."
+    : "Cloud sync is not configured yet.");
+
+  return `
+    <details class="tool-panel sync-panel">
+      <summary>Cloud course sync</summary>
+      <form class="stack" data-form="sync-settings">
+        <p class="source-note">Use this once for your own admin setup. Public users only read the published holes automatically; they do not need to import JSON or run OSM mapping.</p>
+        <label>
+          <span>Sync endpoint</span>
+          <input name="endpoint" type="url" inputmode="url" value="${escapeAttribute(settings.endpoint)}" placeholder="https://your-worker.your-domain.workers.dev" />
+        </label>
+        <label>
+          <span>Admin token on this device only</span>
+          <input name="adminToken" type="password" value="${escapeAttribute(settings.adminToken)}" placeholder="Leave blank on public/user devices" autocomplete="off" />
+        </label>
+        <div class="course-actions">
+          <button class="primary-action" type="submit">Save sync settings</button>
+          <button class="secondary-action" type="button" data-action="load-published-courses" ${connected && !remoteCourseSyncBusy ? "" : "disabled"}>Load published courses</button>
+        </div>
+        <p class="source-note">${escapeHtml(status)}</p>
+      </form>
+    </details>
   `;
 }
 
@@ -338,7 +389,7 @@ function renderMiniCourseSignal(course) {
 function renderCourseCard(course) {
   const isSelected = state.selectedCourseId === course.id;
   const selected = isSelected ? "selected" : "";
-  const source = course.source === "verified" ? "Verified" : course.source === "osm" ? "OSM" : course.source === "manual" ? "Manual" : "Demo";
+  const source = course.source === "verified" ? "Verified" : course.source === "shared" ? "Shared" : course.source === "osm" ? "OSM" : course.source === "manual" ? "Manual" : "Demo";
   return `
     <article class="course-card ${selected}">
       <div class="course-main">
@@ -366,14 +417,19 @@ function renderCourseCard(course) {
 function renderCourseGeometryStatus(course) {
   const mapped = courseMappedHoleCount(course);
   const total = course.holes?.length || course.holesCount || 18;
+  const snapshots = courseSnapshotHoleCount(course);
   const label = mapped
     ? mapped < total
       ? `${mapped}/${total} GPS holes mapped - click OSM holes to refresh`
       : `${mapped}/${total} GPS holes mapped`
     : "GPS holes not mapped yet";
+  const snapshotLabel = snapshots
+    ? `${snapshots}/${total} saved satellite snapshot${snapshots === 1 ? "" : "s"}`
+    : "No saved satellite snapshots yet";
   return `
     <div class="course-geometry-status ${mapped ? "mapped" : "pending"}">
       <span>${label}</span>
+      <span>${snapshotLabel}</span>
       ${course.geometrySource ? `<em>${escapeHtml(course.geometrySource)}</em>` : ""}
     </div>
   `;
@@ -384,6 +440,7 @@ function renderSelectedCourseActions(course) {
     <div class="course-actions">
       <button class="secondary-action" type="button" data-action="quick-start" data-course-id="${course.id}">Start Round</button>
       <button class="secondary-action" type="button" data-action="refresh-course-layout" data-course-id="${course.id}">OSM holes</button>
+      ${remoteCourseSyncCanPublish() ? `<button class="secondary-action" type="button" data-action="publish-course-defaults" data-course-id="${course.id}">Publish course</button>` : ""}
       <label class="file-action secondary-action">
         Import mapper JSON
         <input type="file" accept="application/json,.json" data-action="course-geometry-file" data-course-id="${course.id}" />
@@ -394,6 +451,10 @@ function renderSelectedCourseActions(course) {
 
 function courseMappedHoleCount(course) {
   return (course?.holes || []).filter((hole) => validGeoPoint(hole?.tee) && validGeoPoint(hole?.greenCenter)).length;
+}
+
+function courseSnapshotHoleCount(course) {
+  return (course?.holes || []).filter((hole) => validHoleSnapshot(hole?.snapshot)).length;
 }
 
 function renderTeeSummary(course) {
@@ -790,6 +851,9 @@ function renderPlayerScoreCard(round, course, hole, player) {
 
 function renderHoleVisual(hole) {
   const course = activeVisualCourse();
+  if (snapshotAvailableForHole(hole, course)) {
+    return renderSnapshotHoleVisual(hole, course);
+  }
   if (azureMapsActiveForHole(hole, course)) {
     return renderAzureHoleVisual(hole, course);
   }
@@ -810,6 +874,76 @@ function renderHoleVisual(hole) {
         const visual = item.visual || [50, 50];
         return `<span class="hazard ${item.type}" style="left:${visual[0]}%; top:${visual[1]}%;" title="${escapeAttribute(item.label)}"></span>`;
       }).join("")}
+    </section>
+  `;
+}
+
+function renderSnapshotHoleVisual(hole, course) {
+  const courseId = course?.id || photoCourseId(hole);
+  const snapshot = normalizeHoleSnapshot(hole?.snapshot);
+  const anchors = azureHoleAnchors(hole, course);
+  if (!snapshot || !anchors) {
+    return renderAzureHoleVisual(hole, course);
+  }
+
+  const tee = snapshotGeoToTargetPoint(snapshot, anchors.tee) || { x: 50, y: 82 };
+  const green = snapshotGeoToTargetPoint(snapshot, anchors.green) || { x: 50, y: 24 };
+  const greenShapeSvg = renderSnapshotGreenShapeSvg(hole, snapshot);
+  const gpsPoint = gps.status === "ready" && gps.position ? snapshotGeoToTargetPoint(snapshot, gps.position) : null;
+  const start = gpsPoint || tee;
+  const shotPlan = resolveSnapshotShotPlan(courseId, hole, anchors, snapshot);
+  const trackedShotOverlay = renderSnapshotTrackedShotOverlay(hole, snapshot);
+  const routePoints = shotPlan
+    ? [start, ...shotPlan.viewPoints, green].map((point) => `${point.x},${point.y}`).join(" ")
+    : "";
+  const guide = shotPlan ? "" : `<line class="photo-guide-route" x1="${start.x}" y1="${start.y}" x2="${green.x}" y2="${green.y}"></line>`;
+  const zoom = photoEditMode ? 1 : photoZoomLevel(courseId, hole.number);
+  const pan = photoPanOffset(courseId, hole.number, zoom);
+  const markerScale = Number((1 / Math.max(1, zoom)).toFixed(4));
+  const zoomClass = zoom > 1 ? " zoomed" : "";
+  const attribution = snapshot.attribution || "Imagery: Azure Maps";
+  return `
+    <section class="hole-visual photo-hole azure-hole snapshot-hole${shotPlan ? " planning" : ""}${zoomClass}" style="--photo-marker-scale:${markerScale}; --satellite-panel-ratio:${snapshot.height / snapshot.width};" data-snapshot-hole="${hole.number}" data-azure-hole="${hole.number}" data-azure-course-id="${courseId}" aria-label="${escapeAttribute(course?.name || "Course")} saved satellite snapshot hole ${hole.number}">
+      <div class="photo-pan-layer" style="transform:${photoPanTransform(pan)};">
+        <div class="photo-zoom-layer" style="transform:scale(${zoom});">
+          <div class="azure-tile-layer loaded snapshot-tile-layer" data-azure-tile-layer>
+            <img class="azure-map-image snapshot-map-image" src="${escapeAttribute(snapshot.imageUrl)}" alt="" aria-hidden="true" loading="eager" decoding="async" referrerpolicy="no-referrer" data-azure-tile data-loaded="1" style="left:0%; top:0%; width:100%; height:100%; transform:rotate(0deg);" />
+          </div>
+          <svg class="photo-hole-overlay" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+            <defs>
+              <linearGradient id="snapshot-shot-gradient-${hole.number}" x1="0" y1="1" x2="0" y2="0">
+                <stop offset="0" stop-color="#ff4fd8"></stop>
+                <stop offset="1" stop-color="#8d5cff"></stop>
+              </linearGradient>
+            </defs>
+            ${greenShapeSvg}
+            ${guide}
+            ${trackedShotOverlay}
+            ${shotPlan ? `<polyline class="photo-plan-route" points="${routePoints}" stroke="url(#snapshot-shot-gradient-${hole.number})"></polyline>` : ""}
+            ${shotPlan?.viewPoints.map((point) => `
+              <circle class="photo-plan-point" cx="${point.x}" cy="${point.y}" r="1.9"></circle>
+              <path class="photo-plan-cross" d="M ${point.x - 1.4} ${point.y} L ${point.x + 1.4} ${point.y} M ${point.x} ${point.y - 1.4} L ${point.x} ${point.y + 1.4}"></path>
+            `).join("") || ""}
+          </svg>
+          ${greenShapeSvg ? renderPhotoGreenCenterDot(green) : renderPhotoGreenMarkerElement(green, hole.par)}
+          ${renderPhotoTeeMarkerElement(tee, Boolean(gpsPoint))}
+          ${renderPhotoGpsMarker(gpsPoint)}
+        </div>
+      </div>
+      <div class="photo-info-stack">
+        <div class="photo-hole-badge">
+          <span>Hole ${hole.number}</span>
+          <strong>Par ${hole.par}</strong>
+          <span>${firstHoleYardage(hole.yards)} yd</span>
+          <span>SI ${hole.strokeIndex}</span>
+          <em>Saved snapshot</em>
+        </div>
+        ${renderAzureShotInfo(courseId, hole, shotPlan)}
+      </div>
+      ${renderPhotoClubPanel(hole, shotPlan)}
+      ${renderGpsTestControls(hole, courseId)}
+      ${renderPhotoZoomControls(courseId, hole.number, zoom)}
+      <div class="satellite-attribution">${escapeHtml(attribution)}</div>
     </section>
   `;
 }
@@ -953,9 +1087,11 @@ function queueCourseSatellitePreload(course, currentHoleNumber = 1) {
     });
   const queuedUrls = new Set([...satellitePreloadQueue.map((item) => item.src), ...satellitePreloadingUrls]);
   orderedHoles.forEach((hole) => {
-    const anchors = azureHoleAnchors(hole, course);
-    const map = azureMapViewForHole(anchors, photoTargetMarkers(hole.par), ratio);
-    satelliteMapPreloadItems(map).forEach((item) => {
+    const snapshot = normalizeHoleSnapshot(hole?.snapshot);
+    const items = snapshot
+      ? [{ src: snapshot.imageUrl }]
+      : satelliteMapPreloadItems(azureMapViewForHole(azureHoleAnchors(hole, course), photoTargetMarkers(hole.par), ratio));
+    items.forEach((item) => {
       if (!item.src || satellitePreloadedUrls.has(item.src) || queuedUrls.has(item.src)) {
         return;
       }
@@ -1181,6 +1317,52 @@ function renderPhotoGpsMarker(marker) {
   `;
 }
 
+function renderSnapshotGreenShapeSvg(hole, snapshot) {
+  const polygon = Array.isArray(hole?.geometry?.greenPolygon) ? hole.geometry.greenPolygon : [];
+  const points = polygon
+    .map((point) => snapshotGeoToTargetPoint(snapshot, point))
+    .filter(Boolean);
+  if (!points.length) {
+    return "";
+  }
+  const path = points.map((point) => `${point.x},${point.y}`).join(" ");
+  const center = snapshotGeoToTargetPoint(snapshot, hole.greenCenter) || { x: 50, y: 50 };
+  return `
+    <polygon class="photo-osm-green-shape" points="${path}"></polygon>
+    <circle class="photo-osm-green-centre" cx="${center.x}" cy="${center.y}" r="1.8"></circle>
+  `;
+}
+
+function renderSnapshotTrackedShotOverlay(hole, snapshot) {
+  const round = getActiveRound(state);
+  const entry = round ? trackedRoundEntry(round, hole.number) : null;
+  const shots = trackedShots(entry);
+  const activeShot = trackedActiveShot(entry);
+  const completed = shots
+    .map((shot) => ({
+      shot,
+      start: snapshotGeoToTargetPoint(snapshot, shot.start),
+      end: snapshotGeoToTargetPoint(snapshot, shot.end)
+    }))
+    .filter((item) => item.start && item.end);
+  const activeStart = activeShot ? snapshotGeoToTargetPoint(snapshot, activeShot.start) : null;
+  const activeEnd = activeShot && gps.status === "ready" && gps.position
+    ? snapshotGeoToTargetPoint(snapshot, gps.position)
+    : null;
+
+  return `
+    ${completed.map(({ shot, start, end }) => `
+      <line class="tracked-shot-route" x1="${start.x}" y1="${start.y}" x2="${end.x}" y2="${end.y}"></line>
+      <circle class="tracked-shot-landing" cx="${end.x}" cy="${end.y}" r="1.55"></circle>
+      <text class="tracked-shot-label" x="${end.x + 1.8}" y="${end.y - 1.8}">${shot.number}</text>
+    `).join("")}
+    ${activeStart && activeEnd ? `
+      <line class="tracked-shot-route active" x1="${activeStart.x}" y1="${activeStart.y}" x2="${activeEnd.x}" y2="${activeEnd.y}"></line>
+      <circle class="tracked-shot-landing active" cx="${activeStart.x}" cy="${activeStart.y}" r="1.4"></circle>
+    ` : ""}
+  `;
+}
+
 function renderPhotoGreenMarkerElement(marker, par) {
   const size = Number(par) === 3 ? 36 : 32;
   return `
@@ -1328,6 +1510,36 @@ function gpsDistanceToGreen(hole) {
 function activeVisualCourse() {
   const round = getActiveRound(state);
   return round ? getCourse(state, round.courseId) : getCourse(state, state.selectedCourseId);
+}
+
+function snapshotAvailableForHole(hole, course = activeVisualCourse()) {
+  return Boolean(normalizeHoleSnapshot(hole?.snapshot) && azureHoleAnchors(hole, course));
+}
+
+function validHoleSnapshot(snapshot) {
+  return Boolean(normalizeHoleSnapshot(snapshot));
+}
+
+function normalizeHoleSnapshot(snapshot) {
+  if (!snapshot || typeof snapshot !== "object") {
+    return null;
+  }
+  const imageUrl = String(snapshot.imageUrl || snapshot.url || "").trim();
+  const center = normalizeGeoPoint(snapshot.center);
+  const zoom = Number(snapshot.zoom);
+  const width = Number(snapshot.width);
+  const height = Number(snapshot.height);
+  if (!imageUrl || !center || !Number.isFinite(zoom) || !Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) {
+    return null;
+  }
+  return {
+    ...snapshot,
+    imageUrl,
+    center,
+    zoom,
+    width,
+    height
+  };
 }
 
 function azureMapsActiveForHole(hole, course = activeVisualCourse()) {
@@ -1659,6 +1871,74 @@ function resolveAzureShotPlan(courseId, hole, anchors, marker, panelRatio = sate
     viewPoints: points.map((point) => azureGeoToTargetPoint(anchors, point, marker, panelRatio)),
     segments
   };
+}
+
+function resolveSnapshotShotPlan(courseId, hole, anchors, snapshot) {
+  const saved = azureShotPlans[azureShotPlanKey(courseId, hole.number)];
+  const points = sortAzurePlanPoints(anchors, saved?.points || []);
+  if (!points.length) {
+    return null;
+  }
+  const start = gps.status === "ready" && gps.position ? gps.position : anchors.tee;
+  const route = [start, ...points, anchors.green];
+  const segments = route.slice(0, -1).map((point, index) => {
+    const last = index === route.length - 2;
+    return {
+      label: last ? "Into green" : `Shot ${index + 1}`,
+      yards: yardsBetween(point, route[index + 1]) || 0
+    };
+  });
+  return {
+    points,
+    viewPoints: points.map((point) => snapshotGeoToTargetPoint(snapshot, point)).filter(Boolean),
+    segments
+  };
+}
+
+function snapshotGeoToTargetPoint(snapshot, position) {
+  const normalized = normalizeHoleSnapshot(snapshot);
+  if (!normalized || !validGeoPoint(position)) {
+    return null;
+  }
+  const centerWorld = geoToWorldPixel(normalized.center, normalized.zoom);
+  const pointWorld = geoToWorldPixel(position, normalized.zoom);
+  let dx = pointWorld.x - centerWorld.x;
+  const worldSize = AZURE_MAPS_TILE_SIZE * 2 ** normalized.zoom;
+  if (Math.abs(dx) > worldSize / 2) {
+    dx += dx > 0 ? -worldSize : worldSize;
+  }
+  return {
+    x: Number(clamp(50 + (dx / normalized.width) * 100, -8, 108).toFixed(2)),
+    y: Number(clamp(50 + ((pointWorld.y - centerWorld.y) / normalized.height) * 100, -8, 108).toFixed(2))
+  };
+}
+
+function snapshotTargetPointToGeo(snapshot, point) {
+  const normalized = normalizeHoleSnapshot(snapshot);
+  if (!normalized || !point) {
+    return null;
+  }
+  const centerWorld = geoToWorldPixel(normalized.center, normalized.zoom);
+  const world = {
+    x: centerWorld.x + ((Number(point.x) - 50) / 100) * normalized.width,
+    y: centerWorld.y + ((Number(point.y) - 50) / 100) * normalized.height
+  };
+  return worldPixelToGeo(world, normalized.zoom);
+}
+
+function snapshotEventToPosition(panel, hole, event) {
+  const snapshot = normalizeHoleSnapshot(hole?.snapshot);
+  if (!snapshot) {
+    return null;
+  }
+  const rect = panel.getBoundingClientRect();
+  if (!rect.width || !rect.height) {
+    return null;
+  }
+  return snapshotTargetPointToGeo(snapshot, {
+    x: ((event.clientX - rect.left) / rect.width) * 100,
+    y: ((event.clientY - rect.top) / rect.height) * 100
+  });
 }
 
 function sortAzurePlanPoints(anchors, points) {
@@ -2713,6 +2993,18 @@ function handleClick(event) {
     refreshCourseLayout(button.dataset.courseId || state.selectedCourseId);
   }
 
+  if (action === "export-shared-course-defaults") {
+    exportSharedCourseDefaults();
+  }
+
+  if (action === "publish-course-defaults") {
+    publishMappedCourse(button.dataset.courseId || state.selectedCourseId, { manual: true });
+  }
+
+  if (action === "load-published-courses") {
+    loadPublishedCourseDefaults({ manual: true });
+  }
+
   if (action === "select-course") {
     state.selectedCourseId = button.dataset.courseId;
     persist("Course selected.");
@@ -2831,6 +3123,22 @@ function handleSubmit(event) {
     }));
     persist("Bag saved.");
   }
+
+  if (form.dataset.form === "sync-settings") {
+    saveRemoteCourseSyncSettings({
+      endpoint: String(data.get("endpoint") || ""),
+      adminToken: String(data.get("adminToken") || "")
+    });
+    remoteCourseSyncStatus = remoteCourseSyncCanPublish()
+      ? "Cloud sync saved. This device can publish mapped courses."
+      : remoteCourseSyncIsConfigured()
+        ? "Cloud sync saved for reading. Add your admin token on this device to publish."
+        : "Cloud sync settings cleared.";
+    render();
+    if (remoteCourseSyncIsConfigured()) {
+      loadPublishedCourseDefaults({ manual: true });
+    }
+  }
 }
 
 function handleInput(event) {
@@ -2944,7 +3252,9 @@ function handleAzurePlanningClick(event) {
   if (!hole || !anchors) {
     return;
   }
-  const point = azureEventToPosition(panel, anchors, photoTargetMarkers(hole.par), event);
+  const point = panel.dataset.snapshotHole
+    ? snapshotEventToPosition(panel, hole, event)
+    : azureEventToPosition(panel, anchors, photoTargetMarkers(hole.par), event);
   if (!point) {
     return;
   }
@@ -3857,6 +4167,373 @@ function moveHole(delta) {
   persist();
 }
 
+function loadPublishedCoursesOnStart() {
+  if (!remoteCourseSyncIsConfigured()) {
+    return;
+  }
+  loadPublishedCourseDefaults({ manual: false });
+}
+
+async function loadPublishedCourseDefaults(options = {}) {
+  if (!remoteCourseSyncIsConfigured()) {
+    if (options.manual) {
+      flash("Add your cloud course sync endpoint first.");
+    }
+    return;
+  }
+
+  remoteCourseSyncBusy = true;
+  remoteCourseSyncStatus = "Loading published course data...";
+  render();
+
+  try {
+    const publishedCourses = await fetchRemoteCourseDefaults();
+    const changed = applyPublishedCourseDefaults(publishedCourses);
+    remoteCourseSyncStatus = publishedCourses.length
+      ? `Loaded ${publishedCourses.length} published course${publishedCourses.length === 1 ? "" : "s"}${changed ? " and updated this device." : "."}`
+      : "Cloud sync is connected, but no published courses are stored yet.";
+    saveState(state);
+    if (options.manual) {
+      flash(remoteCourseSyncStatus);
+    } else {
+      render();
+    }
+  } catch (error) {
+    remoteCourseSyncStatus = error.message || "Could not load published courses.";
+    if (options.manual) {
+      flash(remoteCourseSyncStatus);
+    } else {
+      render();
+    }
+  } finally {
+    remoteCourseSyncBusy = false;
+    render();
+  }
+}
+
+async function publishMappedCourse(courseId, options = {}) {
+  const course = getCourse(state, courseId);
+  if (!course) {
+    if (options.manual) {
+      flash("Select a course before publishing.");
+    }
+    return false;
+  }
+
+  const sharedCourse = courseToSharedDefault(course);
+  if (!sharedCourse) {
+    if (options.manual) {
+      flash("This course does not have mapped tee/green data to publish yet.");
+    }
+    return false;
+  }
+
+  if (!remoteCourseSyncCanPublish()) {
+    remoteCourseSyncStatus = remoteCourseSyncIsConfigured()
+      ? "Course is mapped locally. Add your admin token on this device to publish it to every device."
+      : "Course is mapped locally. Add a cloud sync endpoint and admin token to publish it to every device.";
+    if (options.manual) {
+      flash(remoteCourseSyncStatus);
+    } else {
+      render();
+    }
+    return false;
+  }
+
+  remoteCourseSyncBusy = true;
+  remoteCourseSyncStatus = `Publishing ${course.name || "course"}...`;
+  render();
+
+  try {
+    const result = await publishRemoteCourseDefault(sharedCourse, { generateSnapshots: true });
+    const publishedCourses = Array.isArray(result?.courses)
+      ? result.courses
+      : result?.course
+        ? [result.course]
+        : [sharedCourse];
+    applyPublishedCourseDefaults(publishedCourses);
+    saveState(state);
+    const snapshotCount = Array.isArray(result?.snapshots?.generated) ? result.snapshots.generated.length : 0;
+    remoteCourseSyncStatus = snapshotCount
+      ? `Published ${course.name || "course"} with ${snapshotCount} saved satellite snapshot${snapshotCount === 1 ? "" : "s"}. New devices will load this course automatically.`
+      : `Published ${course.name || "course"}. New devices will load this course automatically.${result?.snapshots?.error ? ` Snapshot generation needs attention: ${result.snapshots.error}` : ""}`;
+    flash(remoteCourseSyncStatus);
+    return true;
+  } catch (error) {
+    remoteCourseSyncStatus = error.message || "Could not publish course data.";
+    flash(`Mapped locally, but cloud publish failed: ${remoteCourseSyncStatus}`);
+    return false;
+  } finally {
+    remoteCourseSyncBusy = false;
+    render();
+  }
+}
+
+function applyPublishedCourseDefaults(publishedCourses) {
+  if (!Array.isArray(publishedCourses) || !publishedCourses.length) {
+    return false;
+  }
+
+  const normalized = publishedCourses
+    .filter((course) => course && typeof course === "object" && course.id && Array.isArray(course.holes))
+    .map((course) => ({
+      ...course,
+      source: course.source || "shared",
+      geometrySource: course.geometrySource || "PinScope Cloud"
+    }));
+
+  if (!normalized.length) {
+    return false;
+  }
+
+  const publishedById = new Map(normalized.map((course) => [course.id, course]));
+  const existingIds = new Set(state.courses.map((course) => course.id));
+  let changed = false;
+
+  state.courses = state.courses.map((course) => {
+    const published = publishedById.get(course.id);
+    if (!published) {
+      return course;
+    }
+    changed = true;
+    return mergePublishedCourse(course, published);
+  });
+
+  normalized.forEach((course) => {
+    if (!existingIds.has(course.id)) {
+      changed = true;
+      state.courses.push({
+        ...course,
+        source: course.source || "shared",
+        geometrySource: course.geometrySource || "PinScope Cloud"
+      });
+    }
+  });
+
+  if (changed) {
+    state.courses = state.courses.sort(compareCourses);
+    if (!state.courses.some((course) => course.id === state.selectedCourseId)) {
+      state.selectedCourseId = state.courses[0]?.id || "";
+    }
+  }
+
+  return changed;
+}
+
+function mergePublishedCourse(existing, published) {
+  const existingHoles = Array.isArray(existing.holes) ? existing.holes : [];
+  const publishedHoles = Array.isArray(published.holes) ? published.holes : [];
+  const publishedByNumber = new Map(publishedHoles.map((hole) => [Number(hole.number), hole]));
+  const existingNumbers = new Set(existingHoles.map((hole) => Number(hole.number)));
+  const mergedHoles = existingHoles.map((hole) => mergePublishedHole(hole, publishedByNumber.get(Number(hole.number))));
+
+  publishedHoles.forEach((hole) => {
+    if (!existingNumbers.has(Number(hole.number))) {
+      mergedHoles.push(hole);
+    }
+  });
+
+  return {
+    ...existing,
+    ...published,
+    source: existing.source === "verified" ? existing.source : published.source || existing.source || "shared",
+    attribution: mergeAttribution(existing.attribution, published.attribution),
+    geometrySource: published.geometrySource || existing.geometrySource || "PinScope Cloud",
+    holes: mergedHoles.sort((a, b) => Number(a.number) - Number(b.number))
+  };
+}
+
+function mergePublishedHole(existing, published) {
+  if (!published) {
+    return existing;
+  }
+  return pruneEmpty({
+    ...existing,
+    ...published,
+    yards: { ...(existing.yards || {}), ...(published.yards || {}) },
+    geometry: { ...(existing.geometry || {}), ...(published.geometry || {}) },
+    mapping: { ...(existing.mapping || {}), ...(published.mapping || {}) },
+    visual: published.visual || existing.visual
+  });
+}
+
+function exportSharedCourseDefaults() {
+  const defaults = state.courses
+    .map(courseToSharedDefault)
+    .filter(Boolean);
+
+  if (!defaults.length) {
+    flash("No saved courses are ready to export yet.");
+    return;
+  }
+
+  const moduleText = `// Generated from PinScope saved courses on ${new Date().toISOString()}\n// Replace src/shared-course-defaults.js with this file, then deploy.\n\nexport const sharedCourseDefaults = ${JSON.stringify(defaults, null, 2)};\n`;
+  downloadTextFile("shared-course-defaults.js", moduleText, "text/javascript");
+  flash(`Exported shared defaults for ${defaults.length} course${defaults.length === 1 ? "" : "s"}. Replace src/shared-course-defaults.js, then deploy.`);
+}
+
+function courseToSharedDefault(course) {
+  if (!course || !course.id || !Array.isArray(course.holes)) {
+    return null;
+  }
+
+  const holes = course.holes.map(holeToSharedDefault).filter(Boolean);
+  const hasMappedHole = holes.some((hole) => validGeoPoint(hole.tee) || validGeoPoint(hole.greenCenter) || hole.geometry?.greenPolygon?.length);
+  const shouldExport = hasMappedHole || ["osm", "manual", "shared"].includes(course.source);
+  if (!shouldExport) {
+    return null;
+  }
+
+  return pruneEmpty({
+    id: course.id,
+    source: course.source === "verified" ? "shared" : course.source || "shared",
+    homeAreaId: course.homeAreaId || "",
+    name: course.name || "",
+    town: course.town || "",
+    postcode: course.postcode || "",
+    country: course.country || "",
+    holesCount: Number(course.holesCount || holes.length || course.holes.length || 18),
+    par: course.par || "",
+    distanceMiles: typeof course.distanceMiles === "number" ? course.distanceMiles : null,
+    website: course.website || "",
+    phone: course.phone || "",
+    location: normalizeExportPoint(course.location),
+    osm: course.osm || null,
+    holesTag: course.holesTag || "",
+    attribution: course.attribution || "",
+    geometrySource: course.geometrySource || "PinScope shared defaults",
+    verification: course.verification || null,
+    tees: normalizeExportArray(course.tees),
+    holes
+  });
+}
+
+function holeToSharedDefault(hole) {
+  if (!hole || !Number.isFinite(Number(hole.number))) {
+    return null;
+  }
+
+  const geometry = normalizeExportGeometry(hole.geometry, hole.greenPolygon);
+  return pruneEmpty({
+    number: Number(hole.number),
+    name: hole.name || "",
+    par: Number.isFinite(Number(hole.par)) ? Number(hole.par) : null,
+    strokeIndex: Number.isFinite(Number(hole.strokeIndex)) ? Number(hole.strokeIndex) : null,
+    yards: normalizeExportObject(hole.yards),
+    tee: normalizeExportPoint(hole.tee),
+    greenCenter: normalizeExportPoint(hole.greenCenter),
+    greenFront: normalizeExportPoint(hole.greenFront),
+    greenBack: normalizeExportPoint(hole.greenBack),
+    geometry,
+    mapping: normalizeExportObject(hole.mapping),
+    osm: hole.osm || null,
+    snapshot: normalizeExportSnapshot(hole.snapshot),
+    visual: sanitizeVisualCoordinates(hole.visual)
+  });
+}
+
+function normalizeExportSnapshot(snapshot) {
+  const normalized = normalizeHoleSnapshot(snapshot);
+  if (!normalized) {
+    return null;
+  }
+  return pruneEmpty({
+    imageUrl: normalized.imageUrl,
+    storageKey: normalized.storageKey || "",
+    width: normalized.width,
+    height: normalized.height,
+    center: normalized.center,
+    zoom: normalized.zoom,
+    provider: normalized.provider || "azure-maps",
+    tileset: normalized.tileset || "microsoft.imagery",
+    attribution: normalized.attribution || "Imagery: Azure Maps",
+    generatedAt: normalized.generatedAt || "",
+    fingerprint: normalized.fingerprint || ""
+  });
+}
+
+function normalizeExportGeometry(geometry, fallbackGreenPolygon) {
+  const source = geometry && typeof geometry === "object" ? geometry : {};
+  const greenPolygon = normalizeExportPolygon(source.greenPolygon || fallbackGreenPolygon);
+  const tees = normalizeExportArray(source.tees);
+  const detection = normalizeExportObject(source.detection);
+  return pruneEmpty({
+    ...normalizeExportObject(source),
+    greenPolygon,
+    tees,
+    detection
+  });
+}
+
+function normalizeExportArray(value) {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+  return value
+    .map((item) => {
+      if (validGeoPoint(item)) {
+        return { ...item, ...roundGeoPoint(item) };
+      }
+      if (item && typeof item === "object") {
+        const point = normalizeExportPoint(item);
+        return pruneEmpty({ ...item, ...(point || {}) });
+      }
+      return item;
+    })
+    .filter((item) => item !== null && item !== undefined && item !== "");
+}
+
+function normalizeExportObject(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return null;
+  }
+  return pruneEmpty({ ...value });
+}
+
+function normalizeExportPolygon(value) {
+  const list = Array.isArray(value) ? value : [];
+  return list.map(normalizeExportPoint).filter(Boolean);
+}
+
+function normalizeExportPoint(value) {
+  if (!validGeoPoint(value)) {
+    return null;
+  }
+  return roundGeoPoint(value);
+}
+
+function pruneEmpty(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return value;
+  }
+  const next = {};
+  Object.entries(value).forEach(([key, item]) => {
+    if (item === null || item === undefined || item === "") {
+      return;
+    }
+    if (Array.isArray(item) && !item.length) {
+      return;
+    }
+    if (item && typeof item === "object" && !Array.isArray(item) && !Object.keys(item).length) {
+      return;
+    }
+    next[key] = item;
+  });
+  return next;
+}
+
+function downloadTextFile(filename, text, type = "text/plain") {
+  const blob = new Blob([text], { type });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename;
+  document.body.append(anchor);
+  anchor.click();
+  anchor.remove();
+  URL.revokeObjectURL(url);
+}
+
 function finishRound() {
   const round = getActiveRound(state);
   if (!round) {
@@ -4006,6 +4683,9 @@ function applyCourseGeometry(courseId, payload, options = {}) {
   course.attribution = mergeAttribution(course.attribution, payload.attribution);
   clearSatelliteAnchorEditsForHoles(course.id, changedHoleNumbers);
   persist(options.message || `Updated ${changed} mapped hole${changed === 1 ? "" : "s"}.`);
+  if (changed > 0 && options.autoPublish !== false) {
+    publishMappedCourse(course.id, { automatic: true });
+  }
 }
 
 function normalizeCourseGeometryPayload(payload) {
