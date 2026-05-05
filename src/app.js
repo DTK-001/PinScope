@@ -15,6 +15,15 @@ import {
 import { homeArea } from "./local-area.js";
 import { fetchOsmCourseLayout, findNearbyOsmCourses } from "./osm.js";
 import { loadState, saveState } from "./storage.js";
+import {
+  captureRemoteCourseSyncSettingsFromUrl,
+  fetchRemoteCourseDefaults,
+  getRemoteCourseSyncSettings,
+  publishRemoteCourseDefault,
+  remoteCourseSyncCanPublish,
+  remoteCourseSyncIsConfigured,
+  saveRemoteCourseSyncSettings
+} from "./remote-course-sync.js";
 
 const CRANHAM_COURSE_ID = "osm-way-23454278";
 const BELHUS_COURSE_ID = "verified-belhus-park";
@@ -52,7 +61,10 @@ const BELHUS_PHOTO_GEO_BOUNDS = {
 };
 
 const app = document.querySelector("#app");
+captureRemoteCourseSyncSettingsFromUrl();
 let state = loadState();
+let remoteCourseSyncStatus = "";
+let remoteCourseSyncBusy = false;
 let coursePhotoSources = loadCoursePhotoSources();
 let coursePhotoEdits = loadCoursePhotoEdits();
 let coursePhotoImages = new Map();
@@ -89,6 +101,7 @@ let scoreCardOpen = false;
 
 render();
 registerServiceWorker();
+loadPublishedCoursesOnStart();
 
 window.addEventListener("hashchange", () => {
   view = getViewFromHash();
@@ -256,7 +269,45 @@ function renderCourses() {
     <section class="course-list">
       ${filteredCourses.length ? filteredCourses.map(renderCourseCard).join("") : `<p class="empty-copy">No courses match that search.</p>`}
     </section>
-    <p class="source-note">OpenStreetMap imports require ODbL attribution. Imported shells are saved locally on this device.</p>
+    ${renderRemoteCourseSyncPanel()}
+    <p class="source-note">OpenStreetMap imports require ODbL attribution. Published course geometry loads automatically from your shared PinScope cloud endpoint when configured.</p>
+  `;
+}
+
+function renderRemoteCourseSyncPanel() {
+  const settings = getRemoteCourseSyncSettings();
+  const connected = Boolean(settings.endpoint);
+  const canPublish = Boolean(settings.endpoint && settings.adminToken);
+  const showAdminPanel = !connected || canPublish || new URLSearchParams(window.location.search || "").has("pinscopeAdmin");
+  if (!showAdminPanel) {
+    return "";
+  }
+  const status = remoteCourseSyncStatus || (connected
+    ? canPublish
+      ? "Cloud sync is connected. This device can publish mapped courses."
+      : "Cloud sync is connected for reading. Add your admin token on this device to publish."
+    : "Cloud sync is not configured yet.");
+
+  return `
+    <details class="tool-panel sync-panel">
+      <summary>Cloud course sync</summary>
+      <form class="stack" data-form="sync-settings">
+        <p class="source-note">Use this once for your own admin setup. Public users only read the published holes automatically; they do not need to import JSON or run OSM mapping.</p>
+        <label>
+          <span>Sync endpoint</span>
+          <input name="endpoint" type="url" inputmode="url" value="${escapeAttribute(settings.endpoint)}" placeholder="https://your-worker.your-domain.workers.dev" />
+        </label>
+        <label>
+          <span>Admin token on this device only</span>
+          <input name="adminToken" type="password" value="${escapeAttribute(settings.adminToken)}" placeholder="Leave blank on public/user devices" autocomplete="off" />
+        </label>
+        <div class="course-actions">
+          <button class="primary-action" type="submit">Save sync settings</button>
+          <button class="secondary-action" type="button" data-action="load-published-courses" ${connected && !remoteCourseSyncBusy ? "" : "disabled"}>Load published courses</button>
+        </div>
+        <p class="source-note">${escapeHtml(status)}</p>
+      </form>
+    </details>
   `;
 }
 
@@ -384,7 +435,7 @@ function renderSelectedCourseActions(course) {
     <div class="course-actions">
       <button class="secondary-action" type="button" data-action="quick-start" data-course-id="${course.id}">Start Round</button>
       <button class="secondary-action" type="button" data-action="refresh-course-layout" data-course-id="${course.id}">OSM holes</button>
-      <button class="secondary-action" type="button" data-action="export-shared-course-defaults">Export shared data</button>
+      ${remoteCourseSyncCanPublish() ? `<button class="secondary-action" type="button" data-action="publish-course-defaults" data-course-id="${course.id}">Publish course</button>` : ""}
       <label class="file-action secondary-action">
         Import mapper JSON
         <input type="file" accept="application/json,.json" data-action="course-geometry-file" data-course-id="${course.id}" />
@@ -2718,6 +2769,14 @@ function handleClick(event) {
     exportSharedCourseDefaults();
   }
 
+  if (action === "publish-course-defaults") {
+    publishMappedCourse(button.dataset.courseId || state.selectedCourseId, { manual: true });
+  }
+
+  if (action === "load-published-courses") {
+    loadPublishedCourseDefaults({ manual: true });
+  }
+
   if (action === "select-course") {
     state.selectedCourseId = button.dataset.courseId;
     persist("Course selected.");
@@ -2835,6 +2894,22 @@ function handleSubmit(event) {
       carryYards: clamp(Number(data.get(club.id) || club.carryYards), 0, 400)
     }));
     persist("Bag saved.");
+  }
+
+  if (form.dataset.form === "sync-settings") {
+    saveRemoteCourseSyncSettings({
+      endpoint: String(data.get("endpoint") || ""),
+      adminToken: String(data.get("adminToken") || "")
+    });
+    remoteCourseSyncStatus = remoteCourseSyncCanPublish()
+      ? "Cloud sync saved. This device can publish mapped courses."
+      : remoteCourseSyncIsConfigured()
+        ? "Cloud sync saved for reading. Add your admin token on this device to publish."
+        : "Cloud sync settings cleared.";
+    render();
+    if (remoteCourseSyncIsConfigured()) {
+      loadPublishedCourseDefaults({ manual: true });
+    }
   }
 }
 
@@ -3862,6 +3937,192 @@ function moveHole(delta) {
   persist();
 }
 
+function loadPublishedCoursesOnStart() {
+  if (!remoteCourseSyncIsConfigured()) {
+    return;
+  }
+  loadPublishedCourseDefaults({ manual: false });
+}
+
+async function loadPublishedCourseDefaults(options = {}) {
+  if (!remoteCourseSyncIsConfigured()) {
+    if (options.manual) {
+      flash("Add your cloud course sync endpoint first.");
+    }
+    return;
+  }
+
+  remoteCourseSyncBusy = true;
+  remoteCourseSyncStatus = "Loading published course data...";
+  render();
+
+  try {
+    const publishedCourses = await fetchRemoteCourseDefaults();
+    const changed = applyPublishedCourseDefaults(publishedCourses);
+    remoteCourseSyncStatus = publishedCourses.length
+      ? `Loaded ${publishedCourses.length} published course${publishedCourses.length === 1 ? "" : "s"}${changed ? " and updated this device." : "."}`
+      : "Cloud sync is connected, but no published courses are stored yet.";
+    saveState(state);
+    if (options.manual) {
+      flash(remoteCourseSyncStatus);
+    } else {
+      render();
+    }
+  } catch (error) {
+    remoteCourseSyncStatus = error.message || "Could not load published courses.";
+    if (options.manual) {
+      flash(remoteCourseSyncStatus);
+    } else {
+      render();
+    }
+  } finally {
+    remoteCourseSyncBusy = false;
+    render();
+  }
+}
+
+async function publishMappedCourse(courseId, options = {}) {
+  const course = getCourse(state, courseId);
+  if (!course) {
+    if (options.manual) {
+      flash("Select a course before publishing.");
+    }
+    return false;
+  }
+
+  const sharedCourse = courseToSharedDefault(course);
+  if (!sharedCourse) {
+    if (options.manual) {
+      flash("This course does not have mapped tee/green data to publish yet.");
+    }
+    return false;
+  }
+
+  if (!remoteCourseSyncCanPublish()) {
+    remoteCourseSyncStatus = remoteCourseSyncIsConfigured()
+      ? "Course is mapped locally. Add your admin token on this device to publish it to every device."
+      : "Course is mapped locally. Add a cloud sync endpoint and admin token to publish it to every device.";
+    if (options.manual) {
+      flash(remoteCourseSyncStatus);
+    } else {
+      render();
+    }
+    return false;
+  }
+
+  remoteCourseSyncBusy = true;
+  remoteCourseSyncStatus = `Publishing ${course.name || "course"}...`;
+  render();
+
+  try {
+    const result = await publishRemoteCourseDefault(sharedCourse);
+    const publishedCourses = Array.isArray(result?.courses)
+      ? result.courses
+      : result?.course
+        ? [result.course]
+        : [sharedCourse];
+    applyPublishedCourseDefaults(publishedCourses);
+    saveState(state);
+    remoteCourseSyncStatus = `Published ${course.name || "course"}. New devices will load this course automatically.`;
+    flash(remoteCourseSyncStatus);
+    return true;
+  } catch (error) {
+    remoteCourseSyncStatus = error.message || "Could not publish course data.";
+    flash(`Mapped locally, but cloud publish failed: ${remoteCourseSyncStatus}`);
+    return false;
+  } finally {
+    remoteCourseSyncBusy = false;
+    render();
+  }
+}
+
+function applyPublishedCourseDefaults(publishedCourses) {
+  if (!Array.isArray(publishedCourses) || !publishedCourses.length) {
+    return false;
+  }
+
+  const normalized = publishedCourses
+    .filter((course) => course && typeof course === "object" && course.id && Array.isArray(course.holes))
+    .map((course) => ({
+      ...course,
+      source: course.source || "shared",
+      geometrySource: course.geometrySource || "PinScope Cloud"
+    }));
+
+  if (!normalized.length) {
+    return false;
+  }
+
+  const publishedById = new Map(normalized.map((course) => [course.id, course]));
+  const existingIds = new Set(state.courses.map((course) => course.id));
+  let changed = false;
+
+  state.courses = state.courses.map((course) => {
+    const published = publishedById.get(course.id);
+    if (!published) {
+      return course;
+    }
+    changed = true;
+    return mergePublishedCourse(course, published);
+  });
+
+  normalized.forEach((course) => {
+    if (!existingIds.has(course.id)) {
+      changed = true;
+      state.courses.push({
+        ...course,
+        source: course.source || "shared",
+        geometrySource: course.geometrySource || "PinScope Cloud"
+      });
+    }
+  });
+
+  if (changed) {
+    state.courses = state.courses.sort(compareCourses);
+    if (!state.courses.some((course) => course.id === state.selectedCourseId)) {
+      state.selectedCourseId = state.courses[0]?.id || "";
+    }
+  }
+
+  return changed;
+}
+
+function mergePublishedCourse(existing, published) {
+  const existingHoles = Array.isArray(existing.holes) ? existing.holes : [];
+  const publishedHoles = Array.isArray(published.holes) ? published.holes : [];
+  const publishedByNumber = new Map(publishedHoles.map((hole) => [Number(hole.number), hole]));
+  const existingNumbers = new Set(existingHoles.map((hole) => Number(hole.number)));
+  const mergedHoles = existingHoles.map((hole) => mergePublishedHole(hole, publishedByNumber.get(Number(hole.number))));
+
+  publishedHoles.forEach((hole) => {
+    if (!existingNumbers.has(Number(hole.number))) {
+      mergedHoles.push(hole);
+    }
+  });
+
+  return {
+    ...existing,
+    ...published,
+    source: existing.source === "verified" ? existing.source : published.source || existing.source || "shared",
+    attribution: mergeAttribution(existing.attribution, published.attribution),
+    geometrySource: published.geometrySource || existing.geometrySource || "PinScope Cloud",
+    holes: mergedHoles.sort((a, b) => Number(a.number) - Number(b.number))
+  };
+}
+
+function mergePublishedHole(existing, published) {
+  if (!published) {
+    return existing;
+  }
+  return pruneEmpty({
+    ...existing,
+    ...published,
+    yards: { ...(existing.yards || {}), ...(published.yards || {}) },
+    geometry: { ...(existing.geometry || {}), ...(published.geometry || {}) },
+    mapping: { ...(existing.mapping || {}), ...(published.mapping || {}) },
+    visual: published.visual || existing.visual
+  });
+}
 
 function exportSharedCourseDefaults() {
   const defaults = state.courses
@@ -4168,6 +4429,9 @@ function applyCourseGeometry(courseId, payload, options = {}) {
   course.attribution = mergeAttribution(course.attribution, payload.attribution);
   clearSatelliteAnchorEditsForHoles(course.id, changedHoleNumbers);
   persist(options.message || `Updated ${changed} mapped hole${changed === 1 ? "" : "s"}.`);
+  if (changed > 0 && options.autoPublish !== false) {
+    publishMappedCourse(course.id, { automatic: true });
+  }
 }
 
 function normalizeCourseGeometryPayload(payload) {

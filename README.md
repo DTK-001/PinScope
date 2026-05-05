@@ -16,7 +16,8 @@ Phone-first golf app foundation for local courses, GPS yardages, scoring, stats,
 - Club recommendations from the saved bag distances.
 - Active round scoring with score, putts, penalties, fairways, GIR, and tee club.
 - GPS hooks for front, middle, back, and hazard yardages when a course has coordinates.
-- Local device storage for courses, rounds, and club distances.
+- Local device storage for rounds and club distances.
+- Cloud-published course geometry so mapped OSM/JSON holes can load automatically on every device.
 - A neutral course schema that can later accept richer OSM tee, fairway, green, bunker, and water data.
 
 ## Run it locally
@@ -43,7 +44,7 @@ Then open `http://<your-computer-ip>:5173` on the phone.
 
 ## Data stance
 
-OpenStreetMap data is open under ODbL and needs attribution. The app stores imported course shells locally on the device. For a shared/public version we should keep source attribution visible and be careful with any derived course database we publish.
+OpenStreetMap data is open under ODbL and needs attribution. Published/shared course geometry should keep source attribution visible and be treated as a derived course database.
 
 ## Next step
 
@@ -62,14 +63,15 @@ Imported geometry is saved locally in the browser with the rest of the course da
 
 ## Sharing mapped courses across devices
 
-This build includes `src/shared-course-defaults.js` for course data that should ship with the app instead of only living in one browser's local storage.
+This build now supports a real publish/read workflow instead of copying export files between devices.
 
-Recommended workflow:
+Recommended production workflow:
 
-1. On the device/browser where the courses are already mapped, open PinScope.
-2. Select any mapped course.
-3. Click **Export shared data**.
-4. Replace `src/shared-course-defaults.js` in the project with the downloaded file.
-5. Deploy the app again. The service worker cache has been bumped to `local-loop-golf-v52`, so updated devices should pick up the shared course file.
+1. Deploy the small Cloudflare Worker in `tools/course-sync-worker/`.
+2. Put the worker URL into `src/sync-config.js` as `endpoint`, or paste it in the in-app **Cloud course sync** panel.
+3. Keep `adminToken` blank in public source code. Save the admin token only on your own device through the **Cloud course sync** panel. If the public endpoint is already configured and the panel is hidden, open the app once with `?pinscopeAdmin=1` or `?pinscopeSyncToken=YOUR_TOKEN`.
+4. On your admin device, run **OSM holes** and/or **Import mapper JSON** for a course.
+5. PinScope automatically publishes that mapped course to the sync endpoint.
+6. Any other device that opens the app loads the published holes automatically. Regular users do not need to run OSM mapping, import JSON, or copy files.
 
-Use `src/verified-green-defaults.js` for lightweight tee/green overrides on verified built-in courses. Use `src/shared-course-defaults.js` when you also want imported OSM/manual courses to appear on every device.
+The old `src/shared-course-defaults.js` file still works as an offline fallback, but the preferred approach is the cloud sync endpoint because it lets you update course data without rebuilding the app every time. The service worker cache has been bumped to `local-loop-golf-v53`.
