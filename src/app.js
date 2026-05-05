@@ -285,7 +285,7 @@ function renderRemoteCourseSyncPanel() {
   }
   const status = remoteCourseSyncStatus || (connected
     ? canPublish
-      ? "Cloud sync is connected. This device can save mapped hole snapshots."
+      ? "Cloud sync is connected. OSM holes and mapper imports will save fresh snapshots automatically."
       : "Cloud sync is connected for reading. Add your admin token on this device to save snapshots."
     : "Cloud sync is not configured yet.");
 
@@ -293,7 +293,7 @@ function renderRemoteCourseSyncPanel() {
     <details class="tool-panel sync-panel">
       <summary>Cloud course sync</summary>
       <form class="stack" data-form="sync-settings">
-        <p class="source-note">Use this once for your own admin setup. After OSM holes or mapper JSON, check the live satellite holes, align tee/green if needed, then press Save snapshots.</p>
+        <p class="source-note">Use this once for your own admin setup. OSM holes and mapper JSON update the GPS, clear old images, then automatically save fresh mapped snapshots.</p>
         <label>
           <span>Sync endpoint</span>
           <input name="endpoint" type="url" inputmode="url" value="${escapeAttribute(settings.endpoint)}" placeholder="https://your-worker.your-domain.workers.dev" />
@@ -3361,7 +3361,7 @@ function handleSubmit(event) {
       adminToken: String(data.get("adminToken") || "")
     });
     remoteCourseSyncStatus = remoteCourseSyncCanPublish()
-      ? "Cloud sync saved. This device can save mapped hole snapshots."
+      ? "Cloud sync saved. OSM holes and mapper imports will save fresh snapshots automatically."
       : remoteCourseSyncIsConfigured()
         ? "Cloud sync saved for reading. Add your admin token on this device to save snapshots."
         : "Cloud sync settings cleared.";
@@ -4866,7 +4866,7 @@ async function refreshCourseLayout(courseId) {
     applyCourseGeometry(course.id, layout, {
       source: "OpenStreetMap",
       message: layout.mappedCount || layout.greenShapeCount
-        ? `Mapped ${layout.mappedCount || 0} tee/green hole${(layout.mappedCount || 0) === 1 ? "" : "s"} and ${layout.greenShapeCount || 0} green shape${(layout.greenShapeCount || 0) === 1 ? "" : "s"} from course-locked OSM${layout.courseArea ? " boundary" : " area"}${layout.counts ? ` (${layout.counts.holeLines} hole lines, ${layout.counts.greens} greens, ${layout.counts.tees} tees found inside the course)` : ""}. Old snapshots were cleared; check/align the live satellite holes, then press Save snapshots.`
+        ? `Mapped ${layout.mappedCount || 0} tee/green hole${(layout.mappedCount || 0) === 1 ? "" : "s"} and ${layout.greenShapeCount || 0} green shape${(layout.greenShapeCount || 0) === 1 ? "" : "s"} from course-locked OSM${layout.courseArea ? " boundary" : " area"}${layout.counts ? ` (${layout.counts.holeLines} hole lines, ${layout.counts.greens} greens, ${layout.counts.tees} tees found inside the course)` : ""}. Saving fresh snapshots now.`
         : "No OSM hole geometry found for this course."
     });
   } catch (error) {
@@ -4879,7 +4879,7 @@ async function importCourseGeometryFile(file, courseId) {
     const payload = JSON.parse(await file.text());
     applyCourseGeometry(courseId, payload, {
       source: payload.source || payload.schema || "PinScope Green Mapper",
-      message: "Imported mapper geometry. Old snapshots were cleared; check/align the live satellite holes, then press Save snapshots."
+      message: "Imported mapper geometry. Saving fresh snapshots now."
     });
   } catch (error) {
     flash(error.message || "Could not import that geometry JSON.");
@@ -4934,6 +4934,9 @@ function applyCourseGeometry(courseId, payload, options = {}) {
   course.attribution = mergeAttribution(course.attribution, payload.attribution);
   clearSatelliteAnchorEditsForHoles(course.id, changedHoleNumbers);
   persist(options.message || `Updated ${changed} mapped hole${changed === 1 ? "" : "s"}.`);
+  if (changed > 0 && options.autoPublish !== false) {
+    publishMappedCourse(course.id, { automatic: true });
+  }
 }
 
 function normalizeCourseGeometryPayload(payload) {
