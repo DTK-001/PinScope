@@ -127,6 +127,9 @@ function printHelp() {
   console.log(`Usage:
   node tools/build-course-pack.cjs [--input data/course-pack] [--force]
 
+Generates saved Azure satellite snapshots for every hole with confirmed tee
+and greenCenter GPS coordinates. Holes missing either point are skipped.
+
 Inputs can be:
   - one JSON course object with { id, holes }
   - an array of course objects
@@ -137,6 +140,7 @@ The script writes:
   - assets/snapshots/{courseId}/hole-XX-{fingerprint}.jpg
   - src/shared-course-defaults.js
 
+Use --force after remapping/importing JSON to retake every confirmed snapshot.
 Set AZURE_MAPS_KEY in your shell or .env.local to download missing snapshots.`);
 }
 
