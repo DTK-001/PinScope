@@ -8,7 +8,7 @@ const SNAPSHOT_WIDTH = 900;
 const SNAPSHOT_HEIGHT = 1300;
 const SNAPSHOT_MIN_ZOOM = 14;
 const SNAPSHOT_MAX_ZOOM = 19;
-const SNAPSHOT_TILE_SIZE = 256;
+const SNAPSHOT_TILE_SIZE = 512;
 const SNAPSHOT_PADDING = 0.18;
 
 const repoRoot = path.resolve(__dirname, "..");

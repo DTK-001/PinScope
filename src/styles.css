@@ -990,6 +990,10 @@ select option {
   transition: opacity 180ms ease;
 }
 
+.snapshot-map-image {
+  filter: saturate(1.34) contrast(1.1) brightness(1.06) hue-rotate(-8deg);
+}
+
 .azure-map-tile[data-loaded="1"],
 .azure-map-image[data-loaded="1"] {
   opacity: 1;

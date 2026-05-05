@@ -47,6 +47,7 @@ const AZURE_MAPS_QUERY_KEY = "azureMapsKey";
 const AZURE_MAPS_QUERY_ENABLED = "azureMaps";
 const AZURE_MAPS_TILE_SIZE = 256;
 const AZURE_MAPS_REQUEST_TILE_SIZE = 512;
+const AZURE_MAPS_STATIC_TILE_SIZE = 512;
 const AZURE_MAPS_ZOOM = 17;
 const SATELLITE_PRELOAD_CONCURRENCY = 2;
 const SATELLITE_PANEL_RATIO = 13 / 9;
@@ -1798,10 +1799,10 @@ function azureEventToPosition(panel, anchors, marker, event) {
   return azureTargetPointToGeo(anchors, point, marker, rect.height / rect.width);
 }
 
-function geoToWorldPixel(position, zoom) {
+function geoToWorldPixel(position, zoom, tileSize = AZURE_MAPS_TILE_SIZE) {
   const lat = clamp(Number(position.lat), -85.05112878, 85.05112878);
   const lng = Number(position.lng);
-  const scale = AZURE_MAPS_TILE_SIZE * 2 ** zoom;
+  const scale = tileSize * 2 ** zoom;
   const sinLat = Math.sin((lat * Math.PI) / 180);
   return {
     x: ((lng + 180) / 360) * scale,
@@ -1809,8 +1810,8 @@ function geoToWorldPixel(position, zoom) {
   };
 }
 
-function worldPixelToGeo(pixel, zoom) {
-  const scale = AZURE_MAPS_TILE_SIZE * 2 ** zoom;
+function worldPixelToGeo(pixel, zoom, tileSize = AZURE_MAPS_TILE_SIZE) {
+  const scale = tileSize * 2 ** zoom;
   const lng = (pixel.x / scale) * 360 - 180;
   const n = Math.PI - (2 * Math.PI * pixel.y) / scale;
   const lat = (180 / Math.PI) * Math.atan(Math.sinh(n));
@@ -1900,10 +1901,10 @@ function snapshotGeoToTargetPoint(snapshot, position) {
   if (!normalized || !validGeoPoint(position)) {
     return null;
   }
-  const centerWorld = geoToWorldPixel(normalized.center, normalized.zoom);
-  const pointWorld = geoToWorldPixel(position, normalized.zoom);
+  const centerWorld = geoToWorldPixel(normalized.center, normalized.zoom, AZURE_MAPS_STATIC_TILE_SIZE);
+  const pointWorld = geoToWorldPixel(position, normalized.zoom, AZURE_MAPS_STATIC_TILE_SIZE);
   let dx = pointWorld.x - centerWorld.x;
-  const worldSize = AZURE_MAPS_TILE_SIZE * 2 ** normalized.zoom;
+  const worldSize = AZURE_MAPS_STATIC_TILE_SIZE * 2 ** normalized.zoom;
   if (Math.abs(dx) > worldSize / 2) {
     dx += dx > 0 ? -worldSize : worldSize;
   }
@@ -1918,12 +1919,12 @@ function snapshotTargetPointToGeo(snapshot, point) {
   if (!normalized || !point) {
     return null;
   }
-  const centerWorld = geoToWorldPixel(normalized.center, normalized.zoom);
+  const centerWorld = geoToWorldPixel(normalized.center, normalized.zoom, AZURE_MAPS_STATIC_TILE_SIZE);
   const world = {
     x: centerWorld.x + ((Number(point.x) - 50) / 100) * normalized.width,
     y: centerWorld.y + ((Number(point.y) - 50) / 100) * normalized.height
   };
-  return worldPixelToGeo(world, normalized.zoom);
+  return worldPixelToGeo(world, normalized.zoom, AZURE_MAPS_STATIC_TILE_SIZE);
 }
 
 function snapshotEventToPosition(panel, hole, event) {
