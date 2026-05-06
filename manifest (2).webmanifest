@@ -1,0 +1,19 @@
+{
+  "name": "PinScope",
+  "short_name": "PinScope",
+  "description": "Phone-first golf scoring, GPS, stats, and local course tracking.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#07070d",
+  "theme_color": "#07070d",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "./assets/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
