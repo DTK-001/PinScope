@@ -1,6 +1,6 @@
 {
   "schema": "pinscope-course-pack-v1",
-  "exportedAt": "2026-05-05T21:46:43.039Z",
+  "exportedAt": "2026-05-06T20:34:29.775Z",
   "courses": [
     {
       "id": "osm-way-23454278",
@@ -288,7 +288,7 @@
           },
           "mapping": {
             "source": "OpenStreetMap",
-            "updatedAt": "2026-05-05T21:46:37.190Z",
+            "updatedAt": "2026-05-06T20:34:08.343Z",
             "osm": {
               "hole": "way/1082469602",
               "green": "way/1082469601",
@@ -1393,7 +1393,7 @@
           },
           "mapping": {
             "source": "OpenStreetMap",
-            "updatedAt": "2026-05-05T21:46:37.190Z",
+            "updatedAt": "2026-05-06T20:34:08.343Z",
             "osm": {
               "hole": "way/1082469607",
               "green": "way/1082469606",
@@ -2320,7 +2320,7 @@
           },
           "mapping": {
             "source": "OpenStreetMap",
-            "updatedAt": "2026-05-05T21:46:37.190Z",
+            "updatedAt": "2026-05-06T20:34:08.343Z",
             "osm": {
               "hole": "way/1082469611",
               "green": "way/1082469610",
@@ -2974,7 +2974,7 @@
           },
           "mapping": {
             "source": "OpenStreetMap",
-            "updatedAt": "2026-05-05T21:46:37.190Z",
+            "updatedAt": "2026-05-06T20:34:08.343Z",
             "osm": {
               "hole": "way/1082470252",
               "green": "way/1082470250",
@@ -4610,7 +4610,7 @@
           },
           "mapping": {
             "source": "OpenStreetMap",
-            "updatedAt": "2026-05-05T21:46:37.190Z",
+            "updatedAt": "2026-05-06T20:34:08.343Z",
             "osm": {
               "hole": "way/1082470257",
               "green": "way/1082470255",
@@ -5154,7 +5154,7 @@
           },
           "mapping": {
             "source": "OpenStreetMap",
-            "updatedAt": "2026-05-05T21:46:37.190Z",
+            "updatedAt": "2026-05-06T20:34:08.343Z",
             "osm": {
               "hole": "way/1082470688",
               "green": "way/1082470686",
@@ -6325,7 +6325,7 @@
           },
           "mapping": {
             "source": "OpenStreetMap",
-            "updatedAt": "2026-05-05T21:46:37.190Z",
+            "updatedAt": "2026-05-06T20:34:08.343Z",
             "osm": {
               "hole": "way/1082471995",
               "green": "way/1082471994",
@@ -7603,7 +7603,7 @@
           },
           "mapping": {
             "source": "OpenStreetMap",
-            "updatedAt": "2026-05-05T21:46:37.190Z",
+            "updatedAt": "2026-05-06T20:34:08.343Z",
             "osm": {
               "hole": "way/1082473157",
               "green": "way/1082473155",
@@ -8410,7 +8410,7 @@
           },
           "mapping": {
             "source": "OpenStreetMap",
-            "updatedAt": "2026-05-05T21:46:37.190Z",
+            "updatedAt": "2026-05-06T20:34:08.343Z",
             "osm": {
               "hole": "way/1082473163",
               "green": "way/1082473161",
@@ -9564,7 +9564,7 @@
           },
           "mapping": {
             "source": "OpenStreetMap",
-            "updatedAt": "2026-05-05T21:46:37.190Z",
+            "updatedAt": "2026-05-06T20:34:08.343Z",
             "osm": {
               "hole": "way/1082475647",
               "green": "way/1082475644",
@@ -10789,7 +10789,7 @@
           },
           "mapping": {
             "source": "OpenStreetMap",
-            "updatedAt": "2026-05-05T21:46:37.190Z",
+            "updatedAt": "2026-05-06T20:34:08.343Z",
             "osm": {
               "hole": "way/1082475651",
               "green": "way/1082475649",
@@ -11375,7 +11375,7 @@
           },
           "mapping": {
             "source": "OpenStreetMap",
-            "updatedAt": "2026-05-05T21:46:37.190Z",
+            "updatedAt": "2026-05-06T20:34:08.343Z",
             "osm": {
               "hole": "way/1082475656",
               "green": "way/1082475654",
@@ -13998,7 +13998,7 @@
           },
           "mapping": {
             "source": "OpenStreetMap",
-            "updatedAt": "2026-05-05T21:46:37.190Z",
+            "updatedAt": "2026-05-06T20:34:08.343Z",
             "osm": {
               "hole": "way/1082477202",
               "green": "way/1082477200",
@@ -14822,7 +14822,7 @@
           },
           "mapping": {
             "source": "OpenStreetMap",
-            "updatedAt": "2026-05-05T21:46:37.190Z",
+            "updatedAt": "2026-05-06T20:34:08.343Z",
             "osm": {
               "hole": "way/1082477207",
               "green": "way/1082477205",
@@ -16370,7 +16370,7 @@
           },
           "mapping": {
             "source": "OpenStreetMap",
-            "updatedAt": "2026-05-05T21:46:37.190Z",
+            "updatedAt": "2026-05-06T20:34:08.343Z",
             "osm": {
               "hole": "way/1082479412",
               "green": "way/1082479410",
@@ -17045,7 +17045,7 @@
           },
           "mapping": {
             "source": "OpenStreetMap",
-            "updatedAt": "2026-05-05T21:46:37.190Z",
+            "updatedAt": "2026-05-06T20:34:08.343Z",
             "osm": {
               "hole": "way/1082479416",
               "green": "way/1082479414",
@@ -17520,7 +17520,7 @@
           },
           "mapping": {
             "source": "OpenStreetMap",
-            "updatedAt": "2026-05-05T21:46:37.190Z",
+            "updatedAt": "2026-05-06T20:34:08.343Z",
             "osm": {
               "hole": "way/1082479421",
               "green": "way/1082479418",
@@ -18521,7 +18521,7 @@
           },
           "mapping": {
             "source": "OpenStreetMap",
-            "updatedAt": "2026-05-05T21:46:37.190Z",
+            "updatedAt": "2026-05-06T20:34:08.343Z",
             "osm": {
               "hole": "way/1082479603",
               "green": "way/1082479602",
@@ -19033,7 +19033,7 @@
         "lat": 51.507331,
         "lng": 0.263364
       },
-      "attribution": "Scorecard from Golfify and Belhus Park Golf Club scorecard page. Available tee and green geometry from OpenStreetMap contributors under ODbL. OpenStreetMap contributors. Imagery: Azure Maps. Scorecard from Golfify and Belhus Park Golf Club scorecard page. Available tee and green geometry from OpenStreetMap contributors under ODbL. OpenStreetMap contributors. Imagery: Azure Maps. Scorecard from Golfify and Belhus Park Golf Club scorecard page. Available tee and green geometry from OpenStreetMap contributors under ODbL. OpenStreetMap contributors. Imagery: Azure Maps. Scorecard from Golfify and Belhus Park Golf Club scorecard page. Available tee and green geometry from OpenStreetMap contributors under ODbL. OpenStreetMap contributors. Imagery: Azure Maps. Hole geometry from OpenStreetMap contributors under ODbL.",
+      "attribution": "Scorecard from Golfify and Belhus Park Golf Club scorecard page. Available tee and green geometry from OpenStreetMap contributors under ODbL. OpenStreetMap contributors. Imagery: Azure Maps. Scorecard from Golfify and Belhus Park Golf Club scorecard page. Available tee and green geometry from OpenStreetMap contributors under ODbL. OpenStreetMap contributors. Imagery: Azure Maps. Scorecard from Golfify and Belhus Park Golf Club scorecard page. Available tee and green geometry from OpenStreetMap contributors under ODbL. OpenStreetMap contributors. Imagery: Azure Maps. Scorecard from Golfify and Belhus Park Golf Club scorecard page. Available tee and green geometry from OpenStreetMap contributors under ODbL. OpenStreetMap contributors. Imagery: Azure Maps. Scorecard from Golfify and Belhus Park Golf Club scorecard page. Available tee and green geometry from OpenStreetMap contributors under ODbL. OpenStreetMap contributors. Imagery: Azure Maps. Scorecard from Golfify and Belhus Park Golf Club scorecard page. Available tee and green geometry from OpenStreetMap contributors under ODbL. OpenStreetMap contributors. Imagery: Azure Maps. Scorecard from Golfify and Belhus Park Golf Club scorecard page. Available tee and green geometry from OpenStreetMap contributors under ODbL. OpenStreetMap contributors. Imagery: Azure Maps. Scorecard from Golfify and Belhus Park Golf Club scorecard page. Available tee and green geometry from OpenStreetMap contributors under ODbL. OpenStreetMap contributors. Imagery: Azure Maps. Scorecard from Golfify and Belhus Park Golf Club scorecard page. Available tee and green geometry from OpenStreetMap contributors under ODbL. OpenStreetMap contributors. Imagery: Azure Maps. Scorecard from Golfify and Belhus Park Golf Club scorecard page. Available tee and green geometry from OpenStreetMap contributors under ODbL. OpenStreetMap contributors. Imagery: Azure Maps. Hole geometry from OpenStreetMap contributors under ODbL.",
       "geometrySource": "PinScope course pack: data\\course-pack\\local-osm-map.json",
       "verification": {
         "status": "verified",
