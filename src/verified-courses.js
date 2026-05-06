@@ -14,6 +14,9 @@ const CRANHAM_SCORECARD = {
 
 const BELHUS_COURSE_ID = "verified-belhus-park";
 const BASILDON_COURSE_ID = "verified-basildon";
+const MARDYKE_COURSE_ID = "verified-mardyke-valley";
+const ORSETT_COURSE_ID = "verified-orsett";
+const WARLEY_COURSE_ID = "verified-warley-park";
 const CANVEY_COURSE_ID = "verified-castle-point-canvey";
 
 const BELHUS_SCORECARD = {
@@ -27,9 +30,9 @@ const BELHUS_SCORECARD = {
 const BASILDON_SCORECARD = {
   par: [4, 3, 5, 3, 4, 4, 4, 4, 4, 5, 4, 3, 4, 3, 4, 5, 5, 4],
   strokeIndex: [1, 6, 11, 7, 18, 3, 13, 9, 15, 8, 5, 4, 2, 16, 17, 10, 14, 12],
-  white: [453, 218, 506, 155, 290, 411, 338, 328, 330, 481, 372, 242, 392, 120, 287, 499, 482, 332],
-  yellow: [443, 189, 474, 143, 278, 398, 325, 318, 320, 463, 357, 229, 374, 115, 280, 478, 469, 323],
-  red: [384, 156, 395, 137, 269, 346, 309, 307, 289, 447, 353, 192, 358, 97, 272, 428, 397, 297]
+  white: [442, 210, 491, 154, 272, 401, 332, 322, 325, 476, 372, 242, 392, 120, 287, 499, 482, 332],
+  yellow: [432, 178, 453, 147, 261, 390, 319, 309, 312, 457, 357, 229, 374, 115, 280, 478, 469, 323],
+  red: [375, 147, 388, 138, 252, 337, 307, 302, 283, 441, 353, 192, 358, 97, 272, 428, 397, 297]
 };
 
 const CANVEY_SCORECARD = {
@@ -37,6 +40,39 @@ const CANVEY_SCORECARD = {
   strokeIndex: [6, 12, 8, 2, 16, 14, 10, 18, 4, 15, 7, 17, 1, 13, 3, 11, 9, 5],
   white: [320, 471, 361, 207, 465, 160, 369, 135, 378, 285, 147, 470, 407, 312, 401, 478, 164, 372],
   red: [312, 460, 353, 198, 456, 156, 361, 133, 363, 259, 140, 464, 316, 253, 393, 473, 155, 365]
+};
+
+const MARDYKE_SCORECARD = {
+  par: [4, 4, 4, 4, 3, 5, 4, 4, 3, 4, 4, 3, 4, 5, 4, 4, 3, 4],
+  strokeIndex: [18, 6, 10, 12, 16, 4, 8, 2, 14, 3, 15, 17, 1, 11, 5, 13, 7, 9],
+  white: [283, 418, 416, 357, 170, 567, 336, 328, 163, 418, 352, 176, 384, 485, 291, 403, 218, 436],
+  yellow: [276, 343, 357, 347, 111, 552, 308, 313, 155, 411, 297, 171, 373, 473, 280, 339, 168, 427],
+  red: [270, 337, 350, 337, 99, 510, 256, 250, 150, 406, 287, 148, 311, 376, 217, 271, 145, 416]
+};
+
+const ORSETT_SCORECARD = {
+  par: [5, 4, 3, 4, 5, 4, 5, 3, 4, 4, 5, 3, 4, 4, 3, 4, 4, 4],
+  strokeIndex: [10, 4, 18, 6, 14, 8, 16, 12, 2, 7, 17, 15, 11, 3, 13, 1, 5, 9],
+  white: [531, 443, 154, 374, 496, 318, 513, 180, 458, 388, 485, 145, 385, 358, 199, 425, 438, 404],
+  blue: [506, 443, 154, 374, 496, 318, 513, 180, 424, 388, 485, 145, 385, 358, 199, 401, 438, 404],
+  yellow: [469, 399, 138, 338, 468, 304, 493, 143, 390, 354, 474, 125, 358, 328, 172, 362, 404, 386],
+  red: [451, 376, 123, 326, 429, 298, 451, 120, 369, 320, 433, 123, 345, 307, 161, 401, 394, 367]
+};
+
+const WARLEY_SCORECARD = {
+  par: [4, 5, 3, 4, 5, 4, 4, 3, 4, 4, 4, 4, 5, 3, 4, 4, 4, 3],
+  strokeIndex: [11, 17, 15, 3, 9, 1, 13, 5, 7, 10, 18, 8, 2, 14, 4, 16, 6, 12],
+  black: [322, 458, 167, 428, 549, 434, 315, 151, 411, 375, 267, 362, 475, 194, 347, 276, 336, 188],
+  white: [314, 444, 144, 402, 534, 415, 291, 146, 400, 356, 248, 353, 463, 185, 342, 264, 295, 168],
+  yellow: [286, 435, 117, 385, 524, 406, 263, 138, 376, 335, 220, 338, 451, 147, 315, 246, 286, 157]
+};
+
+const SCORECARD_COURSE_LABELS = {
+  [BASILDON_COURSE_ID]: "Basildon",
+  [CANVEY_COURSE_ID]: "Canvey",
+  [MARDYKE_COURSE_ID]: "Mardyke Valley",
+  [ORSETT_COURSE_ID]: "Orsett",
+  [WARLEY_COURSE_ID]: "Warley Park"
 };
 
 const CRANHAM_COORDS = [
@@ -208,12 +244,14 @@ export const verifiedCourses = [
     website: "https://www.glendalegolf.co.uk/basildon-golf-course/",
     phone: "+44 1268 533532",
     location: { lat: 51.5746, lng: 0.4372 },
-    attribution: "Scorecard cross-checked from BlueGolf and GolfSherpa. Image alignment pending user-supplied top-down course image.",
+    attribution: "Scorecard cross-checked from BlueGolf and GolfSherpa. Holes 1-10 yardages verified against the official Basildon Golf Course planner. Green GPS alignment pending user-supplied map/OSM sync.",
     verification: {
       status: "verified",
-      updated: "2026-05-02",
-      confidence: "BlueGolf and GolfSherpa agree on the 18-hole, par-72 scorecard with 6236 white yards and 5976 yellow yards. Red yards are included from BlueGolf; tee-specific red par differs on some holes and will need tee-specific par support later.",
+      updated: "2026-05-06",
+      confidence: "Basildon identity and 18-hole, par-72 scorecard are verified from BlueGolf and GolfSherpa. Holes 1-10 tee yardages were corrected against Basildon Golf Course's official course planner images; green GPS geometry remains intentionally unset until map alignment/OSM sync is added.",
       sources: [
+        { label: "Official course planner", url: "https://basildongolfcourse.com/course" },
+        { label: "Official yardage book", url: "https://basildongolfcourse.com/sites/default/files/course-plan/Basildon%20Golf%20Course_mobile2.pdf" },
         { label: "BlueGolf detailed scorecard", url: "https://course.bluegolf.com/bluegolf/course/course/basildon/detailedscorecard.htm" },
         { label: "GolfSherpa scorecard", url: "https://golfsherpa.co.uk/courses/england/basildon-golf-club" },
         { label: "GolfPass course page", url: "https://www.golfpass.com/travel-advisor/courses/32437-basildon-golf-course" }
@@ -225,6 +263,103 @@ export const verifiedCourses = [
       { id: "red", name: "Red", color: "#e85d3f", rating: "", slope: "", totalYards: 5433 }
     ],
     holes: Array.from({ length: 18 }, (_, index) => makeScorecardOnlyHole(index, BASILDON_SCORECARD, BASILDON_COURSE_ID))
+  },
+  {
+    id: MARDYKE_COURSE_ID,
+    source: "verified",
+    homeAreaId: homeArea.id,
+    name: "Mardyke Valley Golf Club",
+    town: "South Ockendon",
+    postcode: "RM15 6RR",
+    country: "England",
+    holesCount: 18,
+    par: "70",
+    distanceMiles: 2.1,
+    website: "https://www.mardykevalley.co.uk/",
+    phone: "+44 1708 855011",
+    location: { lat: 51.503425, lng: 0.303971 },
+    attribution: "Course identity from Mardyke Valley Golf Club official site. Hole yardages, par, and stroke index cross-checked against BlueGolf and GolfPass. Green GPS alignment pending user-supplied map/OSM sync.",
+    verification: {
+      status: "verified",
+      updated: "2026-05-06",
+      confidence: "Official Mardyke Valley site confirms the 18-hole, 6201-yard parkland course in South Ockendon. BlueGolf and GolfPass agree on the main men’s par-70 routing and stroke index; red/women’s par differs on some holes and will need tee-specific par support later.",
+      sources: [
+        { label: "Official site", url: "https://www.mardykevalley.co.uk/" },
+        { label: "Official scorecard and rules page", url: "https://www.mardykevalley.co.uk/golf-course-in-south-ockendon-essex/score-card-and-rules/" },
+        { label: "BlueGolf detailed scorecard", url: "https://course.bluegolf.com/bluegolf/course/course/mardykevalleygcentr/detailedscorecard.htm" },
+        { label: "GolfPass scorecard", url: "https://www.golfpass.com/travel-advisor/courses/33567-mardyke-valley-golf-club" }
+      ]
+    },
+    tees: [
+      { id: "white", name: "White", color: "#f8f7f1", rating: "70.4", slope: "118", totalYards: 6201 },
+      { id: "yellow", name: "Yellow", color: "#d7a44d", rating: "68.1", slope: "115", totalYards: 5701 },
+      { id: "red", name: "Red", color: "#e85d3f", rating: "69.9", slope: "118", totalYards: 5136 }
+    ],
+    holes: Array.from({ length: 18 }, (_, index) => makeScorecardOnlyHole(index, MARDYKE_SCORECARD, MARDYKE_COURSE_ID))
+  },
+  {
+    id: ORSETT_COURSE_ID,
+    source: "verified",
+    homeAreaId: homeArea.id,
+    name: "Orsett Golf Club",
+    town: "Orsett",
+    postcode: "RM16 3DR",
+    country: "England",
+    holesCount: 18,
+    par: "72",
+    distanceMiles: 3.2,
+    website: "https://www.orsettgolfclub.co.uk/",
+    phone: "+44 1375 891352",
+    location: { lat: 51.498807, lng: 0.390301 },
+    attribution: "Course identity, address, and scorecard from Orsett Golf Club official course overview. BlueGolf used as a secondary scorecard cross-check. Green GPS alignment pending user-supplied map/OSM sync.",
+    verification: {
+      status: "verified",
+      updated: "2026-05-06",
+      confidence: "Official Orsett Golf Club course overview confirms address, phone, tee ratings, and full 18-hole scorecard. BlueGolf agrees on the white, blue, yellow, and red yardages; red par and stroke index differ on several holes and will need tee-specific par/SI support later.",
+      sources: [
+        { label: "Official course overview", url: "https://www.orsettgolfclub.co.uk/the-course/course-overview/" },
+        { label: "BlueGolf detailed scorecard", url: "https://course.bluegolf.com/bluegolf/course/course/orsettgc/detailedscorecard.htm" }
+      ]
+    },
+    tees: [
+      { id: "white", name: "White", color: "#f8f7f1", rating: "73.3", slope: "135", totalYards: 6694 },
+      { id: "blue", name: "Blue", color: "#4f8fd9", rating: "72.3", slope: "132", totalYards: 6611 },
+      { id: "yellow", name: "Yellow", color: "#d7a44d", rating: "70.4", slope: "127", totalYards: 6105 },
+      { id: "red", name: "Red", color: "#e85d3f", rating: "74.5", slope: "126", totalYards: 5794 }
+    ],
+    holes: Array.from({ length: 18 }, (_, index) => makeScorecardOnlyHole(index, ORSETT_SCORECARD, ORSETT_COURSE_ID))
+  },
+  {
+    id: WARLEY_COURSE_ID,
+    source: "verified",
+    homeAreaId: homeArea.id,
+    name: "Warley Park Golf Club",
+    town: "Little Warley",
+    postcode: "CM13 3DX",
+    country: "England",
+    holesCount: 18,
+    par: "71",
+    distanceMiles: 7.9,
+    website: "https://www.warleyparkgc.co.uk/",
+    phone: "+44 1277 224891",
+    location: { lat: 51.589142, lng: 0.306313 },
+    attribution: "Course identity, address, and scorecard from Warley Park Golf Club official course page. Green GPS alignment pending user-supplied map/OSM sync.",
+    verification: {
+      status: "verified",
+      updated: "2026-05-06",
+      confidence: "Official Warley Park course page confirms the 27-hole facility, address, phone, and Warley 18 scorecard. This seed uses the official Warley card for black, white, and yellow yardages; yellow par/SI differs on some holes and will need tee-specific par/SI support later.",
+      sources: [
+        { label: "Official course page", url: "https://www.warleyparkgc.co.uk/golf/the-course/" },
+        { label: "BlueGolf detailed scorecard", url: "https://course.bluegolf.com/bluegolf/course/course/warleypark/detailedscorecard.htm" },
+        { label: "Golfify scorecard", url: "https://www.golfify.io/courses/warley-park-golf-club-warley" }
+      ]
+    },
+    tees: [
+      { id: "black", name: "Black", color: "#27272a", rating: "", slope: "", totalYards: 6055 },
+      { id: "white", name: "White", color: "#f8f7f1", rating: "", slope: "", totalYards: 5764 },
+      { id: "yellow", name: "Yellow", color: "#d7a44d", rating: "", slope: "", totalYards: 5425 }
+    ],
+    holes: Array.from({ length: 18 }, (_, index) => makeScorecardOnlyHole(index, WARLEY_SCORECARD, WARLEY_COURSE_ID))
   },
   {
     id: CANVEY_COURSE_ID,
@@ -380,7 +515,7 @@ function makeScorecardOnlyHole(index, scorecard, courseId) {
     },
     notes: geo.tee
       ? "Satellite alignment seeded from OpenStreetMap hole geometry; use Adjust to fine-tune."
-      : `Scorecard verified; ${courseId === BASILDON_COURSE_ID ? "Basildon" : "Canvey"} tee/green geometry pending.`
+      : `Scorecard verified; ${SCORECARD_COURSE_LABELS[courseId] || "course"} tee/green geometry pending.`
   };
 }
 

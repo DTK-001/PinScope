@@ -36,7 +36,7 @@ async function main() {
   }
 
   const azureKey = String(process.env.AZURE_MAPS_KEY || "").trim();
-  const courses = inputFiles.flatMap(readInputCourses).map(normalizeCourse).filter(Boolean);
+  const courses = dedupeCoursesById(inputFiles.flatMap(readInputCourses).map(normalizeCourse).filter(Boolean));
   if (!courses.length) {
     throw new Error("No usable courses were found in the input JSON.");
   }
@@ -177,6 +177,14 @@ function readInputCourses(file) {
           ? [data]
           : [];
   return courses.map((course) => ({ ...course, __sourceFile: file }));
+}
+
+function dedupeCoursesById(courses) {
+  const byId = new Map();
+  for (const course of courses) {
+    byId.set(course.id, course);
+  }
+  return Array.from(byId.values());
 }
 
 function normalizeCourse(raw) {
