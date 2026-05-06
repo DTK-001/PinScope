@@ -1,28 +1,31 @@
-const CACHE_NAME = "local-loop-golf-v64";
+const CACHE_NAME = "local-loop-golf-v42";
 
 const APP_SHELL = [
   "./",
   "./index.html",
   "./manifest.webmanifest",
+  "./assets/belhus.png",
   "./assets/enter-score.png",
   "./assets/gps-grey.png",
   "./assets/gps-pink.png",
+  "./assets/courses/cranham.png",
   "./assets/icon.svg",
   "./src/app.js",
+  "./src/belhus-photo-crops.js",
   "./src/course-data.js",
   "./src/cranham-map-data.js",
+  "./src/cranham-photo-crops.js",
   "./src/local-area.js",
   "./src/osm.js",
   "./src/storage.js",
   "./src/styles.css",
-  "./src/verified-courses.js",
-  "./src/verified-green-defaults.js",
-  "./src/shared-course-defaults.js",
-  "./src/shot-marker-drag-patch.js"
+  "./src/verified-courses.js"
 ];
 
 self.addEventListener("install", (event) => {
-  event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL)));
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL))
+  );
   self.skipWaiting();
 });
 
@@ -30,7 +33,9 @@ self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches
       .keys()
-      .then((keys) => Promise.all(keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))))
+      .then((keys) =>
+        Promise.all(keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key)))
+      )
   );
   self.clients.claim();
 });
@@ -44,7 +49,6 @@ self.addEventListener("fetch", (event) => {
   if (url.origin !== self.location.origin) {
     return;
   }
-
   if (url.pathname.startsWith("/api/")) {
     return;
   }
@@ -54,7 +58,6 @@ self.addEventListener("fetch", (event) => {
       if (cached) {
         return cached;
       }
-
       return fetch(event.request).then((response) => {
         const copy = response.clone();
         caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
