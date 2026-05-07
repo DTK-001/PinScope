@@ -7,6 +7,8 @@ const sharp = require("C:/Users/maste/.cache/codex-runtimes/codex-primary-runtim
 
 const SNAPSHOT_WIDTH = 1000;
 const SNAPSHOT_HEIGHT = 1500;
+const SNAPSHOT_MAX_WIDTH = 2200;
+const SNAPSHOT_MAX_HEIGHT = 3300;
 const SNAPSHOT_MIN_ZOOM = 14;
 const SNAPSHOT_MAX_ZOOM = 19;
 const SNAPSHOT_TILE_SIZE = 256;
@@ -15,7 +17,7 @@ const SNAPSHOT_PIXEL_RATIO = 2;
 const SNAPSHOT_PADDING = 0.18;
 const SNAPSHOT_TRANSFORM_MARGIN = 2;
 const SNAPSHOT_PANEL_RATIOS = [SNAPSHOT_HEIGHT / SNAPSHOT_WIDTH, 16 / 9, 20 / 9];
-const SNAPSHOT_PLAN_VERSION = 6;
+const SNAPSHOT_PLAN_VERSION = 7;
 
 const repoRoot = path.resolve(__dirname, "..");
 const tileBufferCache = new Map();
@@ -342,53 +344,99 @@ function planHoleSnapshot(hole) {
     return null;
   }
 
-  let chosen = null;
   for (let zoom = SNAPSHOT_MAX_ZOOM; zoom >= SNAPSHOT_MIN_ZOOM; zoom -= 1) {
     const worldPoints = points.map((point) => geoToWorldPixel(point, zoom));
-    const bounds = worldBounds(worldPoints);
-    const width = bounds.maxX - bounds.minX;
-    const height = bounds.maxY - bounds.minY;
-    const plan = snapshotPlanFromBounds(zoom, bounds);
-    if (
-      width <= SNAPSHOT_WIDTH * (1 - SNAPSHOT_PADDING * 2) &&
-      height <= SNAPSHOT_HEIGHT * (1 - SNAPSHOT_PADDING * 2) &&
-      snapshotCoversAlignedPanel(plan, hole)
-    ) {
-      chosen = { zoom, bounds };
-      break;
+    const plan = expandSnapshotPlanToCoverViewport(snapshotPlanFromWorldPoints(zoom, worldPoints), hole, worldPoints);
+    if (plan && plan.width <= SNAPSHOT_MAX_WIDTH && plan.height <= SNAPSHOT_MAX_HEIGHT) {
+      return plan;
     }
-  }
-  if (!chosen) {
-    for (let zoom = SNAPSHOT_MAX_ZOOM; zoom >= SNAPSHOT_MIN_ZOOM; zoom -= 1) {
-      const worldPoints = points.map((point) => geoToWorldPixel(point, zoom));
-      const bounds = worldBounds(worldPoints);
-      const width = bounds.maxX - bounds.minX;
-      const height = bounds.maxY - bounds.minY;
-      if (width <= SNAPSHOT_WIDTH * (1 - SNAPSHOT_PADDING * 2) && height <= SNAPSHOT_HEIGHT * (1 - SNAPSHOT_PADDING * 2)) {
-        chosen = { zoom, bounds };
-        break;
-      }
-    }
-  }
-  if (!chosen) {
-    const worldPoints = points.map((point) => geoToWorldPixel(point, SNAPSHOT_MIN_ZOOM));
-    chosen = { zoom: SNAPSHOT_MIN_ZOOM, bounds: worldBounds(worldPoints) };
   }
 
-  return snapshotPlanFromBounds(chosen.zoom, chosen.bounds);
+  const worldPoints = points.map((point) => geoToWorldPixel(point, SNAPSHOT_MIN_ZOOM));
+  return expandSnapshotPlanToCoverViewport(snapshotPlanFromWorldPoints(SNAPSHOT_MIN_ZOOM, worldPoints), hole, worldPoints) ||
+    snapshotPlanFromWorldPoints(SNAPSHOT_MIN_ZOOM, worldPoints);
 }
 
-function snapshotPlanFromBounds(zoom, bounds) {
+function snapshotPlanFromWorldPoints(zoom, worldPoints) {
+  return snapshotPlanFromBounds(zoom, worldBounds(worldPoints));
+}
+
+function snapshotPlanFromBounds(zoom, bounds, minWidth = SNAPSHOT_WIDTH, minHeight = SNAPSHOT_HEIGHT) {
+  const contentWidth = bounds.maxX - bounds.minX;
+  const contentHeight = bounds.maxY - bounds.minY;
+  const width = Math.max(minWidth, contentWidth / (1 - SNAPSHOT_PADDING * 2));
+  const height = Math.max(minHeight, contentHeight / (1 - SNAPSHOT_PADDING * 2));
   const centerWorld = {
     x: (bounds.minX + bounds.maxX) / 2,
     y: (bounds.minY + bounds.maxY) / 2
   };
   return {
-    width: SNAPSHOT_WIDTH,
-    height: SNAPSHOT_HEIGHT,
+    width: Math.ceil(width),
+    height: Math.ceil(height),
     center: worldPixelToGeo(centerWorld, zoom),
     centerWorld,
     zoom
+  };
+}
+
+function expandSnapshotPlanToCoverViewport(plan, hole, worldPoints) {
+  let next = plan;
+  for (let attempt = 0; attempt < 8; attempt += 1) {
+    if (snapshotCoversAlignedPanel(next, hole)) {
+      return next;
+    }
+    const required = snapshotRequiredWorldPointsForViewport(next, hole);
+    if (!required.length) {
+      return null;
+    }
+    next = snapshotPlanFromBounds(next.zoom, worldBounds([...worldPoints, ...required]), next.width, next.height);
+  }
+  return snapshotCoversAlignedPanel(next, hole) ? next : null;
+}
+
+function snapshotRequiredWorldPointsForViewport(plan, hole) {
+  const tee = normalizePoint(hole?.tee);
+  const green = normalizePoint(hole?.greenCenter || hole?.green);
+  if (!tee || !green) {
+    return [];
+  }
+  const sourceTee = snapshotGeoToImagePoint(plan, tee);
+  const sourceGreen = snapshotGeoToImagePoint(plan, green);
+  if (!sourceTee || !sourceGreen) {
+    return [];
+  }
+
+  const marker = snapshotTargetMarkers(hole?.par);
+  return SNAPSHOT_PANEL_RATIOS.flatMap((ratio) => {
+    const transform = snapshotDisplayTransform(
+      { x: sourceTee.x, y: sourceTee.y * ratio },
+      { x: sourceGreen.x, y: sourceGreen.y * ratio },
+      { x: marker.tee[0], y: marker.tee[1] * ratio },
+      { x: marker.green[0], y: marker.green[1] * ratio }
+    );
+    const inverse = transform ? invertSnapshotMatrix(transform) : null;
+    if (!inverse) {
+      return [];
+    }
+    return [
+      { x: -SNAPSHOT_TRANSFORM_MARGIN, y: -SNAPSHOT_TRANSFORM_MARGIN * ratio },
+      { x: 100 + SNAPSHOT_TRANSFORM_MARGIN, y: -SNAPSHOT_TRANSFORM_MARGIN * ratio },
+      { x: 100 + SNAPSHOT_TRANSFORM_MARGIN, y: (100 + SNAPSHOT_TRANSFORM_MARGIN) * ratio },
+      { x: -SNAPSHOT_TRANSFORM_MARGIN, y: (100 + SNAPSHOT_TRANSFORM_MARGIN) * ratio }
+    ].map((point) => {
+      const source = applySnapshotMatrix(point, inverse);
+      return snapshotImagePointToWorld(plan, {
+        x: source.x,
+        y: source.y / ratio
+      });
+    });
+  });
+}
+
+function snapshotImagePointToWorld(plan, point) {
+  return {
+    x: plan.centerWorld.x + ((Number(point.x) - 50) / 100) * plan.width,
+    y: plan.centerWorld.y + ((Number(point.y) - 50) / 100) * plan.height
   };
 }
 
