@@ -11,11 +11,11 @@ const SNAPSHOT_MIN_ZOOM = 14;
 const SNAPSHOT_MAX_ZOOM = 19;
 const SNAPSHOT_TILE_SIZE = 256;
 const SNAPSHOT_REQUEST_TILE_SIZE = 512;
-const SNAPSHOT_PIXEL_RATIO = SNAPSHOT_REQUEST_TILE_SIZE / SNAPSHOT_TILE_SIZE;
+const SNAPSHOT_PIXEL_RATIO = 2;
 const SNAPSHOT_PADDING = 0.18;
 const SNAPSHOT_TRANSFORM_MARGIN = 2;
 const SNAPSHOT_PANEL_RATIOS = [SNAPSHOT_HEIGHT / SNAPSHOT_WIDTH, 16 / 9, 20 / 9];
-const SNAPSHOT_PLAN_VERSION = 5;
+const SNAPSHOT_PLAN_VERSION = 6;
 
 const repoRoot = path.resolve(__dirname, "..");
 const tileBufferCache = new Map();
@@ -638,11 +638,19 @@ async function writeStitchedSnapshot(filePath, plan, azureKey) {
       });
     }
   }
-  const composites = await Promise.all(tileJobs.map(async (tile) => ({
-    input: await fetchAzureTileBuffer(tile.x, tile.y, plan.zoom, azureKey),
-    left: tile.left,
-    top: tile.top
-  })));
+  const composites = await Promise.all(tileJobs.map(async (tile) => {
+    const input = await fetchAzureTileBuffer(tile.x, tile.y, plan.zoom, azureKey);
+    const metadata = await sharp(input).metadata();
+    const targetSize = Math.round(SNAPSHOT_TILE_SIZE * SNAPSHOT_PIXEL_RATIO);
+    const tileInput = metadata.width === targetSize && metadata.height === targetSize
+      ? input
+      : await sharp(input).resize(targetSize, targetSize, { kernel: "lanczos3" }).jpeg({ quality: 96 }).toBuffer();
+    return {
+      input: tileInput,
+      left: tile.left,
+      top: tile.top
+    };
+  }));
 
   await sharp({
     create: {
