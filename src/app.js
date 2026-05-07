@@ -836,7 +836,7 @@ function renderSnapshotHoleVisual(hole, course) {
     return renderAzureHoleVisual(hole, course);
   }
   const marker = photoTargetMarkers(hole.par);
-  const panelRatio = snapshot.height / snapshot.width;
+  const panelRatio = satellitePanelRatio();
   const transform = snapshotDisplayTransform(snapshot, anchors, marker, panelRatio);
   if (!transform) {
     return renderAzureHoleVisual(hole, course);
@@ -1768,11 +1768,36 @@ function azureEventToPosition(panel, anchors, marker, event) {
   if (!rect.width || !rect.height) {
     return null;
   }
-  const point = {
+  const point = eventToPhotoLayerPercent(
+    panel,
+    event,
+    panel.dataset.azureCourseId || state.selectedCourseId,
+    panel.dataset.azureHole || ""
+  );
+  if (!point) {
+    return null;
+  }
+  return azureTargetPointToGeo(anchors, point, marker, rect.height / rect.width);
+}
+
+function eventToPhotoLayerPercent(panel, event, courseId = "", holeNumber = "") {
+  const rect = panel.getBoundingClientRect();
+  if (!rect.width || !rect.height) {
+    return null;
+  }
+  const panelPoint = {
     x: ((event.clientX - rect.left) / rect.width) * 100,
     y: ((event.clientY - rect.top) / rect.height) * 100
   };
-  return azureTargetPointToGeo(anchors, point, marker, rect.height / rect.width);
+  const zoom = photoZoomLevel(courseId, holeNumber);
+  if (zoom <= 1) {
+    return panelPoint;
+  }
+  const pan = photoPanOffset(courseId, holeNumber, zoom);
+  return {
+    x: 50 + (panelPoint.x - pan.x - 50) / zoom,
+    y: 50 + (panelPoint.y - pan.y - 50) / zoom
+  };
 }
 
 function geoToWorldPixel(position, zoom, tileSize = AZURE_MAPS_TILE_SIZE) {
@@ -2079,10 +2104,8 @@ function snapshotEventToPosition(panel, hole, event) {
   const anchors = azureHoleAnchors(hole, course);
   const marker = photoTargetMarkers(hole.par);
   const transform = snapshotDisplayTransform(snapshot, anchors, marker, rect.height / rect.width);
-  return snapshotTargetPointToGeo(snapshot, {
-    x: ((event.clientX - rect.left) / rect.width) * 100,
-    y: ((event.clientY - rect.top) / rect.height) * 100
-  }, transform);
+  const point = eventToPhotoLayerPercent(panel, event, courseId, String(hole.number || ""));
+  return snapshotTargetPointToGeo(snapshot, point, transform);
 }
 
 function sortAzurePlanPoints(anchors, points) {

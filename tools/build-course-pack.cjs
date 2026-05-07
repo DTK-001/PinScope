@@ -11,6 +11,7 @@ const SNAPSHOT_MAX_ZOOM = 19;
 const SNAPSHOT_TILE_SIZE = 512;
 const SNAPSHOT_PADDING = 0.18;
 const SNAPSHOT_TRANSFORM_MARGIN = 2;
+const SNAPSHOT_PANEL_RATIOS = [SNAPSHOT_HEIGHT / SNAPSHOT_WIDTH, 16 / 9, 20 / 9];
 
 const repoRoot = path.resolve(__dirname, "..");
 const defaults = {
@@ -398,31 +399,32 @@ function snapshotCoversAlignedPanel(plan, hole) {
     return false;
   }
 
-  const ratio = SNAPSHOT_HEIGHT / SNAPSHOT_WIDTH;
   const marker = snapshotTargetMarkers(hole?.par);
-  const transform = snapshotDisplayTransform(
-    { x: sourceTee.x, y: sourceTee.y * ratio },
-    { x: sourceGreen.x, y: sourceGreen.y * ratio },
-    { x: marker.tee[0], y: marker.tee[1] * ratio },
-    { x: marker.green[0], y: marker.green[1] * ratio }
-  );
-  if (!transform) {
-    return false;
-  }
+  return SNAPSHOT_PANEL_RATIOS.every((ratio) => {
+    const transform = snapshotDisplayTransform(
+      { x: sourceTee.x, y: sourceTee.y * ratio },
+      { x: sourceGreen.x, y: sourceGreen.y * ratio },
+      { x: marker.tee[0], y: marker.tee[1] * ratio },
+      { x: marker.green[0], y: marker.green[1] * ratio }
+    );
+    if (!transform) {
+      return false;
+    }
 
-  const corners = [
-    { x: 0, y: 0 },
-    { x: 100, y: 0 },
-    { x: 100, y: 100 * ratio },
-    { x: 0, y: 100 * ratio }
-  ].map((point) => applySnapshotMatrix(point, transform));
-  const bounds = worldBounds(corners);
-  return (
-    bounds.minX <= -SNAPSHOT_TRANSFORM_MARGIN &&
-    bounds.maxX >= 100 + SNAPSHOT_TRANSFORM_MARGIN &&
-    bounds.minY <= -SNAPSHOT_TRANSFORM_MARGIN * ratio &&
-    bounds.maxY >= (100 + SNAPSHOT_TRANSFORM_MARGIN) * ratio
-  );
+    const corners = [
+      { x: 0, y: 0 },
+      { x: 100, y: 0 },
+      { x: 100, y: 100 * ratio },
+      { x: 0, y: 100 * ratio }
+    ].map((point) => applySnapshotMatrix(point, transform));
+    const bounds = worldBounds(corners);
+    return (
+      bounds.minX <= -SNAPSHOT_TRANSFORM_MARGIN &&
+      bounds.maxX >= 100 + SNAPSHOT_TRANSFORM_MARGIN &&
+      bounds.minY <= -SNAPSHOT_TRANSFORM_MARGIN * ratio &&
+      bounds.maxY >= (100 + SNAPSHOT_TRANSFORM_MARGIN) * ratio
+    );
+  });
 }
 
 function snapshotGeoToImagePoint(plan, position) {
