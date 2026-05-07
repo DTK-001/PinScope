@@ -1224,11 +1224,10 @@ select option {
   position: absolute;
   z-index: 3;
   display: block;
-  width: var(--marker-size, 32px);
-  height: var(--marker-size, 32px);
-  border: 3px solid rgba(248, 243, 255, 0.88);
+  width: 10px;
+  height: 10px;
+  border: 0;
   border-radius: 999px;
-  background: rgba(174, 241, 126, 0.16);
   transform: translate(-50%, -50%) scale(var(--photo-marker-scale, 1));
   transform-origin: center center;
   pointer-events: none;
@@ -2446,11 +2445,11 @@ select option {
   position: absolute;
   z-index: 4;
   display: block;
-  width: 14px;
-  height: 14px;
-  border: 2px solid #f8fff3;
+  width: 8px;
+  height: 8px;
+  border: 0;
   border-radius: 999px;
-  background: rgba(175, 241, 126, 0.95);
+  background: #aff17e;
   transform: translate(-50%, -50%) scale(var(--photo-marker-scale, 1));
   transform-origin: center center;
   filter: drop-shadow(0 0 2px rgba(7, 16, 12, 0.75));
@@ -2458,12 +2457,5 @@ select option {
 }
 
 .photo-green-center-dot span {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 4px;
-  height: 4px;
-  border-radius: 999px;
-  background: #07100c;
-  transform: translate(-50%, -50%);
+  display: none;
 }
