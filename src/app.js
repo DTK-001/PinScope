@@ -880,7 +880,7 @@ function renderSnapshotHoleVisual(hole, course) {
               <path class="photo-plan-cross" d="M ${point.x - 1.4} ${point.y} L ${point.x + 1.4} ${point.y} M ${point.x} ${point.y - 1.4} L ${point.x} ${point.y + 1.4}"></path>
             `).join("") || ""}
           </svg>
-          ${greenShapeSvg ? "" : renderPhotoGreenMarkerElement(green, hole.par)}
+          ${greenShapeSvg ? renderPhotoGreenCenterDot(green) : renderPhotoGreenMarkerElement(green, hole.par)}
           ${renderPhotoTeeMarkerElement(tee, Boolean(gpsPoint))}
           ${renderPhotoGpsMarker(gpsPoint)}
         </div>
@@ -952,7 +952,7 @@ function renderAzureHoleVisual(hole, course) {
               <path class="photo-plan-cross" d="M ${point.x - 1.4} ${point.y} L ${point.x + 1.4} ${point.y} M ${point.x} ${point.y - 1.4} L ${point.x} ${point.y + 1.4}"></path>
             `).join("") || ""}
           </svg>
-          ${greenShapeSvg ? "" : renderPhotoGreenMarkerElement(green, hole.par)}
+          ${greenShapeSvg ? renderPhotoGreenCenterDot(green) : renderPhotoGreenMarkerElement(green, hole.par)}
           ${renderPhotoTeeMarkerElement(tee, Boolean(gpsPoint))}
           ${renderPhotoGpsMarker(gpsPoint)}
           ${photoEditMode ? `
@@ -1326,6 +1326,15 @@ function renderPhotoGreenMarkerElement(marker, par) {
     <span class="photo-green-marker" style="left:${marker.x}%; top:${marker.y}%; --marker-size:${size}px;">
       <span class="photo-green-core"></span>
     </span>
+  `;
+}
+
+function renderPhotoGreenCenterDot(marker) {
+  if (!marker) {
+    return "";
+  }
+  return `
+    <span class="photo-green-center-dot" style="left:${marker.x}%; top:${marker.y}%;"></span>
   `;
 }
 
