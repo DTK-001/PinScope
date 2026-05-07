@@ -12,7 +12,7 @@ const SNAPSHOT_TILE_SIZE = 512;
 const SNAPSHOT_PADDING = 0.18;
 const SNAPSHOT_TRANSFORM_MARGIN = 2;
 const SNAPSHOT_PANEL_RATIOS = [SNAPSHOT_HEIGHT / SNAPSHOT_WIDTH, 16 / 9, 20 / 9];
-const SNAPSHOT_PLAN_VERSION = 2;
+const SNAPSHOT_PLAN_VERSION = 3;
 
 const repoRoot = path.resolve(__dirname, "..");
 const defaults = {
@@ -412,19 +412,23 @@ function snapshotCoversAlignedPanel(plan, hole) {
       return false;
     }
 
-    const corners = [
-      { x: 0, y: 0 },
-      { x: 100, y: 0 },
-      { x: 100, y: 100 * ratio },
-      { x: 0, y: 100 * ratio }
-    ].map((point) => applySnapshotMatrix(point, transform));
-    const bounds = worldBounds(corners);
-    return (
-      bounds.minX <= -SNAPSHOT_TRANSFORM_MARGIN &&
-      bounds.maxX >= 100 + SNAPSHOT_TRANSFORM_MARGIN &&
-      bounds.minY <= -SNAPSHOT_TRANSFORM_MARGIN * ratio &&
-      bounds.maxY >= (100 + SNAPSHOT_TRANSFORM_MARGIN) * ratio
-    );
+    const inverse = invertSnapshotMatrix(transform);
+    if (!inverse) {
+      return false;
+    }
+
+    const targetCorners = [
+      { x: -SNAPSHOT_TRANSFORM_MARGIN, y: -SNAPSHOT_TRANSFORM_MARGIN * ratio },
+      { x: 100 + SNAPSHOT_TRANSFORM_MARGIN, y: -SNAPSHOT_TRANSFORM_MARGIN * ratio },
+      { x: 100 + SNAPSHOT_TRANSFORM_MARGIN, y: (100 + SNAPSHOT_TRANSFORM_MARGIN) * ratio },
+      { x: -SNAPSHOT_TRANSFORM_MARGIN, y: (100 + SNAPSHOT_TRANSFORM_MARGIN) * ratio }
+    ].map((point) => applySnapshotMatrix(point, inverse));
+    return targetCorners.every((point) => (
+      point.x >= 0 &&
+      point.x <= 100 &&
+      point.y >= 0 &&
+      point.y <= 100 * ratio
+    ));
   });
 }
 
@@ -485,6 +489,25 @@ function applySnapshotMatrix(point, matrix) {
   return {
     x: matrix.a * point.x + matrix.c * point.y + matrix.tx,
     y: matrix.b * point.x + matrix.d * point.y + matrix.ty
+  };
+}
+
+function invertSnapshotMatrix(matrix) {
+  const determinant = matrix.a * matrix.d - matrix.b * matrix.c;
+  if (!Number.isFinite(determinant) || Math.abs(determinant) < 0.000001) {
+    return null;
+  }
+  const a = matrix.d / determinant;
+  const b = -matrix.b / determinant;
+  const c = -matrix.c / determinant;
+  const d = matrix.a / determinant;
+  return {
+    a,
+    b,
+    c,
+    d,
+    tx: -(a * matrix.tx + c * matrix.ty),
+    ty: -(b * matrix.tx + d * matrix.ty)
   };
 }
 
