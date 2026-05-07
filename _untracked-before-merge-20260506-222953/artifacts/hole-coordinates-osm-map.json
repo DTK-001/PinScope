@@ -1,0 +1,634 @@
+[
+  {
+    "id": "osm-way-23454278",
+    "name": "Cranham Golf Course",
+    "lat": 51.555764,
+    "lng": 0.282267,
+    "span": 0.018,
+    "sourceUrl": "https://api.openstreetmap.org/api/0.6/map?bbox=0.268317,51.546764,0.296217,51.564764",
+    "holes": [
+      {
+        "number": 1,
+        "osm": "way/1082469602",
+        "name": "",
+        "tee": {
+          "lat": 51.558475,
+          "lng": 0.283172
+        },
+        "green": {
+          "lat": 51.557045,
+          "lng": 0.282523
+        },
+        "yards": 181
+      },
+      {
+        "number": 2,
+        "osm": "way/1082469607",
+        "name": "",
+        "tee": {
+          "lat": 51.55597,
+          "lng": 0.281536
+        },
+        "green": {
+          "lat": 51.554465,
+          "lng": 0.28048
+        },
+        "yards": 200
+      },
+      null,
+      {
+        "number": 4,
+        "osm": "way/1082470252",
+        "name": "",
+        "tee": {
+          "lat": 51.553756,
+          "lng": 0.279284
+        },
+        "green": {
+          "lat": 51.555454,
+          "lng": 0.280203
+        },
+        "yards": 218
+      },
+      {
+        "number": 5,
+        "osm": "way/1082470257",
+        "name": "",
+        "tee": {
+          "lat": 51.555869,
+          "lng": 0.281857
+        },
+        "green": {
+          "lat": 51.555804,
+          "lng": 0.283169
+        },
+        "yards": 99
+      },
+      {
+        "number": 6,
+        "osm": "way/1082470688",
+        "name": "",
+        "tee": {
+          "lat": 51.556289,
+          "lng": 0.284879
+        },
+        "green": {
+          "lat": 51.557866,
+          "lng": 0.285849
+        },
+        "yards": 205
+      },
+      {
+        "number": 7,
+        "osm": "way/1082471995",
+        "name": "",
+        "tee": {
+          "lat": 51.559291,
+          "lng": 0.286919
+        },
+        "green": {
+          "lat": 51.556111,
+          "lng": 0.285915
+        },
+        "yards": 394
+      },
+      null,
+      {
+        "number": 9,
+        "osm": "way/1082473163",
+        "name": "",
+        "tee": {
+          "lat": 51.556339,
+          "lng": 0.284036
+        },
+        "green": {
+          "lat": 51.557887,
+          "lng": 0.284621
+        },
+        "yards": 193
+      },
+      {
+        "number": 10,
+        "osm": "way/1082475647",
+        "name": "",
+        "tee": {
+          "lat": 51.55907,
+          "lng": 0.284317
+        },
+        "green": {
+          "lat": 51.557365,
+          "lng": 0.28358
+        },
+        "yards": 215
+      },
+      null,
+      {
+        "number": 12,
+        "osm": "way/1082475656",
+        "name": "",
+        "tee": {
+          "lat": 51.557276,
+          "lng": 0.280759
+        },
+        "green": {
+          "lat": 51.554207,
+          "lng": 0.278993
+        },
+        "yards": 396
+      },
+      null,
+      {
+        "number": 14,
+        "osm": "way/1082477207",
+        "name": "",
+        "tee": {
+          "lat": 51.552244,
+          "lng": 0.280493
+        },
+        "green": {
+          "lat": 51.552774,
+          "lng": 0.27789
+        },
+        "yards": 207
+      },
+      {
+        "number": 15,
+        "osm": "way/1082479412",
+        "name": "",
+        "tee": {
+          "lat": 51.554324,
+          "lng": 0.277715
+        },
+        "green": {
+          "lat": 51.556047,
+          "lng": 0.277895
+        },
+        "yards": 210
+      },
+      null,
+      {
+        "number": 17,
+        "osm": "way/1082479421",
+        "name": "",
+        "tee": {
+          "lat": 51.555844,
+          "lng": 0.278811
+        },
+        "green": {
+          "lat": 51.557198,
+          "lng": 0.279581
+        },
+        "yards": 175
+      },
+      null
+    ]
+  },
+  {
+    "id": "verified-belhus-park",
+    "name": "Belhus Park Golf Club",
+    "lat": 51.507331,
+    "lng": 0.263364,
+    "span": 0.023,
+    "sourceUrl": "https://api.openstreetmap.org/api/0.6/map?bbox=0.245539,51.495831,0.281189,51.518831",
+    "holes": [
+      {
+        "number": 1,
+        "osm": "way/862143174",
+        "name": "",
+        "tee": {
+          "lat": 51.507091,
+          "lng": 0.263577
+        },
+        "green": {
+          "lat": 51.507466,
+          "lng": 0.261565
+        },
+        "yards": 159
+      },
+      {
+        "number": 2,
+        "osm": "way/862143182",
+        "name": "",
+        "tee": {
+          "lat": 51.508769,
+          "lng": 0.259517
+        },
+        "green": {
+          "lat": 51.507183,
+          "lng": 0.259425
+        },
+        "yards": 193
+      },
+      {
+        "number": 3,
+        "osm": "way/862143195",
+        "name": "",
+        "tee": {
+          "lat": 51.506355,
+          "lng": 0.258703
+        },
+        "green": {
+          "lat": 51.508191,
+          "lng": 0.258968
+        },
+        "yards": 224
+      },
+      {
+        "number": 4,
+        "osm": "way/862143205",
+        "name": "",
+        "tee": {
+          "lat": 51.509577,
+          "lng": 0.258612
+        },
+        "green": {
+          "lat": 51.506754,
+          "lng": 0.258027
+        },
+        "yards": 346
+      },
+      {
+        "number": 5,
+        "osm": "way/862143216",
+        "name": "",
+        "tee": {
+          "lat": 51.506344,
+          "lng": 0.257267
+        },
+        "green": {
+          "lat": 51.508187,
+          "lng": 0.2577
+        },
+        "yards": 227
+      },
+      null,
+      {
+        "number": 7,
+        "osm": "way/862214230",
+        "name": "",
+        "tee": {
+          "lat": 51.50718,
+          "lng": 0.255448
+        },
+        "green": {
+          "lat": 51.508973,
+          "lng": 0.256224
+        },
+        "yards": 226
+      },
+      null,
+      {
+        "number": 9,
+        "osm": "way/862214248",
+        "name": "",
+        "tee": {
+          "lat": 51.509314,
+          "lng": 0.259365
+        },
+        "green": {
+          "lat": 51.50784,
+          "lng": 0.261944
+        },
+        "yards": 265
+      },
+      {
+        "number": 10,
+        "osm": "way/862214258",
+        "name": "",
+        "tee": {
+          "lat": 51.507803,
+          "lng": 0.263759
+        },
+        "green": {
+          "lat": 51.508162,
+          "lng": 0.262242
+        },
+        "yards": 123
+      },
+      {
+        "number": 11,
+        "osm": "way/862214264",
+        "name": "",
+        "tee": {
+          "lat": 51.509007,
+          "lng": 0.261351
+        },
+        "green": {
+          "lat": 51.510028,
+          "lng": 0.261009
+        },
+        "yards": 127
+      },
+      {
+        "number": 12,
+        "osm": "way/862214270",
+        "name": "",
+        "tee": {
+          "lat": 51.510221,
+          "lng": 0.26144
+        },
+        "green": {
+          "lat": 51.508933,
+          "lng": 0.262103
+        },
+        "yards": 164
+      },
+      {
+        "number": 13,
+        "osm": "way/862217316",
+        "name": "",
+        "tee": {
+          "lat": 51.508498,
+          "lng": 0.264601
+        },
+        "green": {
+          "lat": 51.509342,
+          "lng": 0.263021
+        },
+        "yards": 158
+      },
+      null,
+      {
+        "number": 15,
+        "osm": "way/862225781",
+        "name": "",
+        "tee": {
+          "lat": 51.509278,
+          "lng": 0.264974
+        },
+        "green": {
+          "lat": 51.510415,
+          "lng": 0.262568
+        },
+        "yards": 229
+      },
+      {
+        "number": 16,
+        "osm": "way/862225788",
+        "name": "",
+        "tee": {
+          "lat": 51.51106,
+          "lng": 0.260071
+        },
+        "green": {
+          "lat": 51.510649,
+          "lng": 0.26449
+        },
+        "yards": 338
+      },
+      null,
+      {
+        "number": 18,
+        "osm": "way/862225801",
+        "name": "",
+        "tee": {
+          "lat": 51.510737,
+          "lng": 0.266706
+        },
+        "green": {
+          "lat": 51.50798,
+          "lng": 0.264697
+        },
+        "yards": 368
+      }
+    ]
+  },
+  {
+    "id": "verified-basildon",
+    "name": "Basildon Golf Course",
+    "lat": 51.5746,
+    "lng": 0.4372,
+    "span": 0.026,
+    "sourceUrl": "https://api.openstreetmap.org/api/0.6/map?bbox=0.417050,51.561600,0.457350,51.587600",
+    "holes": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ]
+  },
+  {
+    "id": "verified-castle-point-canvey",
+    "name": "Canvey Island Golf Course",
+    "lat": 51.5354,
+    "lng": 0.5844,
+    "span": 0.028,
+    "sourceUrl": "https://api.openstreetmap.org/api/0.6/map?bbox=0.562700,51.521400,0.606100,51.549400",
+    "holes": [
+      {
+        "number": 1,
+        "osm": "way/889214000",
+        "name": "",
+        "tee": {
+          "lat": 51.533759,
+          "lng": 0.575203
+        },
+        "green": {
+          "lat": 51.535364,
+          "lng": 0.574148
+        },
+        "yards": 211
+      },
+      {
+        "number": 2,
+        "osm": "way/889217055",
+        "name": "",
+        "tee": {
+          "lat": 51.536888,
+          "lng": 0.573907
+        },
+        "green": {
+          "lat": 51.537888,
+          "lng": 0.570233
+        },
+        "yards": 303
+      },
+      {
+        "number": 3,
+        "osm": "way/889219893",
+        "name": "",
+        "tee": {
+          "lat": 51.538091,
+          "lng": 0.567871
+        },
+        "green": {
+          "lat": 51.537018,
+          "lng": 0.570643
+        },
+        "yards": 247
+      },
+      {
+        "number": 4,
+        "osm": "way/889222068",
+        "name": "",
+        "tee": {
+          "lat": 51.536155,
+          "lng": 0.571904
+        },
+        "green": {
+          "lat": 51.535268,
+          "lng": 0.571346
+        },
+        "yards": 116
+      },
+      {
+        "number": 5,
+        "osm": "way/889226157",
+        "name": "",
+        "tee": {
+          "lat": 51.534072,
+          "lng": 0.571493
+        },
+        "green": {
+          "lat": 51.535625,
+          "lng": 0.567399
+        },
+        "yards": 363
+      },
+      {
+        "number": 6,
+        "osm": "way/889227536",
+        "name": "",
+        "tee": {
+          "lat": 51.535975,
+          "lng": 0.565365
+        },
+        "green": {
+          "lat": 51.536699,
+          "lng": 0.566496
+        },
+        "yards": 123
+      },
+      {
+        "number": 7,
+        "osm": "way/889237187",
+        "name": "",
+        "tee": {
+          "lat": 51.537208,
+          "lng": 0.566934
+        },
+        "green": {
+          "lat": 51.536217,
+          "lng": 0.570479
+        },
+        "yards": 294
+      },
+      {
+        "number": 8,
+        "osm": "way/889237195",
+        "name": "",
+        "tee": {
+          "lat": 51.535674,
+          "lng": 0.57304
+        },
+        "green": {
+          "lat": 51.536401,
+          "lng": 0.573461
+        },
+        "yards": 94
+      },
+      {
+        "number": 9,
+        "osm": "way/889237200",
+        "name": "",
+        "tee": {
+          "lat": 51.536734,
+          "lng": 0.574205
+        },
+        "green": {
+          "lat": 51.534599,
+          "lng": 0.575717
+        },
+        "yards": 284
+      },
+      {
+        "number": 10,
+        "osm": "way/889239566",
+        "name": "",
+        "tee": {
+          "lat": 51.533536,
+          "lng": 0.575752
+        },
+        "green": {
+          "lat": 51.533824,
+          "lng": 0.577833
+        },
+        "yards": 161
+      },
+      null,
+      null,
+      {
+        "number": 13,
+        "osm": "way/889246713",
+        "name": "",
+        "tee": {
+          "lat": 51.533761,
+          "lng": 0.588949
+        },
+        "green": {
+          "lat": 51.532109,
+          "lng": 0.590796
+        },
+        "yards": 245
+      },
+      {
+        "number": 14,
+        "osm": "way/889256370",
+        "name": "",
+        "tee": {
+          "lat": 51.530844,
+          "lng": 0.592894
+        },
+        "green": {
+          "lat": 51.532271,
+          "lng": 0.593593
+        },
+        "yards": 181
+      },
+      {
+        "number": 15,
+        "osm": "way/889256376",
+        "name": "",
+        "tee": {
+          "lat": 51.533368,
+          "lng": 0.593914
+        },
+        "green": {
+          "lat": 51.533278,
+          "lng": 0.591657
+        },
+        "yards": 171
+      },
+      {
+        "number": 16,
+        "osm": "way/889256382",
+        "name": "",
+        "tee": {
+          "lat": 51.533688,
+          "lng": 0.589108
+        },
+        "green": {
+          "lat": 51.534801,
+          "lng": 0.584078
+        },
+        "yards": 404
+      },
+      null,
+      null
+    ]
+  }
+]
