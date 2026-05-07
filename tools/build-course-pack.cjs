@@ -10,6 +10,7 @@ const SNAPSHOT_MIN_ZOOM = 14;
 const SNAPSHOT_MAX_ZOOM = 19;
 const SNAPSHOT_TILE_SIZE = 512;
 const SNAPSHOT_PADDING = 0.18;
+const SNAPSHOT_TRANSFORM_MARGIN = 2;
 
 const repoRoot = path.resolve(__dirname, "..");
 const defaults = {
@@ -342,9 +343,26 @@ function planHoleSnapshot(hole) {
     const bounds = worldBounds(worldPoints);
     const width = bounds.maxX - bounds.minX;
     const height = bounds.maxY - bounds.minY;
-    if (width <= SNAPSHOT_WIDTH * (1 - SNAPSHOT_PADDING * 2) && height <= SNAPSHOT_HEIGHT * (1 - SNAPSHOT_PADDING * 2)) {
+    const plan = snapshotPlanFromBounds(zoom, bounds);
+    if (
+      width <= SNAPSHOT_WIDTH * (1 - SNAPSHOT_PADDING * 2) &&
+      height <= SNAPSHOT_HEIGHT * (1 - SNAPSHOT_PADDING * 2) &&
+      snapshotCoversAlignedPanel(plan, hole)
+    ) {
       chosen = { zoom, bounds };
       break;
+    }
+  }
+  if (!chosen) {
+    for (let zoom = SNAPSHOT_MAX_ZOOM; zoom >= SNAPSHOT_MIN_ZOOM; zoom -= 1) {
+      const worldPoints = points.map((point) => geoToWorldPixel(point, zoom));
+      const bounds = worldBounds(worldPoints);
+      const width = bounds.maxX - bounds.minX;
+      const height = bounds.maxY - bounds.minY;
+      if (width <= SNAPSHOT_WIDTH * (1 - SNAPSHOT_PADDING * 2) && height <= SNAPSHOT_HEIGHT * (1 - SNAPSHOT_PADDING * 2)) {
+        chosen = { zoom, bounds };
+        break;
+      }
     }
   }
   if (!chosen) {
@@ -352,15 +370,118 @@ function planHoleSnapshot(hole) {
     chosen = { zoom: SNAPSHOT_MIN_ZOOM, bounds: worldBounds(worldPoints) };
   }
 
+  return snapshotPlanFromBounds(chosen.zoom, chosen.bounds);
+}
+
+function snapshotPlanFromBounds(zoom, bounds) {
   const centerWorld = {
-    x: (chosen.bounds.minX + chosen.bounds.maxX) / 2,
-    y: (chosen.bounds.minY + chosen.bounds.maxY) / 2
+    x: (bounds.minX + bounds.maxX) / 2,
+    y: (bounds.minY + bounds.maxY) / 2
   };
   return {
     width: SNAPSHOT_WIDTH,
     height: SNAPSHOT_HEIGHT,
-    center: worldPixelToGeo(centerWorld, chosen.zoom),
-    zoom: chosen.zoom
+    center: worldPixelToGeo(centerWorld, zoom),
+    zoom
+  };
+}
+
+function snapshotCoversAlignedPanel(plan, hole) {
+  const tee = normalizePoint(hole?.tee);
+  const green = normalizePoint(hole?.greenCenter || hole?.green);
+  if (!tee || !green) {
+    return false;
+  }
+  const sourceTee = snapshotGeoToImagePoint(plan, tee);
+  const sourceGreen = snapshotGeoToImagePoint(plan, green);
+  if (!sourceTee || !sourceGreen) {
+    return false;
+  }
+
+  const ratio = SNAPSHOT_HEIGHT / SNAPSHOT_WIDTH;
+  const marker = snapshotTargetMarkers(hole?.par);
+  const transform = snapshotDisplayTransform(
+    { x: sourceTee.x, y: sourceTee.y * ratio },
+    { x: sourceGreen.x, y: sourceGreen.y * ratio },
+    { x: marker.tee[0], y: marker.tee[1] * ratio },
+    { x: marker.green[0], y: marker.green[1] * ratio }
+  );
+  if (!transform) {
+    return false;
+  }
+
+  const corners = [
+    { x: 0, y: 0 },
+    { x: 100, y: 0 },
+    { x: 100, y: 100 * ratio },
+    { x: 0, y: 100 * ratio }
+  ].map((point) => applySnapshotMatrix(point, transform));
+  const bounds = worldBounds(corners);
+  return (
+    bounds.minX <= -SNAPSHOT_TRANSFORM_MARGIN &&
+    bounds.maxX >= 100 + SNAPSHOT_TRANSFORM_MARGIN &&
+    bounds.minY <= -SNAPSHOT_TRANSFORM_MARGIN * ratio &&
+    bounds.maxY >= (100 + SNAPSHOT_TRANSFORM_MARGIN) * ratio
+  );
+}
+
+function snapshotGeoToImagePoint(plan, position) {
+  const normalized = normalizePoint(position);
+  if (!normalized) {
+    return null;
+  }
+  const centerWorld = geoToWorldPixel(plan.center, plan.zoom);
+  const pointWorld = geoToWorldPixel(normalized, plan.zoom);
+  let dx = pointWorld.x - centerWorld.x;
+  const worldSize = SNAPSHOT_TILE_SIZE * 2 ** plan.zoom;
+  if (Math.abs(dx) > worldSize / 2) {
+    dx += dx > 0 ? -worldSize : worldSize;
+  }
+  return {
+    x: 50 + (dx / plan.width) * 100,
+    y: 50 + ((pointWorld.y - centerWorld.y) / plan.height) * 100
+  };
+}
+
+function snapshotTargetMarkers(par) {
+  const teeY = 82;
+  const distance = Number(par) === 3 ? 56 : Number(par) === 5 ? 68 : 64;
+  return {
+    tee: [50, teeY],
+    green: [50, Number((teeY - distance).toFixed(1))]
+  };
+}
+
+function snapshotDisplayTransform(sourceTee, sourceGreen, targetTee, targetGreen) {
+  const sourceVector = {
+    x: sourceGreen.x - sourceTee.x,
+    y: sourceGreen.y - sourceTee.y
+  };
+  const targetVector = {
+    x: targetGreen.x - targetTee.x,
+    y: targetGreen.y - targetTee.y
+  };
+  const lengthSquared = sourceVector.x * sourceVector.x + sourceVector.y * sourceVector.y;
+  if (lengthSquared < 0.01) {
+    return null;
+  }
+
+  const a = (targetVector.x * sourceVector.x + targetVector.y * sourceVector.y) / lengthSquared;
+  const b = (targetVector.y * sourceVector.x - targetVector.x * sourceVector.y) / lengthSquared;
+  return {
+    a,
+    b,
+    c: -b,
+    d: a,
+    tx: targetTee.x - (a * sourceTee.x - b * sourceTee.y),
+    ty: targetTee.y - (b * sourceTee.x + a * sourceTee.y)
+  };
+}
+
+function applySnapshotMatrix(point, matrix) {
+  return {
+    x: matrix.a * point.x + matrix.c * point.y + matrix.tx,
+    y: matrix.b * point.x + matrix.d * point.y + matrix.ty
   };
 }
 

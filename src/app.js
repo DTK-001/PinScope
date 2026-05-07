@@ -832,10 +832,13 @@ function renderSnapshotHoleVisual(hole, course) {
   const courseId = course?.id || photoCourseId(hole);
   const snapshot = normalizeHoleSnapshot(hole?.snapshot);
   const anchors = azureHoleAnchors(hole, course);
+  if (!snapshot || !anchors) {
+    return renderAzureHoleVisual(hole, course);
+  }
   const marker = photoTargetMarkers(hole.par);
   const panelRatio = snapshot.height / snapshot.width;
   const transform = snapshotDisplayTransform(snapshot, anchors, marker, panelRatio);
-  if (!snapshot || !anchors || !transform) {
+  if (!transform) {
     return renderAzureHoleVisual(hole, course);
   }
 
