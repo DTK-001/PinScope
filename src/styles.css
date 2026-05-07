@@ -986,14 +986,14 @@ select option {
   transform-origin: 0 0;
   opacity: 0;
   backface-visibility: hidden;
-  filter: saturate(1.08) contrast(1.03) brightness(1.02) hue-rotate(-2deg);
+  filter: saturate(1.16) contrast(1.07) brightness(1.045) hue-rotate(-4deg);
   image-rendering: auto;
   transition: opacity 180ms ease;
 }
 
 .snapshot-map-image {
   position: static;
-  filter: saturate(1.08) contrast(1.03) brightness(1.02) hue-rotate(-2deg);
+  filter: saturate(1.16) contrast(1.07) brightness(1.045) hue-rotate(-4deg);
 }
 
 .snapshot-map-svg {
@@ -2428,10 +2428,10 @@ select option {
    OpenStreetMap green polygon is available for the hole. */
 .photo-osm-green-shape {
   fill: rgba(135, 245, 123, 0.14);
-  stroke: rgba(248, 255, 243, 0.7);
+  stroke: rgba(248, 255, 243, 0.52);
   stroke-width: 0.72;
   vector-effect: non-scaling-stroke;
-  filter: drop-shadow(0 0 1.2px rgba(5, 18, 8, 0.52));
+  filter: drop-shadow(0 0 0.9px rgba(5, 18, 8, 0.42));
 }
 
 .photo-green-center-dot {
