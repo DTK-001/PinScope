@@ -4,15 +4,15 @@ const fs = require("node:fs");
 const path = require("node:path");
 const crypto = require("node:crypto");
 
-const SNAPSHOT_WIDTH = 900;
-const SNAPSHOT_HEIGHT = 1300;
+const SNAPSHOT_WIDTH = 1500;
+const SNAPSHOT_HEIGHT = 1500;
 const SNAPSHOT_MIN_ZOOM = 14;
 const SNAPSHOT_MAX_ZOOM = 19;
 const SNAPSHOT_TILE_SIZE = 512;
 const SNAPSHOT_PADDING = 0.18;
 const SNAPSHOT_TRANSFORM_MARGIN = 2;
 const SNAPSHOT_PANEL_RATIOS = [SNAPSHOT_HEIGHT / SNAPSHOT_WIDTH, 16 / 9, 20 / 9];
-const SNAPSHOT_PLAN_VERSION = 3;
+const SNAPSHOT_PLAN_VERSION = 4;
 
 const repoRoot = path.resolve(__dirname, "..");
 const defaults = {
