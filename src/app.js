@@ -880,7 +880,7 @@ function renderSnapshotHoleVisual(hole, course) {
               <path class="photo-plan-cross" d="M ${point.x - 1.4} ${point.y} L ${point.x + 1.4} ${point.y} M ${point.x} ${point.y - 1.4} L ${point.x} ${point.y + 1.4}"></path>
             `).join("") || ""}
           </svg>
-          ${greenShapeSvg ? renderPhotoGreenCenterDot(green) : renderPhotoGreenMarkerElement(green, hole.par)}
+          ${greenShapeSvg ? "" : renderPhotoGreenMarkerElement(green, hole.par)}
           ${renderPhotoTeeMarkerElement(tee, Boolean(gpsPoint))}
           ${renderPhotoGpsMarker(gpsPoint)}
         </div>
@@ -952,7 +952,7 @@ function renderAzureHoleVisual(hole, course) {
               <path class="photo-plan-cross" d="M ${point.x - 1.4} ${point.y} L ${point.x + 1.4} ${point.y} M ${point.x} ${point.y - 1.4} L ${point.x} ${point.y + 1.4}"></path>
             `).join("") || ""}
           </svg>
-          ${greenShapeSvg ? renderPhotoGreenCenterDot(green) : renderPhotoGreenMarkerElement(green, hole.par)}
+          ${greenShapeSvg ? "" : renderPhotoGreenMarkerElement(green, hole.par)}
           ${renderPhotoTeeMarkerElement(tee, Boolean(gpsPoint))}
           ${renderPhotoGpsMarker(gpsPoint)}
           ${photoEditMode ? `
@@ -1285,10 +1285,8 @@ function renderSnapshotGreenShapeSvg(hole, snapshot, transform) {
     return "";
   }
   const path = points.map((point) => `${point.x},${point.y}`).join(" ");
-  const center = snapshotGeoToTargetPoint(snapshot, hole.greenCenter, transform) || { x: 50, y: 50 };
   return `
     <polygon class="photo-osm-green-shape" points="${path}"></polygon>
-    <circle class="photo-osm-green-centre" cx="${center.x}" cy="${center.y}" r="1.8"></circle>
   `;
 }
 
@@ -1331,17 +1329,6 @@ function renderPhotoGreenMarkerElement(marker, par) {
   `;
 }
 
-function renderPhotoGreenCenterDot(marker) {
-  if (!marker) {
-    return "";
-  }
-  return `
-    <span class="photo-green-center-dot" style="left:${marker.x}%; top:${marker.y}%;">
-      <span></span>
-    </span>
-  `;
-}
-
 function renderAzureGreenShapeSvg(hole, anchors, marker, panelRatio = satellitePanelRatio()) {
   const polygon = holeGreenPolygon(hole);
   if (!polygon.length) {
@@ -1354,10 +1341,8 @@ function renderAzureGreenShapeSvg(hole, anchors, marker, panelRatio = satelliteP
     return "";
   }
   const path = points.map((point) => `${point.x},${point.y}`).join(" ");
-  const center = azureGeoToTargetPoint(anchors, hole.greenCenter || anchors.green, marker, panelRatio) || { x: marker.green[0], y: marker.green[1] };
   return `
     <polygon class="photo-osm-green-shape" points="${path}"></polygon>
-    <circle class="photo-osm-green-centre" cx="${center.x}" cy="${center.y}" r="1.8"></circle>
   `;
 }
 
