@@ -3,18 +3,22 @@
 const fs = require("node:fs");
 const path = require("node:path");
 const crypto = require("node:crypto");
+const sharp = require("C:/Users/maste/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/sharp");
 
-const SNAPSHOT_WIDTH = 1500;
+const SNAPSHOT_WIDTH = 1000;
 const SNAPSHOT_HEIGHT = 1500;
 const SNAPSHOT_MIN_ZOOM = 14;
 const SNAPSHOT_MAX_ZOOM = 19;
-const SNAPSHOT_TILE_SIZE = 512;
+const SNAPSHOT_TILE_SIZE = 256;
+const SNAPSHOT_REQUEST_TILE_SIZE = 512;
+const SNAPSHOT_PIXEL_RATIO = SNAPSHOT_REQUEST_TILE_SIZE / SNAPSHOT_TILE_SIZE;
 const SNAPSHOT_PADDING = 0.18;
 const SNAPSHOT_TRANSFORM_MARGIN = 2;
 const SNAPSHOT_PANEL_RATIOS = [SNAPSHOT_HEIGHT / SNAPSHOT_WIDTH, 16 / 9, 20 / 9];
-const SNAPSHOT_PLAN_VERSION = 4;
+const SNAPSHOT_PLAN_VERSION = 5;
 
 const repoRoot = path.resolve(__dirname, "..");
+const tileBufferCache = new Map();
 const defaults = {
   input: path.join(repoRoot, "data", "course-pack"),
   output: path.join(repoRoot, "src", "shared-course-defaults.js"),
@@ -299,17 +303,14 @@ async function ensureSnapshot(course, hole, plan, options, azureKey, summary) {
   }
 
   fs.mkdirSync(courseDir, { recursive: true });
-  const response = await fetch(azureStaticImageUrl(plan, azureKey), {
-    headers: { Accept: "image/jpeg" }
-  });
-  if (!response.ok) {
-    const text = await response.text().catch(() => "");
-    summary.errors.push(`${course.id} hole ${hole.number}: Azure snapshot failed (${response.status})${text ? ` ${text.slice(0, 140)}` : ""}`);
+  try {
+    await writeStitchedSnapshot(filePath, plan, azureKey);
+  } catch (error) {
+    summary.errors.push(`${course.id} hole ${hole.number}: Azure tile stitch failed (${error.message || error})`);
     summary.skipped += 1;
     return null;
   }
 
-  fs.writeFileSync(filePath, Buffer.from(await response.arrayBuffer()));
   summary.generated += 1;
   return snapshotMetadata(imageUrl, filePath, plan, fingerprint, geometrySignature);
 }
@@ -322,6 +323,8 @@ function snapshotMetadata(imageUrl, filePath, plan, fingerprint, geometrySignatu
     height: plan.height,
     center: plan.center,
     zoom: plan.zoom,
+    tileSize: SNAPSHOT_TILE_SIZE,
+    pixelRatio: SNAPSHOT_PIXEL_RATIO,
     provider: "azure-maps",
     tileset: "microsoft.imagery",
     attribution: "Imagery: Azure Maps",
@@ -384,6 +387,7 @@ function snapshotPlanFromBounds(zoom, bounds) {
     width: SNAPSHOT_WIDTH,
     height: SNAPSHOT_HEIGHT,
     center: worldPixelToGeo(centerWorld, zoom),
+    centerWorld,
     zoom
   };
 }
@@ -611,6 +615,83 @@ function azureStaticImageUrl(plan, key) {
   return `https://atlas.microsoft.com/map/static?${params.toString()}`;
 }
 
+async function writeStitchedSnapshot(filePath, plan, azureKey) {
+  const left = plan.centerWorld.x - plan.width / 2;
+  const top = plan.centerWorld.y - plan.height / 2;
+  const right = left + plan.width;
+  const bottom = top + plan.height;
+  const minTileX = Math.floor(left / SNAPSHOT_TILE_SIZE);
+  const maxTileX = Math.floor((right - 0.001) / SNAPSHOT_TILE_SIZE);
+  const minTileY = Math.floor(top / SNAPSHOT_TILE_SIZE);
+  const maxTileY = Math.floor((bottom - 0.001) / SNAPSHOT_TILE_SIZE);
+  const outputWidth = Math.round(plan.width * SNAPSHOT_PIXEL_RATIO);
+  const outputHeight = Math.round(plan.height * SNAPSHOT_PIXEL_RATIO);
+
+  const tileJobs = [];
+  for (let x = minTileX; x <= maxTileX; x += 1) {
+    for (let y = minTileY; y <= maxTileY; y += 1) {
+      tileJobs.push({
+        x,
+        y,
+        left: Math.round((x * SNAPSHOT_TILE_SIZE - left) * SNAPSHOT_PIXEL_RATIO),
+        top: Math.round((y * SNAPSHOT_TILE_SIZE - top) * SNAPSHOT_PIXEL_RATIO)
+      });
+    }
+  }
+  const composites = await Promise.all(tileJobs.map(async (tile) => ({
+    input: await fetchAzureTileBuffer(tile.x, tile.y, plan.zoom, azureKey),
+    left: tile.left,
+    top: tile.top
+  })));
+
+  await sharp({
+    create: {
+      width: outputWidth,
+      height: outputHeight,
+      channels: 3,
+      background: { r: 4, g: 8, b: 8 }
+    }
+  })
+    .composite(composites)
+    .jpeg({ quality: 94, mozjpeg: true })
+    .toFile(filePath);
+}
+
+async function fetchAzureTileBuffer(x, y, zoom, key) {
+  const cacheKey = `${zoom}/${x}/${y}`;
+  if (tileBufferCache.has(cacheKey)) {
+    return tileBufferCache.get(cacheKey);
+  }
+  const promise = fetchAzureTileBufferUncached(x, y, zoom, key);
+  tileBufferCache.set(cacheKey, promise);
+  return promise;
+}
+
+async function fetchAzureTileBufferUncached(x, y, zoom, key) {
+  const response = await fetch(azureTileUrl(x, y, zoom, key), {
+    headers: { Accept: "image/jpeg,image/png" }
+  });
+  if (!response.ok) {
+    const text = await response.text().catch(() => "");
+    throw new Error(`tile ${zoom}/${x}/${y} failed (${response.status})${text ? ` ${text.slice(0, 120)}` : ""}`);
+  }
+  return Buffer.from(await response.arrayBuffer());
+}
+
+function azureTileUrl(x, y, zoom, key) {
+  const params = new URLSearchParams({
+    "api-version": "2024-04-01",
+    tilesetId: "microsoft.imagery",
+    zoom: String(zoom),
+    x: String(x),
+    y: String(y),
+    tileSize: String(SNAPSHOT_REQUEST_TILE_SIZE),
+    view: "Auto",
+    "subscription-key": key
+  });
+  return `https://atlas.microsoft.com/map/tile?${params.toString()}`;
+}
+
 function snapshotFingerprint(course, hole, plan) {
   return crypto
     .createHash("sha256")
@@ -624,6 +705,8 @@ function snapshotFingerprint(course, hole, plan) {
       polygon: Array.isArray(hole?.geometry?.greenPolygon) ? hole.geometry.greenPolygon.map(normalizePoint).filter(Boolean) : [],
       planner: SNAPSHOT_PLAN_VERSION,
       panelRatios: SNAPSHOT_PANEL_RATIOS,
+      tileSize: SNAPSHOT_TILE_SIZE,
+      pixelRatio: SNAPSHOT_PIXEL_RATIO,
       plan
     }))
     .digest("hex")

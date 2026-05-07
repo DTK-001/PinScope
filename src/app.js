@@ -1493,6 +1493,7 @@ function normalizeHoleSnapshot(snapshot) {
   const zoom = Number(snapshot.zoom);
   const width = Number(snapshot.width);
   const height = Number(snapshot.height);
+  const tileSize = Number(snapshot.tileSize || AZURE_MAPS_STATIC_TILE_SIZE);
   if (!imageUrl || !center || !Number.isFinite(zoom) || !Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) {
     return null;
   }
@@ -1503,6 +1504,8 @@ function normalizeHoleSnapshot(snapshot) {
     zoom,
     width,
     height,
+    tileSize: Number.isFinite(tileSize) && tileSize > 0 ? tileSize : AZURE_MAPS_STATIC_TILE_SIZE,
+    pixelRatio: Number(snapshot.pixelRatio || 1),
     geometrySignature: String(snapshot.geometrySignature || "").trim()
   };
 }
@@ -1913,10 +1916,10 @@ function snapshotGeoToImagePoint(snapshot, position) {
   if (!normalized || !validGeoPoint(position)) {
     return null;
   }
-  const centerWorld = geoToWorldPixel(normalized.center, normalized.zoom, AZURE_MAPS_STATIC_TILE_SIZE);
-  const pointWorld = geoToWorldPixel(position, normalized.zoom, AZURE_MAPS_STATIC_TILE_SIZE);
+  const centerWorld = geoToWorldPixel(normalized.center, normalized.zoom, normalized.tileSize);
+  const pointWorld = geoToWorldPixel(position, normalized.zoom, normalized.tileSize);
   let dx = pointWorld.x - centerWorld.x;
-  const worldSize = AZURE_MAPS_STATIC_TILE_SIZE * 2 ** normalized.zoom;
+  const worldSize = normalized.tileSize * 2 ** normalized.zoom;
   if (Math.abs(dx) > worldSize / 2) {
     dx += dx > 0 ? -worldSize : worldSize;
   }
@@ -1935,12 +1938,12 @@ function snapshotTargetPointToGeo(snapshot, point, transform = null) {
   if (!imagePoint) {
     return null;
   }
-  const centerWorld = geoToWorldPixel(normalized.center, normalized.zoom, AZURE_MAPS_STATIC_TILE_SIZE);
+  const centerWorld = geoToWorldPixel(normalized.center, normalized.zoom, normalized.tileSize);
   const world = {
     x: centerWorld.x + ((Number(imagePoint.x) - 50) / 100) * normalized.width,
     y: centerWorld.y + ((Number(imagePoint.y) - 50) / 100) * normalized.height
   };
-  return worldPixelToGeo(world, normalized.zoom, AZURE_MAPS_STATIC_TILE_SIZE);
+  return worldPixelToGeo(world, normalized.zoom, normalized.tileSize);
 }
 
 function snapshotGeometrySignature(courseId, hole) {
@@ -4447,6 +4450,8 @@ function normalizeExportSnapshot(snapshot) {
     height: normalized.height,
     center: normalized.center,
     zoom: normalized.zoom,
+    tileSize: normalized.tileSize || AZURE_MAPS_STATIC_TILE_SIZE,
+    pixelRatio: normalized.pixelRatio || 1,
     provider: normalized.provider || "azure-maps",
     tileset: normalized.tileset || "microsoft.imagery",
     attribution: normalized.attribution || "Imagery: Azure Maps",
