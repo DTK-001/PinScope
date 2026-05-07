@@ -12,6 +12,7 @@ const SNAPSHOT_TILE_SIZE = 512;
 const SNAPSHOT_PADDING = 0.18;
 const SNAPSHOT_TRANSFORM_MARGIN = 2;
 const SNAPSHOT_PANEL_RATIOS = [SNAPSHOT_HEIGHT / SNAPSHOT_WIDTH, 16 / 9, 20 / 9];
+const SNAPSHOT_PLAN_VERSION = 2;
 
 const repoRoot = path.resolve(__dirname, "..");
 const defaults = {
@@ -598,6 +599,8 @@ function snapshotFingerprint(course, hole, plan) {
       front: normalizePoint(hole.greenFront),
       back: normalizePoint(hole.greenBack),
       polygon: Array.isArray(hole?.geometry?.greenPolygon) ? hole.geometry.greenPolygon.map(normalizePoint).filter(Boolean) : [],
+      planner: SNAPSHOT_PLAN_VERSION,
+      panelRatios: SNAPSHOT_PANEL_RATIOS,
       plan
     }))
     .digest("hex")
