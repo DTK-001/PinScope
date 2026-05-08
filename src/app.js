@@ -205,10 +205,9 @@ function renderView() {
 }
 
 function renderCourses() {
-  const featuredCourse = getCourse(state, CRANHAM_COURSE_ID);
   const filteredCourses = filteredCourseList();
   return `
-    ${featuredCourse ? renderFeaturedCourse(featuredCourse) : ""}
+    ${renderPlayedCoursesSection()}
 
     <section class="action-band">
       <div>
@@ -273,6 +272,98 @@ function filteredCourseList() {
     course.country,
     course.source
   ].some((value) => String(value || "").toLowerCase().includes(query)));
+}
+
+function renderPlayedCoursesSection() {
+  const playedCourses = playedCourseSummaries();
+  return `
+    <section class="played-courses">
+      <header class="section-head">
+        <div>
+          <p class="eyebrow">Recent</p>
+          <h2>Courses you have played at</h2>
+        </div>
+      </header>
+      <div class="played-course-list">
+        ${playedCourses.length ? playedCourses.map(renderPlayedCourseCard).join("") : `<p class="empty-copy">Courses appear here after you start a round.</p>`}
+      </div>
+    </section>
+  `;
+}
+
+function playedCourseSummaries() {
+  const roundCounts = new Map();
+  state.rounds.forEach((round) => {
+    if (round.courseId) {
+      roundCounts.set(round.courseId, (roundCounts.get(round.courseId) || 0) + 1);
+    }
+  });
+
+  const newestRounds = state.rounds
+    .map((round) => ({
+      round,
+      timestamp: Date.parse(round.completedAt || round.startedAt || "")
+    }))
+    .filter(({ round, timestamp }) => round.courseId && Number.isFinite(timestamp))
+    .sort((a, b) => b.timestamp - a.timestamp);
+
+  const seenCourseIds = new Set();
+  return newestRounds.reduce((summaries, { round, timestamp }) => {
+    if (seenCourseIds.has(round.courseId)) {
+      return summaries;
+    }
+    const course = getCourse(state, round.courseId);
+    if (!course) {
+      return summaries;
+    }
+    seenCourseIds.add(round.courseId);
+    const players = getRoundPlayers(round);
+    const leadTotals = round.status === "complete" ? roundTotals(round, course, players[0]?.id) : null;
+    summaries.push({
+      course,
+      round,
+      timestamp,
+      roundCount: roundCounts.get(round.courseId) || 1,
+      leadTotals
+    });
+    return summaries;
+  }, []);
+}
+
+function renderPlayedCourseCard(summary) {
+  const { course, round, roundCount, leadTotals } = summary;
+  const selected = state.selectedCourseId === course.id;
+  const playedLabel = round.status === "active"
+    ? "Round in progress"
+    : `Last played ${formatShortDate(round.completedAt || round.startedAt)}`;
+  const scoreLabel = leadTotals
+    ? `${leadTotals.score} (${formatToPar(leadTotals.toPar)})`
+    : "Ready to continue";
+  return `
+    <article class="played-course-card ${selected ? "selected" : ""}">
+      <div>
+        <p class="eyebrow">${playedLabel}</p>
+        <h3>${escapeHtml(course.name)}</h3>
+        <p>${courseLocationLine(course)}</p>
+      </div>
+      <div class="played-course-meta">
+        <span>${roundCount} ${roundCount === 1 ? "round" : "rounds"}</span>
+        <span>${scoreLabel}</span>
+      </div>
+      <div class="played-course-actions">
+        <button class="primary-action" type="button" data-action="quick-start" data-course-id="${course.id}">Play</button>
+        <button class="secondary-action" type="button" data-action="select-course" data-course-id="${course.id}">${selected ? "Selected" : "Select"}</button>
+      </div>
+    </article>
+  `;
+}
+
+function formatShortDate(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return "recently";
+  }
+  return date.toLocaleDateString(undefined, { day: "numeric", month: "short" });
 }
 
 function renderFeaturedCourse(course) {

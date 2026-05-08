@@ -30,12 +30,14 @@
 
 html {
   min-height: 100%;
+  overflow-x: hidden;
   background: var(--page);
 }
 
 body {
   min-height: 100%;
   margin: 0;
+  overflow-x: hidden;
   color: var(--ink);
   background:
     linear-gradient(180deg, rgba(255, 79, 216, 0.12), rgba(141, 92, 255, 0.07) 240px, rgba(7, 7, 13, 0) 420px),
@@ -70,6 +72,7 @@ a {
 
 .app-shell {
   width: min(100%, 760px);
+  max-width: 100vw;
   min-height: 100vh;
   margin: 0 auto;
   padding: env(safe-area-inset-top) 14px calc(82px + env(safe-area-inset-bottom));
@@ -112,6 +115,16 @@ p {
   line-height: 1.1;
 }
 
+.topbar > div,
+.topbar h1,
+.topbar p,
+h2,
+h3,
+p {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
 .eyebrow {
   margin-bottom: 4px;
   color: var(--accent);
@@ -125,11 +138,15 @@ p {
 .primary-action,
 .secondary-action,
 .finish-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   min-height: 44px;
   border: 0;
   border-radius: var(--radius);
   cursor: pointer;
   font-weight: 750;
+  text-align: center;
 }
 
 .gps-pill {
@@ -498,6 +515,79 @@ p {
   z-index: 1;
 }
 
+.played-courses {
+  display: grid;
+  gap: 12px;
+}
+
+.section-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+}
+
+.section-head > div,
+.action-band > div,
+.home-area > div,
+.course-main > div,
+.played-course-card > div:first-child {
+  min-width: 0;
+}
+
+.played-course-list {
+  display: grid;
+  gap: 10px;
+}
+
+.played-course-card {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+  padding: 14px;
+  border-radius: var(--radius);
+  background:
+    linear-gradient(135deg, rgba(53, 240, 193, 0.08), transparent 42%),
+    var(--panel);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+
+.played-course-card.selected {
+  box-shadow: inset 0 0 0 2px rgba(255, 79, 216, 0.72), var(--shadow);
+}
+
+.played-course-card h3 {
+  margin: 0 0 5px;
+  font-size: 1.08rem;
+  line-height: 1.15;
+}
+
+.played-course-card p,
+.played-course-meta {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.played-course-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.played-course-meta span {
+  min-width: 0;
+  padding: 5px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.played-course-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(96px, 0.55fr);
+  gap: 8px;
+}
+
 .photo-source-control {
   position: relative;
   z-index: 1;
@@ -567,6 +657,7 @@ p {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
   gap: 14px;
 }
 
@@ -583,6 +674,7 @@ p {
 
 .action-band h2,
 .home-area h2,
+.played-courses h2,
 .round-header h2,
 .tool-panel h2,
 .round-list h2 {
@@ -592,6 +684,7 @@ p {
 
 .action-band p,
 .home-area p,
+.played-course-card p,
 .course-card p,
 .round-row p,
 .source-note,
@@ -2419,6 +2512,75 @@ select option {
 }
 
 @media (max-width: 560px) {
+  .app-shell {
+    padding-right: 10px;
+    padding-left: 10px;
+  }
+
+  .topbar {
+    gap: 8px;
+    margin-right: -10px;
+    margin-left: -10px;
+    padding-right: 10px;
+    padding-left: 10px;
+  }
+
+  .topbar h1 {
+    font-size: 1.28rem;
+  }
+
+  .gps-pill {
+    min-width: 78px;
+    padding-inline: 9px;
+  }
+
+  .section-head,
+  .action-band,
+  .home-area,
+  .course-main {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: stretch;
+  }
+
+  .action-band .primary-action,
+  .home-area .secondary-action,
+  .course-main .chip-button {
+    width: 100%;
+  }
+
+  .played-course-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .photo-source-control,
+  .photo-source-control.loaded {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .photo-source-control > div {
+    grid-column: auto;
+  }
+
+  .photo-source-control .file-action,
+  .photo-source-control .compact-action {
+    width: 100%;
+  }
+
+  .tee-summary {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .course-geometry-status {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+  }
+
+  .course-geometry-status em {
+    white-space: normal;
+  }
+
   .course-actions {
     grid-template-columns: 1fr;
   }
