@@ -2567,10 +2567,6 @@ select option {
     width: 100%;
   }
 
-  .tee-summary {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
   .course-geometry-status {
     display: grid;
     grid-template-columns: minmax(0, 1fr);

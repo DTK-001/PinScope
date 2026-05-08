@@ -448,7 +448,6 @@ function renderCourseCard(course) {
         ${course.website ? `<a href="${escapeAttribute(course.website)}" target="_blank" rel="noreferrer">Website</a>` : "<span>Website pending</span>"}
         ${course.phone ? `<a href="tel:${escapeAttribute(course.phone)}">Call</a>` : "<span>Phone pending</span>"}
       </div>
-      ${renderCourseGeometryStatus(course)}
       ${course.verification ? renderTeeSummary(course) : ""}
       ${isSelected ? renderSelectedCourseActions(course) : ""}
     </article>
