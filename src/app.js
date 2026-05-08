@@ -9,7 +9,6 @@ import {
   getRoundEntry,
   getRoundPlayers,
   roundTotals,
-  statSummary,
   yardsBetween
 } from "./course-data.js";
 import { homeArea } from "./local-area.js";
@@ -70,6 +69,7 @@ let satelliteAnchorEdits = loadSatelliteAnchorEdits();
 let holeSwipe = null;
 let wheelHoleNavigationAt = 0;
 let courseSearchQuery = "";
+let statsFilter = "all";
 let gpsTestMoveMode = false;
 let azureMapsKey = initAzureMapsKey();
 let azureMapsEnabled = initAzureMapsEnabled();
@@ -3138,21 +3138,480 @@ function toggleButton(field, value, label, activeValue, holeNumber, playerId = "
 }
 
 function renderStats() {
-  const summary = statSummary(state.rounds, state.courses);
-  const completed = state.rounds.filter((round) => round.status === "complete").slice().reverse();
+  const completed = completedRoundSummaries();
+  const filteredRounds = filteredStatRounds(completed);
+  const summary = buildGameStats(filteredRounds);
   return `
+    <section class="stats-hero">
+      <div>
+        <p class="eyebrow">Form Check</p>
+        <h2>${statsFilterLabel()}</h2>
+        <p>${summary.rounds ? `${summary.rounds} scored ${summary.rounds === 1 ? "round" : "rounds"} feeding this view` : "Finish a round to unlock your game picture."}</p>
+      </div>
+      ${renderStatsFilter()}
+    </section>
+
     <section class="stats-grid">
-      ${statTile("Rounds", summary.rounds)}
       ${statTile("Avg score", summary.averageScore ? summary.averageScore.toFixed(1) : "-")}
-      ${statTile("Fairways", summary.fairwayPct ? `${Math.round(summary.fairwayPct)}%` : "-")}
-      ${statTile("GIR", summary.girPct ? `${Math.round(summary.girPct)}%` : "-")}
+      ${statTile("Avg to par", summary.averageToPar !== null ? formatSignedDecimal(summary.averageToPar) : "-")}
+      ${statTile("Best round", summary.bestRound ? `${summary.bestRound.totals.score} (${formatToPar(summary.bestRound.totals.toPar)})` : "-")}
+      ${statTile("Fairways", summary.fairwayPct !== null ? `${Math.round(summary.fairwayPct)}%` : "-")}
+      ${statTile("GIR", summary.girPct !== null ? `${Math.round(summary.girPct)}%` : "-")}
       ${statTile("Putts / hole", summary.puttsPerHole ? summary.puttsPerHole.toFixed(1) : "-")}
     </section>
+
+    ${renderRecentForm(summary)}
+    ${renderGameInsights(summary)}
+    ${renderScoringBreakdown(summary)}
+    ${renderParSplit(summary)}
+    ${renderCoursePerformance(summary)}
+    ${renderHardestHoles(summary)}
+
     <section class="round-list">
       <h2>Rounds</h2>
-      ${completed.length ? completed.map(renderRoundRow).join("") : `<p class="empty-copy">Finished rounds will appear here.</p>`}
+      ${filteredRounds.length ? filteredRounds.map(({ round }) => renderRoundRow(round)).join("") : `<p class="empty-copy">Finished rounds will appear here.</p>`}
     </section>
   `;
+}
+
+function renderStatsFilter() {
+  const options = [
+    ["all", "All"],
+    ["last5", "Last 5"],
+    ["last10", "Last 10"]
+  ];
+  return `
+    <div class="stats-filter" role="group" aria-label="Stats range">
+      ${options.map(([value, label]) => `
+        <button class="${statsFilter === value ? "active" : ""}" type="button" data-action="stats-filter" data-filter="${value}">${label}</button>
+      `).join("")}
+    </div>
+  `;
+}
+
+function statsFilterLabel() {
+  if (statsFilter === "last5") {
+    return "Last 5 rounds";
+  }
+  if (statsFilter === "last10") {
+    return "Last 10 rounds";
+  }
+  return "All-time game stats";
+}
+
+function completedRoundSummaries() {
+  return state.rounds
+    .filter((round) => round.status === "complete")
+    .map((round) => {
+      const course = getCourse(state, round.courseId);
+      if (!course) {
+        return null;
+      }
+      const players = getRoundPlayers(round);
+      const playerId = players[0]?.id || "player-1";
+      return {
+        round,
+        course,
+        playerId,
+        totals: roundTotals(round, course, playerId),
+        playedAt: Date.parse(round.completedAt || round.startedAt || "") || 0
+      };
+    })
+    .filter(Boolean)
+    .sort((a, b) => b.playedAt - a.playedAt);
+}
+
+function filteredStatRounds(rounds) {
+  if (statsFilter === "last5") {
+    return rounds.slice(0, 5);
+  }
+  if (statsFilter === "last10") {
+    return rounds.slice(0, 10);
+  }
+  return rounds;
+}
+
+function buildGameStats(rounds) {
+  const holes = rounds.flatMap((summary) => statHoleRows(summary));
+  const totalScore = rounds.reduce((sum, item) => sum + item.totals.score, 0);
+  const totalToPar = rounds.reduce((sum, item) => sum + item.totals.toPar, 0);
+  const putts = holes.reduce((sum, item) => sum + item.putts, 0);
+  const penalties = holes.reduce((sum, item) => sum + item.penalties, 0);
+  const fairways = holes.filter((item) => item.par > 3 && item.fairway !== "unset");
+  const greens = holes.filter((item) => typeof item.gir === "boolean");
+  const bestRound = rounds.length ? rounds.reduce((best, item) => item.totals.toPar < best.totals.toPar ? item : best, rounds[0]) : null;
+  const scoringCounts = scoringDistribution(holes);
+  return {
+    rounds: rounds.length,
+    holes,
+    averageScore: rounds.length ? totalScore / rounds.length : 0,
+    averageToPar: rounds.length ? totalToPar / rounds.length : null,
+    bestRound,
+    fairwayPct: fairways.length ? (fairways.filter((item) => item.fairway === "hit").length / fairways.length) * 100 : null,
+    girPct: greens.length ? (greens.filter((item) => item.gir).length / greens.length) * 100 : null,
+    puttsPerHole: holes.length ? putts / holes.length : 0,
+    penaltiesPerRound: rounds.length ? penalties / rounds.length : 0,
+    scoringCounts,
+    parSplits: parSplits(holes),
+    recentRounds: rounds.slice(0, 6).slice().reverse(),
+    coursePerformance: coursePerformance(rounds),
+    hardestHoles: hardestHoles(holes),
+    insights: gameInsights(rounds, holes)
+  };
+}
+
+function statHoleRows(summary) {
+  return summary.course.holes.map((hole) => {
+    const entry = getPlayerEntry(summary.round, hole.number, summary.playerId);
+    if (!entry) {
+      return null;
+    }
+    const score = Number(entry.score || 0);
+    const par = Number(hole.par || 0);
+    return {
+      courseId: summary.course.id,
+      courseName: summary.course.name,
+      holeNumber: hole.number,
+      par,
+      score,
+      toPar: score - par,
+      putts: Number(entry.putts || 0),
+      penalties: Number(entry.penalties || 0),
+      fairway: entry.fairway || "unset",
+      gir: Boolean(entry.gir)
+    };
+  }).filter(Boolean);
+}
+
+function scoringDistribution(holes) {
+  return holes.reduce((counts, hole) => {
+    if (hole.toPar <= -1) {
+      counts.birdie += 1;
+    } else if (hole.toPar === 0) {
+      counts.par += 1;
+    } else if (hole.toPar === 1) {
+      counts.bogey += 1;
+    } else {
+      counts.double += 1;
+    }
+    return counts;
+  }, { birdie: 0, par: 0, bogey: 0, double: 0 });
+}
+
+function parSplits(holes) {
+  return [3, 4, 5].map((par) => {
+    const rows = holes.filter((hole) => hole.par === par);
+    const totalScore = rows.reduce((sum, hole) => sum + hole.score, 0);
+    const totalToPar = rows.reduce((sum, hole) => sum + hole.toPar, 0);
+    return {
+      par,
+      holes: rows.length,
+      averageScore: rows.length ? totalScore / rows.length : 0,
+      averageToPar: rows.length ? totalToPar / rows.length : 0
+    };
+  });
+}
+
+function coursePerformance(rounds) {
+  const groups = new Map();
+  rounds.forEach((item) => {
+    const current = groups.get(item.course.id) || {
+      course: item.course,
+      rounds: 0,
+      score: 0,
+      toPar: 0,
+      best: item.totals
+    };
+    current.rounds += 1;
+    current.score += item.totals.score;
+    current.toPar += item.totals.toPar;
+    if (item.totals.toPar < current.best.toPar) {
+      current.best = item.totals;
+    }
+    groups.set(item.course.id, current);
+  });
+  return Array.from(groups.values())
+    .map((item) => ({
+      ...item,
+      averageScore: item.score / item.rounds,
+      averageToPar: item.toPar / item.rounds
+    }))
+    .sort((a, b) => b.rounds - a.rounds || a.averageToPar - b.averageToPar);
+}
+
+function hardestHoles(holes) {
+  const groups = new Map();
+  holes.forEach((hole) => {
+    const key = `${hole.courseId}-${hole.holeNumber}`;
+    const current = groups.get(key) || {
+      courseName: hole.courseName,
+      holeNumber: hole.holeNumber,
+      par: hole.par,
+      played: 0,
+      toPar: 0,
+      putts: 0,
+      penalties: 0
+    };
+    current.played += 1;
+    current.toPar += hole.toPar;
+    current.putts += hole.putts;
+    current.penalties += hole.penalties;
+    groups.set(key, current);
+  });
+  return Array.from(groups.values())
+    .filter((item) => item.played > 0)
+    .map((item) => ({
+      ...item,
+      averageToPar: item.toPar / item.played,
+      averagePutts: item.putts / item.played
+    }))
+    .sort((a, b) => b.averageToPar - a.averageToPar)
+    .slice(0, 3);
+}
+
+function gameInsights(rounds, holes) {
+  if (!rounds.length) {
+    return [];
+  }
+  const insights = [];
+  const fairways = holes.filter((item) => item.par > 3 && item.fairway !== "unset");
+  const fairwayPct = fairways.length ? (fairways.filter((item) => item.fairway === "hit").length / fairways.length) * 100 : null;
+  const girPct = holes.length ? (holes.filter((item) => item.gir).length / holes.length) * 100 : null;
+  const puttsPerHole = holes.length ? holes.reduce((sum, item) => sum + item.putts, 0) / holes.length : null;
+  const penaltiesPerRound = rounds.length ? holes.reduce((sum, item) => sum + item.penalties, 0) / rounds.length : null;
+
+  if (penaltiesPerRound !== null && penaltiesPerRound >= 1) {
+    insights.push({
+      label: "Leak",
+      title: "Penalties are costing shots",
+      value: `${penaltiesPerRound.toFixed(1)} / round`,
+      copy: "Clean up the big misses first. This is usually the fastest score drop."
+    });
+  }
+  if (puttsPerHole !== null && puttsPerHole >= 2) {
+    insights.push({
+      label: "Putting",
+      title: "Putts are heavy",
+      value: `${puttsPerHole.toFixed(1)} / hole`,
+      copy: "Track first-putt distance next if you want to separate lag putting from approach quality."
+    });
+  }
+  if (girPct !== null && girPct < 35) {
+    insights.push({
+      label: "Approach",
+      title: "Greens in regulation need work",
+      value: `${Math.round(girPct)}% GIR`,
+      copy: "The approach game is where the round is asking for attention."
+    });
+  }
+  if (fairwayPct !== null && fairwayPct < 45) {
+    insights.push({
+      label: "Tee",
+      title: "Fairways are under pressure",
+      value: `${Math.round(fairwayPct)}% hit`,
+      copy: "A safer tee club may be worth testing on tighter holes."
+    });
+  }
+  const trend = roundTrend(rounds);
+  if (trend) {
+    insights.unshift(trend);
+  }
+  return insights.slice(0, 3);
+}
+
+function roundTrend(rounds) {
+  if (rounds.length < 4) {
+    return null;
+  }
+  const recent = rounds.slice(0, 3);
+  const previous = rounds.slice(3, 6);
+  if (!previous.length) {
+    return null;
+  }
+  const recentAverage = recent.reduce((sum, item) => sum + item.totals.toPar, 0) / recent.length;
+  const previousAverage = previous.reduce((sum, item) => sum + item.totals.toPar, 0) / previous.length;
+  const change = recentAverage - previousAverage;
+  return {
+    label: change <= 0 ? "Trend" : "Watch",
+    title: change <= 0 ? "Recent form is improving" : "Recent form has drifted",
+    value: `${formatSignedDecimal(change)} vs prior`,
+    copy: change <= 0 ? "Your last three are beating the previous sample." : "Worth checking whether penalties or putting caused it."
+  };
+}
+
+function renderRecentForm(summary) {
+  if (!summary.recentRounds.length) {
+    return "";
+  }
+  const values = summary.recentRounds.map((item) => item.totals.toPar);
+  const max = Math.max(4, ...values.map((value) => Math.abs(value)));
+  return `
+    <section class="stats-panel">
+      <div class="panel-heading">
+        <div>
+          <p class="eyebrow">Trend</p>
+          <h2>Recent form</h2>
+        </div>
+      </div>
+      <div class="form-chart">
+        ${summary.recentRounds.map((item) => {
+          const height = 26 + (Math.abs(item.totals.toPar) / max) * 74;
+          return `
+            <div class="form-bar ${item.totals.toPar <= 0 ? "good" : ""}">
+              <span style="height:${height.toFixed(1)}%"></span>
+              <strong>${formatToPar(item.totals.toPar)}</strong>
+              <em>${formatShortDate(item.round.completedAt || item.round.startedAt)}</em>
+            </div>
+          `;
+        }).join("")}
+      </div>
+    </section>
+  `;
+}
+
+function renderGameInsights(summary) {
+  return `
+    <section class="stats-panel">
+      <div class="panel-heading">
+        <div>
+          <p class="eyebrow">Read</p>
+          <h2>Game insights</h2>
+        </div>
+      </div>
+      <div class="insight-grid">
+        ${summary.insights.length ? summary.insights.map((item) => `
+          <article class="insight-card">
+            <span>${escapeHtml(item.label)}</span>
+            <strong>${escapeHtml(item.value)}</strong>
+            <h3>${escapeHtml(item.title)}</h3>
+            <p>${escapeHtml(item.copy)}</p>
+          </article>
+        `).join("") : `<p class="empty-copy">Add a few scored rounds and PinScope will start calling out patterns.</p>`}
+      </div>
+    </section>
+  `;
+}
+
+function renderScoringBreakdown(summary) {
+  const total = Object.values(summary.scoringCounts).reduce((sum, value) => sum + value, 0);
+  if (!total) {
+    return "";
+  }
+  const items = [
+    ["Birdie+", summary.scoringCounts.birdie],
+    ["Par", summary.scoringCounts.par],
+    ["Bogey", summary.scoringCounts.bogey],
+    ["Double+", summary.scoringCounts.double]
+  ];
+  return `
+    <section class="stats-panel">
+      <div class="panel-heading">
+        <div>
+          <p class="eyebrow">Scoring</p>
+          <h2>Hole outcomes</h2>
+        </div>
+      </div>
+      <div class="outcome-list">
+        ${items.map(([label, value]) => `
+          <div>
+            <span>${label}</span>
+            <strong>${value}</strong>
+            <em style="width:${((value / total) * 100).toFixed(1)}%"></em>
+          </div>
+        `).join("")}
+      </div>
+    </section>
+  `;
+}
+
+function renderParSplit(summary) {
+  if (!summary.holes.length) {
+    return "";
+  }
+  return `
+    <section class="stats-panel">
+      <div class="panel-heading">
+        <div>
+          <p class="eyebrow">Shape</p>
+          <h2>Par 3 / 4 / 5 scoring</h2>
+        </div>
+      </div>
+      <div class="par-split-grid">
+        ${summary.parSplits.map((item) => `
+          <article>
+            <span>Par ${item.par}</span>
+            <strong>${item.holes ? item.averageScore.toFixed(2) : "-"}</strong>
+            <em>${item.holes ? `${formatSignedDecimal(item.averageToPar)} avg` : "No holes"}</em>
+          </article>
+        `).join("")}
+      </div>
+    </section>
+  `;
+}
+
+function renderCoursePerformance(summary) {
+  if (!summary.coursePerformance.length) {
+    return "";
+  }
+  return `
+    <section class="stats-panel">
+      <div class="panel-heading">
+        <div>
+          <p class="eyebrow">Courses</p>
+          <h2>Course form</h2>
+        </div>
+      </div>
+      <div class="course-stat-list">
+        ${summary.coursePerformance.map((item) => `
+          <article>
+            <div>
+              <h3>${escapeHtml(item.course.name)}</h3>
+              <p>${item.rounds} ${item.rounds === 1 ? "round" : "rounds"} - best ${item.best.score} (${formatToPar(item.best.toPar)})</p>
+            </div>
+            <strong>${item.averageScore.toFixed(1)}</strong>
+            <span>${formatSignedDecimal(item.averageToPar)}</span>
+          </article>
+        `).join("")}
+      </div>
+    </section>
+  `;
+}
+
+function renderHardestHoles(summary) {
+  if (!summary.hardestHoles.length) {
+    return "";
+  }
+  return `
+    <section class="stats-panel">
+      <div class="panel-heading">
+        <div>
+          <p class="eyebrow">Leaks</p>
+          <h2>Hardest holes</h2>
+        </div>
+      </div>
+      <div class="hard-hole-list">
+        ${summary.hardestHoles.map((item) => `
+          <article>
+            <div>
+              <h3>${escapeHtml(item.courseName)} - ${item.holeNumber}</h3>
+              <p>Par ${item.par} - ${item.played} played - ${item.averagePutts.toFixed(1)} putts</p>
+            </div>
+            <strong>${formatSignedDecimal(item.averageToPar)}</strong>
+          </article>
+        `).join("")}
+      </div>
+    </section>
+  `;
+}
+
+function formatSignedDecimal(value) {
+  if (!Number.isFinite(value)) {
+    return "-";
+  }
+  if (Math.abs(value) < 0.05) {
+    return "E";
+  }
+  return value > 0 ? `+${value.toFixed(1)}` : value.toFixed(1);
 }
 
 function statTile(label, value) {
@@ -3300,6 +3759,11 @@ function handleClick(event) {
 
   if (action === "quick-start") {
     openRoundSetup(button.dataset.courseId);
+  }
+
+  if (action === "stats-filter") {
+    statsFilter = button.dataset.filter || "all";
+    render();
   }
 
   if (action === "entry-step") {
