@@ -1983,11 +1983,12 @@ function snapshotDisplayTransform(snapshot, anchors, marker = photoTargetMarkers
     return null;
   }
 
-  const ratio = normalizedSatelliteRatio(panelRatio);
-  const sourceTee = { x: tee.x, y: tee.y * ratio };
-  const sourceGreen = { x: green.x, y: green.y * ratio };
-  const targetTee = { x: Number(marker.tee[0]), y: Number(marker.tee[1]) * ratio };
-  const targetGreen = { x: Number(marker.green[0]), y: Number(marker.green[1]) * ratio };
+  const sourceRatio = normalizedSatelliteRatio(normalized.height / normalized.width);
+  const targetRatio = normalizedSatelliteRatio(panelRatio);
+  const sourceTee = { x: tee.x, y: tee.y * sourceRatio };
+  const sourceGreen = { x: green.x, y: green.y * sourceRatio };
+  const targetTee = { x: Number(marker.tee[0]), y: Number(marker.tee[1]) * targetRatio };
+  const targetGreen = { x: Number(marker.green[0]), y: Number(marker.green[1]) * targetRatio };
   const sourceVector = {
     x: sourceGreen.x - sourceTee.x,
     y: sourceGreen.y - sourceTee.y
@@ -2012,7 +2013,9 @@ function snapshotDisplayTransform(snapshot, anchors, marker = photoTargetMarkers
     ty: targetTee.y - (b * sourceTee.x + a * sourceTee.y)
   };
   return {
-    ratio,
+    ratio: targetRatio,
+    sourceRatio,
+    targetRatio,
     matrix,
     inverse: invertSnapshotMatrix(matrix)
   };
@@ -2024,12 +2027,12 @@ function snapshotImagePointToTarget(point, transform) {
   }
   const source = {
     x: Number(point.x),
-    y: Number(point.y) * transform.ratio
+    y: Number(point.y) * (transform.sourceRatio || transform.ratio || 1)
   };
   const target = applySnapshotMatrix(source, transform.matrix);
   return {
     x: Number(clamp(target.x, -32, 132).toFixed(2)),
-    y: Number(clamp(target.y / transform.ratio, -32, 132).toFixed(2))
+    y: Number(clamp(target.y / (transform.targetRatio || transform.ratio || 1), -32, 132).toFixed(2))
   };
 }
 
@@ -2039,12 +2042,12 @@ function snapshotTargetPointToImage(point, transform) {
   }
   const target = {
     x: Number(point.x),
-    y: Number(point.y) * transform.ratio
+    y: Number(point.y) * (transform.targetRatio || transform.ratio || 1)
   };
   const source = applySnapshotMatrix(target, transform.inverse);
   return {
     x: Number(source.x.toFixed(2)),
-    y: Number((source.y / transform.ratio).toFixed(2))
+    y: Number((source.y / (transform.sourceRatio || transform.ratio || 1)).toFixed(2))
   };
 }
 
@@ -2053,13 +2056,14 @@ function snapshotImageTransform(transform) {
     return "";
   }
   const { a, b, c, d, tx, ty } = transform.matrix;
-  const ratio = transform.ratio || 1;
+  const sourceRatio = transform.sourceRatio || transform.ratio || 1;
+  const targetRatio = transform.targetRatio || transform.ratio || 1;
   const svgA = a;
-  const svgB = b / ratio;
-  const svgC = c * ratio;
-  const svgD = d;
+  const svgB = b / targetRatio;
+  const svgC = c * sourceRatio;
+  const svgD = (d * sourceRatio) / targetRatio;
   const svgTx = tx;
-  const svgTy = ty / ratio;
+  const svgTy = ty / targetRatio;
   return `matrix(${formatTransformNumber(svgA)} ${formatTransformNumber(svgB)} ${formatTransformNumber(svgC)} ${formatTransformNumber(svgD)} ${formatTransformNumber(svgTx)} ${formatTransformNumber(svgTy)})`;
 }
 

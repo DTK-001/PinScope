@@ -17,7 +17,7 @@ const SNAPSHOT_PIXEL_RATIO = 2;
 const SNAPSHOT_PADDING = 0.18;
 const SNAPSHOT_TRANSFORM_MARGIN = 2;
 const SNAPSHOT_PANEL_RATIOS = [SNAPSHOT_HEIGHT / SNAPSHOT_WIDTH, 16 / 9, 20 / 9];
-const SNAPSHOT_PLAN_VERSION = 7;
+const SNAPSHOT_PLAN_VERSION = 8;
 
 const repoRoot = path.resolve(__dirname, "..");
 const tileBufferCache = new Map();
@@ -407,27 +407,28 @@ function snapshotRequiredWorldPointsForViewport(plan, hole) {
   }
 
   const marker = snapshotTargetMarkers(hole?.par);
-  return SNAPSHOT_PANEL_RATIOS.flatMap((ratio) => {
+  const sourceRatio = plan.height / plan.width;
+  return SNAPSHOT_PANEL_RATIOS.flatMap((targetRatio) => {
     const transform = snapshotDisplayTransform(
-      { x: sourceTee.x, y: sourceTee.y * ratio },
-      { x: sourceGreen.x, y: sourceGreen.y * ratio },
-      { x: marker.tee[0], y: marker.tee[1] * ratio },
-      { x: marker.green[0], y: marker.green[1] * ratio }
+      { x: sourceTee.x, y: sourceTee.y * sourceRatio },
+      { x: sourceGreen.x, y: sourceGreen.y * sourceRatio },
+      { x: marker.tee[0], y: marker.tee[1] * targetRatio },
+      { x: marker.green[0], y: marker.green[1] * targetRatio }
     );
     const inverse = transform ? invertSnapshotMatrix(transform) : null;
     if (!inverse) {
       return [];
     }
     return [
-      { x: -SNAPSHOT_TRANSFORM_MARGIN, y: -SNAPSHOT_TRANSFORM_MARGIN * ratio },
-      { x: 100 + SNAPSHOT_TRANSFORM_MARGIN, y: -SNAPSHOT_TRANSFORM_MARGIN * ratio },
-      { x: 100 + SNAPSHOT_TRANSFORM_MARGIN, y: (100 + SNAPSHOT_TRANSFORM_MARGIN) * ratio },
-      { x: -SNAPSHOT_TRANSFORM_MARGIN, y: (100 + SNAPSHOT_TRANSFORM_MARGIN) * ratio }
+      { x: -SNAPSHOT_TRANSFORM_MARGIN, y: -SNAPSHOT_TRANSFORM_MARGIN * targetRatio },
+      { x: 100 + SNAPSHOT_TRANSFORM_MARGIN, y: -SNAPSHOT_TRANSFORM_MARGIN * targetRatio },
+      { x: 100 + SNAPSHOT_TRANSFORM_MARGIN, y: (100 + SNAPSHOT_TRANSFORM_MARGIN) * targetRatio },
+      { x: -SNAPSHOT_TRANSFORM_MARGIN, y: (100 + SNAPSHOT_TRANSFORM_MARGIN) * targetRatio }
     ].map((point) => {
       const source = applySnapshotMatrix(point, inverse);
       return snapshotImagePointToWorld(plan, {
         x: source.x,
-        y: source.y / ratio
+        y: source.y / sourceRatio
       });
     });
   });
@@ -453,12 +454,13 @@ function snapshotCoversAlignedPanel(plan, hole) {
   }
 
   const marker = snapshotTargetMarkers(hole?.par);
-  return SNAPSHOT_PANEL_RATIOS.every((ratio) => {
+  const sourceRatio = plan.height / plan.width;
+  return SNAPSHOT_PANEL_RATIOS.every((targetRatio) => {
     const transform = snapshotDisplayTransform(
-      { x: sourceTee.x, y: sourceTee.y * ratio },
-      { x: sourceGreen.x, y: sourceGreen.y * ratio },
-      { x: marker.tee[0], y: marker.tee[1] * ratio },
-      { x: marker.green[0], y: marker.green[1] * ratio }
+      { x: sourceTee.x, y: sourceTee.y * sourceRatio },
+      { x: sourceGreen.x, y: sourceGreen.y * sourceRatio },
+      { x: marker.tee[0], y: marker.tee[1] * targetRatio },
+      { x: marker.green[0], y: marker.green[1] * targetRatio }
     );
     if (!transform) {
       return false;
@@ -470,16 +472,16 @@ function snapshotCoversAlignedPanel(plan, hole) {
     }
 
     const targetCorners = [
-      { x: -SNAPSHOT_TRANSFORM_MARGIN, y: -SNAPSHOT_TRANSFORM_MARGIN * ratio },
-      { x: 100 + SNAPSHOT_TRANSFORM_MARGIN, y: -SNAPSHOT_TRANSFORM_MARGIN * ratio },
-      { x: 100 + SNAPSHOT_TRANSFORM_MARGIN, y: (100 + SNAPSHOT_TRANSFORM_MARGIN) * ratio },
-      { x: -SNAPSHOT_TRANSFORM_MARGIN, y: (100 + SNAPSHOT_TRANSFORM_MARGIN) * ratio }
+      { x: -SNAPSHOT_TRANSFORM_MARGIN, y: -SNAPSHOT_TRANSFORM_MARGIN * targetRatio },
+      { x: 100 + SNAPSHOT_TRANSFORM_MARGIN, y: -SNAPSHOT_TRANSFORM_MARGIN * targetRatio },
+      { x: 100 + SNAPSHOT_TRANSFORM_MARGIN, y: (100 + SNAPSHOT_TRANSFORM_MARGIN) * targetRatio },
+      { x: -SNAPSHOT_TRANSFORM_MARGIN, y: (100 + SNAPSHOT_TRANSFORM_MARGIN) * targetRatio }
     ].map((point) => applySnapshotMatrix(point, inverse));
     return targetCorners.every((point) => (
       point.x >= 0 &&
       point.x <= 100 &&
       point.y >= 0 &&
-      point.y <= 100 * ratio
+      point.y <= 100 * sourceRatio
     ));
   });
 }
