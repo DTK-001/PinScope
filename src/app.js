@@ -256,7 +256,7 @@ function renderHome() {
         <span>Handicap</span>
         <strong>${escapeHtml(handicap.display)}</strong>
       </div>
-      <img class="home-logo" src="${PINSCOPE_COMPLETE_LOGO_SRC}" alt="PinScope" />
+      <img class="home-logo" src="${PINSCOPE_NAME_LOGO_SRC}" alt="PinScope" />
       <div class="home-actions">
         <a class="primary-action" href="#${activeRound ? "play" : "courses"}">${activeRound ? "Continue Round" : "Choose Course"}</a>
         <a class="secondary-action" href="#bag">Tune Bag</a>
