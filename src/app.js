@@ -741,9 +741,7 @@ function renderPlay() {
         <button class="play-finish-button" type="button" data-action="finish-round">Finish Round</button>
       </div>
 
-      <button class="score-fab" type="button" data-action="open-score-card" aria-label="Enter scores">
-        <img src="${SCORE_BUTTON_IMAGE_SRC}" alt="" aria-hidden="true" />
-      </button>
+      <button class="score-fab" type="button" data-action="open-score-card">Scores</button>
       ${renderShotTracker(activeRound, hole)}
     </section>
   `;
@@ -1186,9 +1184,9 @@ function renderSnapshotHoleVisual(hole, course) {
             ${guide}
             ${trackedShotOverlay}
             ${shotPlan ? `<polyline class="photo-plan-route" points="${routePoints}" stroke="url(#snapshot-shot-gradient-${hole.number})"></polyline>` : ""}
-            ${shotPlan?.viewPoints.map((point) => `
-              <circle class="photo-plan-point" cx="${point.x}" cy="${point.y}" r="1.9"></circle>
-              <path class="photo-plan-cross" d="M ${point.x - 1.4} ${point.y} L ${point.x + 1.4} ${point.y} M ${point.x} ${point.y - 1.4} L ${point.x} ${point.y + 1.4}"></path>
+            ${shotPlan?.viewPoints.map((point, index) => `
+              <circle class="photo-plan-point" data-photo-plan-point="${index}" cx="${point.x}" cy="${point.y}" r="1.9"></circle>
+              <path class="photo-plan-cross" data-photo-plan-cross="${index}" d="M ${point.x - 1.4} ${point.y} L ${point.x + 1.4} ${point.y} M ${point.x} ${point.y - 1.4} L ${point.x} ${point.y + 1.4}"></path>
             `).join("") || ""}
           </svg>
           ${greenShapeSvg ? renderPhotoGreenCenterDot(green) : renderPhotoGreenMarkerElement(green, hole.par)}
@@ -1259,8 +1257,8 @@ function renderAzureHoleVisual(hole, course) {
             ${trackedShotOverlay}
             ${shotPlan ? `<polyline class="photo-plan-route" points="${routePoints}" stroke="url(#azure-shot-gradient-${hole.number})"></polyline>` : ""}
             ${shotPlan?.viewPoints.map((point, index) => `
-              <circle class="photo-plan-point" cx="${point.x}" cy="${point.y}" r="1.9"></circle>
-              <path class="photo-plan-cross" d="M ${point.x - 1.4} ${point.y} L ${point.x + 1.4} ${point.y} M ${point.x} ${point.y - 1.4} L ${point.x} ${point.y + 1.4}"></path>
+              <circle class="photo-plan-point" data-photo-plan-point="${index}" cx="${point.x}" cy="${point.y}" r="1.9"></circle>
+              <path class="photo-plan-cross" data-photo-plan-cross="${index}" d="M ${point.x - 1.4} ${point.y} L ${point.x + 1.4} ${point.y} M ${point.x} ${point.y - 1.4} L ${point.x} ${point.y + 1.4}"></path>
             `).join("") || ""}
           </svg>
           ${greenShapeSvg ? renderPhotoGreenCenterDot(green) : renderPhotoGreenMarkerElement(green, hole.par)}
@@ -4424,7 +4422,7 @@ function handlePhotoPlanningClick(event) {
   if (event.target.closest("[data-action], [data-photo-handle], [data-gps-test-marker], button, input, label, .photo-hole-badge, .photo-align-toolbar, .photo-yardage-card, .photo-tap-hint, .photo-club-panel, .photo-zoom-toolbar")) {
     return;
   }
-  const panel = event.target.closest(".photo-hole");
+  const panel = photoPanelFromEvent(event);
   const canvas = panel?.querySelector(".photo-hole-canvas");
   if (!panel || !canvas || !coursePhotoSource(canvas.dataset.photoCourseId)) {
     return;
@@ -4537,9 +4535,6 @@ function beginPhotoPlanOrPanDrag(event) {
   if (event.defaultPrevented) {
     return;
   }
-  if (event.target.closest("[data-action], [data-gps-test-marker], button, input, label, .photo-hole-badge, .photo-align-toolbar, .photo-yardage-card, .photo-tap-hint, .photo-club-panel, .photo-zoom-toolbar")) {
-    return;
-  }
   const panel = event.target.closest(".photo-hole");
   const canvas = panel?.querySelector(".photo-hole-canvas");
   if (!panel || !canvas || !coursePhotoSource(canvas.dataset.photoCourseId)) {
@@ -4556,15 +4551,18 @@ function beginPhotoPlanOrPanDrag(event) {
   if (!hole) {
     return;
   }
-  if (gpsTestEnabled() && gpsTestMoveMode) {
-    beginGpsTestDragOnHole(event, panel, canvas, courseId, holeNumber, hole);
-    return;
-  }
   const teeInfo = photoPlanningTee(hole);
   const shotPlan = resolvePhotoShotPlan(hole, teeInfo);
   const hit = hitTestPhotoPlanPoint(canvas, shotPlan, event);
   if (hit) {
     beginPhotoShotDrag(event, panel, canvas, courseId, holeNumber, hole, shotPlan, hit);
+    return;
+  }
+  if (event.target.closest("[data-action], [data-gps-test-marker], button, input, label, .photo-hole-badge, .photo-align-toolbar, .photo-yardage-card, .photo-tap-hint, .photo-club-panel, .photo-zoom-toolbar")) {
+    return;
+  }
+  if (gpsTestEnabled() && gpsTestMoveMode) {
+    beginGpsTestDragOnHole(event, panel, canvas, courseId, holeNumber, hole);
     return;
   }
 
@@ -4578,7 +4576,7 @@ function beginSatellitePlanOrPanDrag(event) {
   if (event.target.closest("[data-action], [data-gps-test-marker], button, input, label, .photo-hole-badge, .photo-align-toolbar, .photo-yardage-card, .photo-tap-hint, .photo-club-panel, .photo-zoom-toolbar")) {
     return false;
   }
-  const panel = event.target.closest(".azure-hole");
+  const panel = azurePanelFromEvent(event);
   if (!panel) {
     return false;
   }
@@ -4591,11 +4589,49 @@ function beginSatellitePlanOrPanDrag(event) {
   if (beginPhotoPinchIfReady(event, panel, null, courseId, holeNumber)) {
     return true;
   }
+  const course = getCourse(state, courseId);
+  const hole = course?.holes?.find((item) => item.number === Number(holeNumber));
+  const anchors = hole ? azureHoleAnchors(hole, course) : null;
+  const marker = hole ? photoTargetMarkers(hole.par) : photoTargetMarkers(4);
+  const snapshot = hole ? normalizeHoleSnapshot(hole.snapshot) : null;
+  const transform = panel.dataset.snapshotHole && snapshot && anchors
+    ? snapshotDisplayTransform(snapshot, anchors, marker, panel.getBoundingClientRect().height / Math.max(1, panel.getBoundingClientRect().width))
+    : null;
+  const shotPlan = hole && anchors
+    ? panel.dataset.snapshotHole && snapshot
+      ? resolveSnapshotShotPlan(courseId, hole, anchors, snapshot, transform)
+      : resolveAzureShotPlan(courseId, hole, anchors, marker, satellitePanelRatio())
+    : null;
+  const hit = hitTestPanelPlanPoint(panel, shotPlan, event, courseId, holeNumber);
+  if (hit && hole && anchors) {
+    beginAzureShotDrag(event, panel, courseId, holeNumber, hole, anchors, marker, snapshot, transform, shotPlan, hit);
+    return true;
+  }
+  if (event.target.closest("[data-action], [data-gps-test-marker], button, input, label, .photo-hole-badge, .photo-align-toolbar, .photo-yardage-card, .photo-tap-hint, .photo-club-panel, .photo-zoom-toolbar")) {
+    return false;
+  }
   if (photoZoomLevel(courseId, holeNumber) > 1) {
     beginPhotoPanDrag(event, panel, null, courseId, holeNumber);
     return true;
   }
   return false;
+}
+
+function photoPanelFromEvent(event) {
+  return event.target.closest(".photo-hole") || panelFromPoint(event, ".photo-hole");
+}
+
+function azurePanelFromEvent(event) {
+  return event.target.closest(".azure-hole") || panelFromPoint(event, ".azure-hole");
+}
+
+function panelFromPoint(event, selector) {
+  if (typeof document.elementsFromPoint !== "function") {
+    return null;
+  }
+  return document.elementsFromPoint(event.clientX, event.clientY)
+    .map((element) => element.closest?.(selector))
+    .find(Boolean) || null;
 }
 
 function beginSatelliteAnchorDrag(event, handle) {
@@ -4675,6 +4711,28 @@ function beginPhotoShotDrag(event, panel, canvas, courseId, holeNumber, hole, sh
   movePhotoPlanPoint(event);
 }
 
+function beginAzureShotDrag(event, panel, courseId, holeNumber, hole, anchors, marker, snapshot, transform, shotPlan, hit) {
+  event.preventDefault();
+  capturePhotoPointer(panel, event.pointerId);
+  suppressPhotoPlanningClick = true;
+  photoDrag = {
+    type: "azure-shot",
+    index: hit.index,
+    hole,
+    holeNumber,
+    courseId,
+    panel,
+    anchors,
+    marker,
+    snapshot,
+    transform,
+    points: [...shotPlan.points],
+    route: panel.querySelector(".photo-plan-route")
+  };
+  panel.classList.add("dragging-shot");
+  moveAzurePlanPoint(event);
+}
+
 function beginPhotoPanDrag(event, panel, canvas, courseId, holeNumber) {
   if (Number(event.button || 0) !== 0 || photoZoomLevel(courseId, holeNumber) <= 1) {
     return;
@@ -4716,6 +4774,10 @@ function handlePhotoPointerMove(event) {
     moveSatelliteAnchorHandle(event);
     return;
   }
+  if (photoDrag.type === "azure-shot") {
+    moveAzurePlanPoint(event);
+    return;
+  }
   event.preventDefault();
   if (photoDrag.type === "shot") {
     movePhotoPlanPoint(event);
@@ -4744,6 +4806,10 @@ function handlePhotoPointerEnd(event) {
   }
   if (photoDrag.type === "satellite-anchor") {
     finishSatelliteAnchorDrag(event);
+    return;
+  }
+  if (photoDrag.type === "azure-shot") {
+    finishAzurePlanDrag(event);
     return;
   }
   event.preventDefault();
@@ -4918,6 +4984,34 @@ function finishPhotoPlanDrag(event) {
   setPhotoShotPoints(courseId, holeNumber, hole, points);
 }
 
+function finishAzurePlanDrag(event) {
+  const geoPoint = azureDragEventToPosition(photoDrag, event) || photoDrag.latestGeoPoint;
+  const courseId = photoDrag.courseId;
+  const holeNumber = photoDrag.holeNumber;
+  const index = photoDrag.index;
+  const points = [...photoDrag.points];
+  const anchors = photoDrag.anchors;
+  photoDrag.panel.classList.remove("dragging-shot");
+  photoDrag = null;
+  window.setTimeout(() => {
+    suppressPhotoPlanningClick = false;
+  }, 250);
+
+  if (!geoPoint || !courseId || !holeNumber || index < 0 || !anchors) {
+    render();
+    return;
+  }
+
+  points[index] = geoPoint;
+  azureShotPlans = {
+    ...azureShotPlans,
+    [azureShotPlanKey(courseId, holeNumber)]: {
+      points: sortAzurePlanPoints(anchors, points).slice(0, 4)
+    }
+  };
+  render();
+}
+
 function moveGpsTestMarker(event) {
   event.preventDefault();
   const sourcePoint = photoEventToSourcePoint(photoDrag.canvas, event);
@@ -4959,6 +5053,28 @@ function movePhotoPlanPoint(event) {
   }
   photoDrag.latestSourcePoint = sourcePoint;
   updatePhotoPlanRouteDom(photoDrag.panel, photoDrag.index, viewPoint);
+}
+
+function moveAzurePlanPoint(event) {
+  const viewPoint = eventToPhotoLayerPercent(photoDrag.panel, event, photoDrag.courseId, photoDrag.holeNumber);
+  const geoPoint = azureDragEventToPosition(photoDrag, event, viewPoint);
+  if (!viewPoint || !geoPoint) {
+    return;
+  }
+  photoDrag.latestGeoPoint = geoPoint;
+  updatePhotoPlanRouteDom(photoDrag.panel, photoDrag.index, viewPoint);
+}
+
+function azureDragEventToPosition(drag, event, viewPoint = null) {
+  const point = viewPoint || eventToPhotoLayerPercent(drag.panel, event, drag.courseId, drag.holeNumber);
+  if (!point) {
+    return null;
+  }
+  if (drag.snapshot) {
+    return snapshotTargetPointToGeo(drag.snapshot, point, drag.transform);
+  }
+  const rect = drag.panel.getBoundingClientRect();
+  return azureTargetPointToGeo(drag.anchors, point, drag.marker, rect.height / Math.max(1, rect.width));
 }
 
 function movePhotoPan(event) {
@@ -5165,6 +5281,15 @@ function setPhotoLayerTransforms(panel, zoom, pan) {
 
 function hitTestPhotoPlanPoint(canvas, shotPlan, event) {
   const pointer = photoEventToViewPoint(canvas, event);
+  return hitTestPlanViewPoint(pointer, shotPlan);
+}
+
+function hitTestPanelPlanPoint(panel, shotPlan, event, courseId = "", holeNumber = "") {
+  const pointer = eventToPhotoLayerPercent(panel, event, courseId, holeNumber);
+  return hitTestPlanViewPoint(pointer, shotPlan);
+}
+
+function hitTestPlanViewPoint(pointer, shotPlan) {
   const viewPoints = shotPlan?.viewPoints || [];
   if (!pointer || !viewPoints.length) {
     return null;
