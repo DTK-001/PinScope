@@ -28,6 +28,9 @@ const PHOTO_MAX_ZOOM = 2.6;
 const SCORE_BUTTON_IMAGE_SRC = "./assets/enter-score.png";
 const GPS_PINK_IMAGE_SRC = "./assets/gps-pink.png";
 const GPS_GREY_IMAGE_SRC = "./assets/gps-grey.png";
+const HOME_IMAGE_SRC = "./assets/home.png";
+const PINSCOPE_COMPLETE_LOGO_SRC = "./assets/pinscope-complete-logo.png";
+const PINSCOPE_NAME_LOGO_SRC = "./assets/pinscope-name-logo.png";
 const HOLE_SWIPE_MIN_DISTANCE = 68;
 const HOLE_SWIPE_VERTICAL_RATIO = 1.25;
 const GPS_TEST_QUERY_KEY = "gpsTest";
@@ -131,9 +134,9 @@ app.addEventListener("input", handleInput);
 app.addEventListener("change", handleChange);
 
 function getViewFromHash() {
-  const allowed = ["courses", "play", "stats", "bag"];
+  const allowed = ["home", "courses", "play", "stats", "bag"];
   const value = window.location.hash.replace("#", "");
-  return allowed.includes(value) ? value : "courses";
+  return allowed.includes(value) ? value : "home";
 }
 
 function render() {
@@ -143,7 +146,7 @@ function render() {
   app.innerHTML = `
     <header class="topbar">
       <div>
-        <p class="eyebrow">PinScope</p>
+        <img class="topbar-logo" src="${PINSCOPE_NAME_LOGO_SRC}" alt="PinScope" />
         <h1>${pageTitle()}</h1>
       </div>
       <button class="gps-pill ${gps.status}" type="button" data-action="gps">
@@ -155,6 +158,7 @@ function render() {
     ${scoreCardOpen ? renderScoreCardOverlay() : ""}
     ${notice ? `<aside class="toast" role="status">${escapeHtml(notice)}</aside>` : ""}
     <nav class="bottom-nav" aria-label="Primary">
+      ${navItem("home", "Home", "H")}
       ${navItem("courses", "Courses", "C")}
       ${navItem("play", "Play", "P")}
       ${navItem("stats", "Stats", "S")}
@@ -169,6 +173,9 @@ function isActiveRoundView() {
 }
 
 function pageTitle() {
+  if (view === "home") {
+    return "Home";
+  }
   if (view === "play") {
     const round = getActiveRound(state);
     return round ? "Active Round" : "Start Round";
@@ -193,6 +200,9 @@ function navItem(target, label, icon) {
 }
 
 function renderView() {
+  if (view === "home") {
+    return renderHome();
+  }
   if (view === "play") {
     return renderPlay();
   }
@@ -203,6 +213,39 @@ function renderView() {
     return renderBag();
   }
   return renderCourses();
+}
+
+function renderHome() {
+  const activeRound = getActiveRound(state);
+  const selectedCourse = getCourse(state, state.selectedCourseId);
+  const bag = activeBag();
+  return `
+    <section class="home-screen">
+      <img class="home-logo" src="${PINSCOPE_COMPLETE_LOGO_SRC}" alt="PinScope" />
+      <div class="home-orbit" aria-hidden="true">
+        <img src="${HOME_IMAGE_SRC}" alt="" />
+      </div>
+      <div class="home-actions">
+        <a class="primary-action" href="#${activeRound ? "play" : "courses"}">${activeRound ? "Continue Round" : "Choose Course"}</a>
+        <a class="secondary-action" href="#bag">Tune Bag</a>
+      </div>
+    </section>
+
+    <section class="home-grid">
+      <article>
+        <span>Course</span>
+        <strong>${escapeHtml(selectedCourse?.name || "Select a course")}</strong>
+      </article>
+      <article>
+        <span>Active Bag</span>
+        <strong>${escapeHtml(bag?.name || "My Bag")}</strong>
+      </article>
+      <article>
+        <span>Rounds</span>
+        <strong>${state.rounds.filter((round) => round.status === "complete").length}</strong>
+      </article>
+    </section>
+  `;
 }
 
 function renderCourses() {
