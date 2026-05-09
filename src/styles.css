@@ -2585,15 +2585,24 @@ select option {
   height: 112px;
   border-radius: 999px;
   background:
-    radial-gradient(circle at 24% 24%, rgba(53, 240, 193, 0.94) 0 7px, transparent 8px),
-    radial-gradient(circle at 66% 22%, rgba(255, 79, 216, 0.9) 0 9px, transparent 10px),
-    radial-gradient(circle at 46% 50%, rgba(141, 92, 255, 0.94) 0 11px, transparent 12px),
-    radial-gradient(circle at 76% 64%, rgba(53, 240, 193, 0.8) 0 6px, transparent 7px),
-    radial-gradient(circle at 20% 72%, rgba(255, 79, 216, 0.72) 0 13px, transparent 14px),
-    radial-gradient(circle at 58% 86%, rgba(141, 92, 255, 0.62) 0 7px, transparent 8px),
-    radial-gradient(circle, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02) 58%, transparent 59%);
+    radial-gradient(circle at 16% 18%, rgba(53, 240, 193, 0.92) 0 3px, transparent 4px),
+    radial-gradient(circle at 34% 14%, rgba(255, 79, 216, 0.88) 0 4px, transparent 5px),
+    radial-gradient(circle at 56% 20%, rgba(141, 92, 255, 0.9) 0 3px, transparent 4px),
+    radial-gradient(circle at 78% 18%, rgba(53, 240, 193, 0.82) 0 4px, transparent 5px),
+    radial-gradient(circle at 22% 38%, rgba(141, 92, 255, 0.78) 0 5px, transparent 6px),
+    radial-gradient(circle at 44% 40%, rgba(53, 240, 193, 0.9) 0 3px, transparent 4px),
+    radial-gradient(circle at 68% 42%, rgba(255, 79, 216, 0.76) 0 5px, transparent 6px),
+    radial-gradient(circle at 88% 44%, rgba(141, 92, 255, 0.7) 0 3px, transparent 4px),
+    radial-gradient(circle at 14% 62%, rgba(255, 79, 216, 0.78) 0 4px, transparent 5px),
+    radial-gradient(circle at 36% 64%, rgba(53, 240, 193, 0.86) 0 5px, transparent 6px),
+    radial-gradient(circle at 58% 62%, rgba(141, 92, 255, 0.84) 0 4px, transparent 5px),
+    radial-gradient(circle at 82% 66%, rgba(53, 240, 193, 0.74) 0 3px, transparent 4px),
+    radial-gradient(circle at 24% 84%, rgba(141, 92, 255, 0.72) 0 4px, transparent 5px),
+    radial-gradient(circle at 50% 86%, rgba(255, 79, 216, 0.68) 0 3px, transparent 4px),
+    radial-gradient(circle at 74% 86%, rgba(53, 240, 193, 0.78) 0 5px, transparent 6px),
+    radial-gradient(circle, rgba(53, 240, 193, 0.1), rgba(53, 240, 193, 0.03) 58%, transparent 59%);
   box-shadow:
-    inset 0 0 26px rgba(255, 255, 255, 0.08),
+    inset 0 0 28px rgba(53, 240, 193, 0.18),
     0 0 34px rgba(53, 240, 193, 0.14),
     0 0 44px rgba(255, 79, 216, 0.12);
 }
