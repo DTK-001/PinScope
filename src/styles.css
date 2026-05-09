@@ -199,11 +199,11 @@ p {
   position: relative;
   overflow: hidden;
   display: grid;
-  align-content: center;
+  align-content: start;
   min-height: min(66vh, 560px);
   justify-items: center;
   gap: 18px;
-  padding: 52px 18px 28px;
+  padding: 42px 18px 28px;
   border: 1px solid rgba(53, 240, 193, 0.24);
   border-radius: var(--radius);
   background:
