@@ -158,9 +158,9 @@ function render() {
     ${scoreCardOpen ? renderScoreCardOverlay() : ""}
     ${notice ? `<aside class="toast" role="status">${escapeHtml(notice)}</aside>` : ""}
     <nav class="bottom-nav" aria-label="Primary">
-      ${navItem("home", "Home", "H")}
       ${navItem("courses", "Courses", "C")}
       ${navItem("play", "Play", "P")}
+      ${navItem("home", "Home", "H")}
       ${navItem("stats", "Stats", "S")}
       ${navItem("bag", "Bag", "B")}
     </nav>
@@ -191,9 +191,12 @@ function pageTitle() {
 
 function navItem(target, label, icon) {
   const active = view === target ? "active" : "";
+  const homeIcon = target === "home"
+    ? `<img class="nav-home-img" src="${HOME_IMAGE_SRC}" alt="" />`
+    : icon;
   return `
-    <a class="nav-item ${active}" href="#${target}" aria-current="${active ? "page" : "false"}">
-      <span class="nav-icon" aria-hidden="true">${icon}</span>
+    <a class="nav-item ${target === "home" ? "home-nav" : ""} ${active}" href="#${target}" aria-current="${active ? "page" : "false"}">
+      <span class="nav-icon" aria-hidden="true">${homeIcon}</span>
       <span>${label}</span>
     </a>
   `;
@@ -219,12 +222,14 @@ function renderHome() {
   const activeRound = getActiveRound(state);
   const selectedCourse = getCourse(state, state.selectedCourseId);
   const bag = activeBag();
+  const handicap = currentHandicap();
   return `
     <section class="home-screen">
-      <img class="home-logo" src="${PINSCOPE_COMPLETE_LOGO_SRC}" alt="PinScope" />
-      <div class="home-orbit" aria-hidden="true">
-        <img src="${HOME_IMAGE_SRC}" alt="" />
+      <div class="home-handicap">
+        <span>Handicap</span>
+        <strong>${handicap === null ? "-" : handicap}</strong>
       </div>
+      <img class="home-logo" src="${PINSCOPE_COMPLETE_LOGO_SRC}" alt="PinScope" />
       <div class="home-actions">
         <a class="primary-action" href="#${activeRound ? "play" : "courses"}">${activeRound ? "Continue Round" : "Choose Course"}</a>
         <a class="secondary-action" href="#bag">Tune Bag</a>
@@ -246,6 +251,33 @@ function renderHome() {
       </article>
     </section>
   `;
+}
+
+function currentHandicap() {
+  const differentials = completedRoundSummaries()
+    .slice(0, 20)
+    .map(({ round, course, totals, playerId }) => {
+      const player = getRoundPlayers(round).find((item) => item.id === playerId) || getRoundPlayers(round)[0];
+      const tee = (course.tees || []).find((item) => item.id === (player?.teeId || round.teeId));
+      const rating = Number(tee?.rating);
+      const slope = Number(tee?.slope) || 113;
+      const par = course.holes.reduce((sum, hole) => sum + Number(hole.par || 0), 0);
+      const baseline = Number.isFinite(rating) && rating > 0 ? rating : par;
+      if (!Number.isFinite(totals.score) || !Number.isFinite(baseline) || !Number.isFinite(slope) || slope <= 0) {
+        return null;
+      }
+      return ((totals.score - baseline) * 113) / slope;
+    })
+    .filter((value) => Number.isFinite(value))
+    .sort((a, b) => a - b);
+
+  if (!differentials.length) {
+    return null;
+  }
+  const count = differentials.length >= 20 ? 8 : Math.max(1, Math.ceil(differentials.length * 0.4));
+  const best = differentials.slice(0, count);
+  const handicap = best.reduce((sum, value) => sum + value, 0) / best.length;
+  return handicap < 0 ? `+${Math.abs(handicap).toFixed(1)}` : handicap.toFixed(1);
 }
 
 function renderCourses() {
