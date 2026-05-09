@@ -2724,6 +2724,31 @@ select option {
   font-weight: 900;
 }
 
+.add-club-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  min-height: 48px;
+  border: 1px dashed rgba(53, 240, 193, 0.5);
+  border-radius: var(--radius);
+  color: #f8fffb;
+  background: rgba(53, 240, 193, 0.08);
+  cursor: pointer;
+  font-weight: 900;
+}
+
+.add-club-row span {
+  display: grid;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+  border-radius: 999px;
+  color: #071414;
+  background: var(--accent-3);
+  line-height: 1;
+}
+
 .bottom-nav {
   position: fixed;
   right: 0;

@@ -3761,6 +3761,10 @@ function renderBag() {
             </div>
           `).join("")}
         </div>
+        <button class="add-club-row" type="button" data-action="add-club">
+          <span>+</span>
+          <strong>Add Club</strong>
+        </button>
         <button class="primary-action full" type="submit">Save Active Bag</button>
       </form>
     </section>
