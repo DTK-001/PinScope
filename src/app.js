@@ -3699,7 +3699,6 @@ function renderBag() {
   const bag = activeBag();
   const bags = Array.isArray(state.bags) && state.bags.length ? state.bags : [];
   const clubs = bag?.clubs || [];
-  const totalYards = clubs.reduce((sum, club) => sum + Number(club.carryYards || 0), 0);
   const longest = clubs.reduce((best, club) => Number(club.carryYards || 0) > Number(best?.carryYards || 0) ? club : best, null);
   return `
     <section class="bag-hero">
@@ -3708,10 +3707,7 @@ function renderBag() {
         <h2>${escapeHtml(bag?.name || "My Bag")}</h2>
         <p>${clubs.length} clubs tuned for recommendations${longest ? ` - longest ${escapeHtml(longest.name)} at ${Number(longest.carryYards)} yd` : ""}</p>
       </div>
-      <div class="bag-hero-meter" aria-label="${totalYards} combined carry yards">
-        <span>${totalYards}</span>
-        <small>total yd</small>
-      </div>
+      <div class="bag-hero-spots" aria-hidden="true"></div>
     </section>
 
     <section class="bag-switcher" aria-label="Golf bags">
@@ -3739,7 +3735,6 @@ function renderBag() {
           <p class="eyebrow">Club Matrix</p>
           <h2>Name and Yardage</h2>
         </div>
-        <button class="secondary-action" type="button" data-action="add-club">Add Club</button>
       </div>
       <form data-form="bag" class="bag-list">
         <label class="bag-name-field">
