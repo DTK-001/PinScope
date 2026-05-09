@@ -115,6 +115,7 @@ registerServiceWorker();
 window.addEventListener("hashchange", () => {
   view = getViewFromHash();
   render();
+  scrollToTop();
 });
 
 function handleWindowResize() {
@@ -235,6 +236,13 @@ function renderView() {
     return renderBag();
   }
   return renderCourses();
+}
+
+function scrollToTop() {
+  window.requestAnimationFrame(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    document.querySelector(".screen")?.scrollTo?.({ top: 0, left: 0, behavior: "auto" });
+  });
 }
 
 function renderHome() {
@@ -4212,6 +4220,7 @@ function handleClick(event) {
 
   if (action === "select-course") {
     state.selectedCourseId = button.dataset.courseId;
+    scrollToTop();
     persist("Course selected.");
   }
 
@@ -5555,6 +5564,7 @@ function startRound(courseId, teeId = "") {
   view = "play";
   window.location.hash = "play";
   queueCourseSatellitePreload(course, round.currentHole);
+  scrollToTop();
   persist("Round started.");
 }
 
@@ -5566,6 +5576,7 @@ function openRoundSetup(courseId) {
   view = "play";
   window.location.hash = "play";
   queueCourseSatellitePreload(course, 1);
+  scrollToTop();
   persist("Course ready.");
 }
 
