@@ -45,6 +45,20 @@ const AZURE_MAPS_STATIC_TILE_SIZE = 512;
 const AZURE_MAPS_ZOOM = 17;
 const SATELLITE_PRELOAD_CONCURRENCY = 2;
 const SATELLITE_PANEL_RATIO = 13 / 9;
+const HANDICAP_MIN_HOLES = 54;
+const HANDICAP_SCORE_TABLE = [
+  { min: 3, max: 3, count: 1, adjustment: -2 },
+  { min: 4, max: 4, count: 1, adjustment: -1 },
+  { min: 5, max: 5, count: 1, adjustment: 0 },
+  { min: 6, max: 6, count: 2, adjustment: -1 },
+  { min: 7, max: 8, count: 2, adjustment: 0 },
+  { min: 9, max: 11, count: 3, adjustment: 0 },
+  { min: 12, max: 14, count: 4, adjustment: 0 },
+  { min: 15, max: 16, count: 5, adjustment: 0 },
+  { min: 17, max: 18, count: 6, adjustment: 0 },
+  { min: 19, max: 19, count: 7, adjustment: 0 },
+  { min: 20, max: Infinity, count: 8, adjustment: 0 }
+];
 const ESRI_WORLD_IMAGERY_URL = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile";
 const ESRI_WORLD_IMAGERY_EXPORT_URL = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/export";
 const SATELLITE_ATTRIBUTION = "Imagery: Esri World Imagery";
@@ -222,12 +236,12 @@ function renderHome() {
   const activeRound = getActiveRound(state);
   const selectedCourse = getCourse(state, state.selectedCourseId);
   const bag = activeBag();
-  const handicap = currentHandicap();
+  const handicap = handicapProfile();
   return `
     <section class="home-screen">
       <div class="home-handicap">
         <span>Handicap</span>
-        <strong>${handicap === null ? "-" : handicap}</strong>
+        <strong>${escapeHtml(handicap.display)}</strong>
       </div>
       <img class="home-logo" src="${PINSCOPE_COMPLETE_LOGO_SRC}" alt="PinScope" />
       <div class="home-actions">
@@ -235,6 +249,8 @@ function renderHome() {
         <a class="secondary-action" href="#bag">Tune Bag</a>
       </div>
     </section>
+
+    ${renderHandicapIntro(handicap)}
 
     <section class="home-grid">
       <article>
@@ -249,35 +265,131 @@ function renderHome() {
         <span>Rounds</span>
         <strong>${state.rounds.filter((round) => round.status === "complete").length}</strong>
       </article>
+      <article>
+        <span>Handicap Status</span>
+        <strong>${escapeHtml(handicap.status)}</strong>
+      </article>
     </section>
   `;
 }
 
-function currentHandicap() {
-  const differentials = completedRoundSummaries()
-    .slice(0, 20)
-    .map(({ round, course, totals, playerId }) => {
-      const player = getRoundPlayers(round).find((item) => item.id === playerId) || getRoundPlayers(round)[0];
+function renderHandicapIntro(profile) {
+  if (profile.source !== "none" || state.settings?.handicap?.introDismissed) {
+    return "";
+  }
+  return `
+    <section class="handicap-intro">
+      <div>
+        <p class="eyebrow">Handicap Setup</p>
+        <h2>Build a reliable index</h2>
+        <p>PinScope needs 54 posted holes to calculate an initial handicap, then gets strongest once it has 20 recent 18-hole scores. If you already know yours, add it now.</p>
+      </div>
+      <form data-form="handicap-setup" class="handicap-setup">
+        <label>
+          <span>Current handicap</span>
+          <input name="manualIndex" type="number" min="-10" max="54" step="0.1" inputmode="decimal" placeholder="e.g. 18.4" />
+        </label>
+        <div>
+          <button class="primary-action" type="submit">Save Handicap</button>
+          <button class="secondary-action" type="button" data-action="dismiss-handicap-intro">Later</button>
+        </div>
+      </form>
+    </section>
+  `;
+}
+
+function handicapProfile() {
+  const manual = manualHandicapIndex();
+  const records = handicapRecords();
+  const holes = records.reduce((sum, item) => sum + item.holes, 0);
+  const calculated = calculateHandicapIndex(records);
+  if (calculated) {
+    return {
+      ...calculated,
+      source: "calculated",
+      display: formatHandicapIndex(calculated.index),
+      status: calculated.scoreCount >= 20 ? "Reliable" : `${calculated.scoreCount}/20 scores`,
+      holes,
+      manualIndex: manual
+    };
+  }
+  if (manual !== null) {
+    return {
+      source: "manual",
+      display: formatHandicapIndex(manual),
+      status: holes >= HANDICAP_MIN_HOLES ? "Manual index" : `${Math.max(0, HANDICAP_MIN_HOLES - holes)} holes to calculate`,
+      holes,
+      manualIndex: manual
+    };
+  }
+  return {
+    source: "none",
+    display: "-",
+    status: holes ? `${Math.max(0, HANDICAP_MIN_HOLES - holes)} holes to go` : "Not set",
+    holes,
+    manualIndex: null
+  };
+}
+
+function manualHandicapIndex() {
+  const raw = state.settings?.handicap?.manualIndex;
+  if (raw === null || raw === undefined || raw === "") {
+    return null;
+  }
+  const value = Number(raw);
+  return Number.isFinite(value) ? clamp(value, -10, 54) : null;
+}
+
+function handicapRecords() {
+  return completedRoundSummaries()
+    .map(({ round, course, totals, playerId, playedAt }) => {
+      const players = getRoundPlayers(round);
+      const player = players.find((item) => item.id === playerId) || players[0];
       const tee = (course.tees || []).find((item) => item.id === (player?.teeId || round.teeId));
       const rating = Number(tee?.rating);
       const slope = Number(tee?.slope) || 113;
       const par = course.holes.reduce((sum, hole) => sum + Number(hole.par || 0), 0);
+      const holes = Math.max(0, course.holes.length || round.entries?.length || 0);
       const baseline = Number.isFinite(rating) && rating > 0 ? rating : par;
-      if (!Number.isFinite(totals.score) || !Number.isFinite(baseline) || !Number.isFinite(slope) || slope <= 0) {
+      if (!Number.isFinite(totals.score) || !Number.isFinite(baseline) || !Number.isFinite(slope) || slope <= 0 || holes <= 0) {
         return null;
       }
-      return ((totals.score - baseline) * 113) / slope;
+      return {
+        playedAt,
+        holes,
+        differential: (((totals.score - baseline) * 113) / slope) * (18 / holes)
+      };
     })
-    .filter((value) => Number.isFinite(value))
-    .sort((a, b) => a - b);
+    .filter(Boolean)
+    .sort((a, b) => b.playedAt - a.playedAt);
+}
 
-  if (!differentials.length) {
+function calculateHandicapIndex(records) {
+  const eligible = records.slice(0, 20);
+  const holes = records.reduce((sum, item) => sum + item.holes, 0);
+  if (holes < HANDICAP_MIN_HOLES || eligible.length < 3) {
     return null;
   }
-  const count = differentials.length >= 20 ? 8 : Math.max(1, Math.ceil(differentials.length * 0.4));
-  const best = differentials.slice(0, count);
-  const handicap = best.reduce((sum, value) => sum + value, 0) / best.length;
-  return handicap < 0 ? `+${Math.abs(handicap).toFixed(1)}` : handicap.toFixed(1);
+  const rule = HANDICAP_SCORE_TABLE.find((item) => eligible.length >= item.min && eligible.length <= item.max) || HANDICAP_SCORE_TABLE[HANDICAP_SCORE_TABLE.length - 1];
+  const selected = eligible
+    .map((item) => item.differential)
+    .sort((a, b) => a - b)
+    .slice(0, rule.count);
+  const average = selected.reduce((sum, value) => sum + value, 0) / selected.length;
+  return {
+    index: clamp(average + rule.adjustment, -10, 54),
+    scoreCount: eligible.length,
+    usedCount: selected.length,
+    adjustment: rule.adjustment,
+    holes
+  };
+}
+
+function formatHandicapIndex(value) {
+  if (!Number.isFinite(value)) {
+    return "-";
+  }
+  return value < 0 ? `+${Math.abs(value).toFixed(1)}` : value.toFixed(1);
 }
 
 function renderCourses() {
@@ -3909,6 +4021,11 @@ function handleClick(event) {
     render();
   }
 
+  if (action === "dismiss-handicap-intro") {
+    handicapSettings().introDismissed = true;
+    persist("Handicap setup hidden.");
+  }
+
   if (action === "set-active-bag") {
     setActiveBag(button.dataset.bagId);
   }
@@ -4042,6 +4159,29 @@ function handleSubmit(event) {
     persist("Bag saved.");
   }
 
+  if (form.dataset.form === "handicap-setup") {
+    const value = Number(data.get("manualIndex"));
+    if (!Number.isFinite(value)) {
+      flash("Add a handicap number first.");
+      return;
+    }
+    const settings = handicapSettings();
+    settings.manualIndex = clamp(value, -10, 54);
+    settings.introDismissed = true;
+    form.reset();
+    persist("Handicap saved.");
+  }
+
+}
+
+function handicapSettings() {
+  state.settings = state.settings || {};
+  state.settings.handicap = {
+    manualIndex: null,
+    introDismissed: false,
+    ...(state.settings.handicap || {})
+  };
+  return state.settings.handicap;
 }
 
 function setActiveBag(bagId) {

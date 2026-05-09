@@ -108,7 +108,13 @@ const baseState = {
   activeBagId: defaultBags[0]?.id || "",
   bags: defaultBags,
   clubs: defaultClubs,
-  settings: { units: "yards" }
+  settings: {
+    units: "yards",
+    handicap: {
+      manualIndex: null,
+      introDismissed: false
+    }
+  }
 };
 
 export function loadState() {
@@ -138,7 +144,14 @@ function mergeState(defaults, stored) {
   return {
     ...defaults,
     ...stored,
-    settings: { ...defaults.settings, ...(stored.settings || {}) },
+    settings: {
+      ...defaults.settings,
+      ...(stored.settings || {}),
+      handicap: {
+        ...defaults.settings.handicap,
+        ...(stored.settings?.handicap || {})
+      }
+    },
     courses: Array.isArray(stored.courses) ? stored.courses : defaults.courses,
     rounds: Array.isArray(stored.rounds) ? stored.rounds : defaults.rounds,
     ...normalizeBags(stored)
