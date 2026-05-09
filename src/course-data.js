@@ -12,6 +12,11 @@ export const defaultClubs = [
   { id: "putter", name: "Putter", carryYards: 0 }
 ];
 
+export const defaultBags = [
+  { id: "main-bag", name: "Main Bag", clubs: defaultClubs.map((club) => ({ ...club })) },
+  { id: "second-bag", name: "Second Bag", clubs: defaultClubs.map((club) => ({ ...club })) }
+];
+
 export const seedCourses = [];
 
 export function createPlaceholderCourse({ name, town, holesCount = 18, source = "manual" }) {

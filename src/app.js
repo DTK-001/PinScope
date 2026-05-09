@@ -2,6 +2,7 @@ import {
   clamp,
   createPlaceholderCourse,
   createRound,
+  defaultClubs,
   formatToPar,
   getActiveRound,
   getCourse,
@@ -1539,10 +1540,23 @@ function recommendClub(distance) {
   if (!Number.isFinite(target) || target <= 0) {
     return null;
   }
-  const clubs = (state.clubs || [])
+  const clubs = activeBagClubs()
     .filter((club) => Number(club.carryYards) > 0)
     .sort((a, b) => Math.abs(Number(a.carryYards) - target) - Math.abs(Number(b.carryYards) - target));
   return clubs[0] || null;
+}
+
+function activeBag() {
+  const bags = Array.isArray(state.bags) ? state.bags : [];
+  return bags.find((bag) => bag.id === state.activeBagId) || bags[0] || null;
+}
+
+function activeBagClubs() {
+  return activeBag()?.clubs || state.clubs || [];
+}
+
+function syncActiveBagClubs() {
+  state.clubs = activeBagClubs().map((club) => ({ ...club }));
 }
 
 function gpsDistanceToGreen(hole) {
@@ -3682,17 +3696,72 @@ function formatShotLanding(point) {
 }
 
 function renderBag() {
+  const bag = activeBag();
+  const bags = Array.isArray(state.bags) && state.bags.length ? state.bags : [];
+  const clubs = bag?.clubs || [];
+  const totalYards = clubs.reduce((sum, club) => sum + Number(club.carryYards || 0), 0);
+  const longest = clubs.reduce((best, club) => Number(club.carryYards || 0) > Number(best?.carryYards || 0) ? club : best, null);
   return `
-    <section class="tool-panel open-panel">
-      <h2>Club Yardages</h2>
+    <section class="bag-hero">
+      <div>
+        <p class="eyebrow">Active Loadout</p>
+        <h2>${escapeHtml(bag?.name || "My Bag")}</h2>
+        <p>${clubs.length} clubs tuned for recommendations${longest ? ` - longest ${escapeHtml(longest.name)} at ${Number(longest.carryYards)} yd` : ""}</p>
+      </div>
+      <div class="bag-hero-meter" aria-label="${totalYards} combined carry yards">
+        <span>${totalYards}</span>
+        <small>total yd</small>
+      </div>
+    </section>
+
+    <section class="bag-switcher" aria-label="Golf bags">
+      ${bags.map((item) => {
+        const active = item.id === bag?.id;
+        const clubCount = Array.isArray(item.clubs) ? item.clubs.length : 0;
+        return `
+          <button class="bag-switch ${active ? "active" : ""}" type="button" data-action="set-active-bag" data-bag-id="${escapeAttribute(item.id)}" aria-pressed="${active ? "true" : "false"}">
+            <span>${active ? "Active" : "Bag"}</span>
+            <strong>${escapeHtml(item.name)}</strong>
+            <small>${clubCount} club${clubCount === 1 ? "" : "s"}</small>
+          </button>
+        `;
+      }).join("")}
+      <button class="bag-switch add" type="button" data-action="add-bag">
+        <span>New</span>
+        <strong>Add Bag</strong>
+        <small>Copy current setup</small>
+      </button>
+    </section>
+
+    <section class="tool-panel open-panel bag-editor">
+      <div class="bag-editor-head">
+        <div>
+          <p class="eyebrow">Club Matrix</p>
+          <h2>Name and Yardage</h2>
+        </div>
+        <button class="secondary-action" type="button" data-action="add-club">Add Club</button>
+      </div>
       <form data-form="bag" class="bag-list">
-        ${state.clubs.map((club) => `
-          <label class="club-row">
-            <span>${escapeHtml(club.name)}</span>
-            <input name="${club.id}" type="number" min="0" max="400" step="1" value="${club.carryYards}" />
-          </label>
-        `).join("")}
-        <button class="primary-action full" type="submit">Save Bag</button>
+        <label class="bag-name-field">
+          <span>Bag name</span>
+          <input name="bagName" type="text" maxlength="32" value="${escapeAttribute(bag?.name || "")}" placeholder="Bag name" required />
+        </label>
+        <div class="club-table" role="list">
+          ${clubs.map((club) => `
+            <div class="club-row" role="listitem">
+              <label>
+                <span>Club</span>
+                <input name="clubName-${escapeAttribute(club.id)}" type="text" maxlength="28" value="${escapeAttribute(club.name)}" placeholder="Club name" required />
+              </label>
+              <label>
+                <span>Carry</span>
+                <input name="clubYards-${escapeAttribute(club.id)}" type="number" min="0" max="400" step="1" value="${Number(club.carryYards || 0)}" inputmode="numeric" />
+              </label>
+              <button class="club-remove" type="button" data-action="remove-club" data-club-id="${escapeAttribute(club.id)}" aria-label="Remove ${escapeAttribute(club.name)}">x</button>
+            </div>
+          `).join("")}
+        </div>
+        <button class="primary-action full" type="submit">Save Active Bag</button>
       </form>
     </section>
   `;
@@ -3764,6 +3833,22 @@ function handleClick(event) {
   if (action === "stats-filter") {
     statsFilter = button.dataset.filter || "all";
     render();
+  }
+
+  if (action === "set-active-bag") {
+    setActiveBag(button.dataset.bagId);
+  }
+
+  if (action === "add-bag") {
+    addBag();
+  }
+
+  if (action === "add-club") {
+    addClubToActiveBag();
+  }
+
+  if (action === "remove-club") {
+    removeClubFromActiveBag(button.dataset.clubId);
   }
 
   if (action === "entry-step") {
@@ -3869,13 +3954,74 @@ function handleSubmit(event) {
   }
 
   if (form.dataset.form === "bag") {
-    state.clubs = state.clubs.map((club) => ({
+    const bag = activeBag();
+    if (!bag) {
+      return;
+    }
+    bag.name = String(data.get("bagName") || bag.name || "My Bag").trim() || "My Bag";
+    bag.clubs = bag.clubs.map((club) => ({
       ...club,
-      carryYards: clamp(Number(data.get(club.id) || club.carryYards), 0, 400)
+      name: String(data.get(`clubName-${club.id}`) || club.name || "Club").trim() || "Club",
+      carryYards: clamp(Math.round(Number(data.get(`clubYards-${club.id}`) || 0)), 0, 400)
     }));
+    syncActiveBagClubs();
     persist("Bag saved.");
   }
 
+}
+
+function setActiveBag(bagId) {
+  if (!Array.isArray(state.bags) || !state.bags.some((bag) => bag.id === bagId)) {
+    return;
+  }
+  state.activeBagId = bagId;
+  syncActiveBagClubs();
+  persist("Active bag changed.");
+}
+
+function addBag() {
+  const source = activeBag();
+  const id = `bag-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  const bags = Array.isArray(state.bags) ? state.bags : [];
+  const nextNumber = bags.length + 1;
+  const clubs = (source?.clubs?.length ? source.clubs : defaultClubs).map((club) => ({
+    ...club,
+    id: `club-${Date.now()}-${Math.random().toString(16).slice(2)}-${club.id}`
+  }));
+  state.bags = [...bags, {
+    id,
+    name: `Bag ${nextNumber}`,
+    clubs
+  }];
+  state.activeBagId = id;
+  syncActiveBagClubs();
+  persist("New bag created.");
+}
+
+function addClubToActiveBag() {
+  const bag = activeBag();
+  if (!bag) {
+    return;
+  }
+  const nextClub = {
+    id: `club-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+    name: "New club",
+    carryYards: 100
+  };
+  bag.clubs = [...(bag.clubs || []), nextClub];
+  syncActiveBagClubs();
+  persist("Club added.");
+}
+
+function removeClubFromActiveBag(clubId) {
+  const bag = activeBag();
+  if (!bag || !Array.isArray(bag.clubs) || bag.clubs.length <= 1) {
+    flash("Keep at least one club in the active bag.");
+    return;
+  }
+  bag.clubs = bag.clubs.filter((club) => club.id !== clubId);
+  syncActiveBagClubs();
+  persist("Club removed.");
 }
 
 function handleInput(event) {

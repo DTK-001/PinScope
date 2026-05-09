@@ -1,4 +1,4 @@
-import { defaultClubs, seedCourses } from "./course-data.js";
+import { defaultBags, defaultClubs, seedCourses } from "./course-data.js";
 import { verifiedCourses } from "./verified-courses.js";
 import { verifiedGreenDefaults } from "./verified-green-defaults.js";
 import { sharedCourseDefaults } from "./shared-course-defaults.js";
@@ -105,6 +105,8 @@ const baseState = {
   activeRoundId: "",
   courses: builtInCourses,
   rounds: [],
+  activeBagId: defaultBags[0]?.id || "",
+  bags: defaultBags,
   clubs: defaultClubs,
   settings: { units: "yards" }
 };
@@ -139,8 +141,66 @@ function mergeState(defaults, stored) {
     settings: { ...defaults.settings, ...(stored.settings || {}) },
     courses: Array.isArray(stored.courses) ? stored.courses : defaults.courses,
     rounds: Array.isArray(stored.rounds) ? stored.rounds : defaults.rounds,
-    clubs: Array.isArray(stored.clubs) ? stored.clubs : defaults.clubs
+    ...normalizeBags(stored)
   };
+}
+
+function normalizeBags(stored = {}) {
+  const fallbackClubs = Array.isArray(stored.clubs) && stored.clubs.length
+    ? stored.clubs
+    : defaultClubs;
+  let bags = Array.isArray(stored.bags) && stored.bags.length
+    ? stored.bags
+    : [{ ...defaultBags[0], clubs: fallbackClubs }];
+
+  bags = bags
+    .filter((bag) => bag && typeof bag === "object")
+    .map((bag, index) => ({
+      id: String(bag.id || `bag-${index + 1}`),
+      name: String(bag.name || `Bag ${index + 1}`).trim() || `Bag ${index + 1}`,
+      clubs: normalizeClubs(bag.clubs, fallbackClubs)
+    }));
+
+  if (bags.length < 2) {
+    const usedIds = new Set(bags.map((bag) => bag.id));
+    defaultBags.forEach((bag) => {
+      if (bags.length < 2 && !usedIds.has(bag.id)) {
+        bags.push({
+          ...bag,
+          clubs: bag.clubs.map((club) => ({ ...club }))
+        });
+      }
+    });
+  }
+
+  const activeBagId = bags.some((bag) => bag.id === stored.activeBagId)
+    ? stored.activeBagId
+    : bags[0]?.id || "";
+  const activeBag = bags.find((bag) => bag.id === activeBagId) || bags[0];
+  return {
+    bags,
+    activeBagId,
+    clubs: activeBag?.clubs || normalizeClubs(fallbackClubs)
+  };
+}
+
+function normalizeClubs(clubs, fallback = defaultClubs) {
+  const source = Array.isArray(clubs) && clubs.length ? clubs : fallback;
+  return source
+    .filter((club) => club && typeof club === "object")
+    .map((club, index) => ({
+      id: String(club.id || `club-${index + 1}`),
+      name: String(club.name || `Club ${index + 1}`).trim() || `Club ${index + 1}`,
+      carryYards: clampYards(club.carryYards)
+    }));
+}
+
+function clampYards(value) {
+  const yards = Number(value);
+  if (!Number.isFinite(yards)) {
+    return 0;
+  }
+  return Math.min(400, Math.max(0, Math.round(yards)));
 }
 
 function ensureBuiltInCourses(courses) {
