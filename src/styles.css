@@ -945,16 +945,100 @@ p {
   gap: 14px;
 }
 
+.round-setup-panel {
+  overflow: hidden;
+  padding: 0;
+  background:
+    linear-gradient(135deg, rgba(255, 79, 216, 0.1), transparent 34%),
+    linear-gradient(225deg, rgba(53, 240, 193, 0.1), transparent 38%),
+    var(--panel);
+}
+
+.round-setup-hero {
+  padding: 16px;
+  border-bottom: 1px solid rgba(53, 240, 193, 0.18);
+  background:
+    radial-gradient(circle at 88% 24%, rgba(53, 240, 193, 0.18), transparent 26%),
+    rgba(255, 255, 255, 0.035);
+}
+
+.round-setup-hero h2 {
+  margin-bottom: 5px;
+  font-size: 1.35rem;
+  line-height: 1.06;
+}
+
+.round-setup-hero p {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.round-setup-panel form {
+  padding: 14px;
+}
+
 .player-setup-list {
   display: grid;
-  gap: 10px;
+  gap: 12px;
 }
 
 .player-setup-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid rgba(53, 240, 193, 0.18);
+  border-radius: var(--radius);
+  background:
+    linear-gradient(90deg, rgba(53, 240, 193, 0.08), transparent 58%),
+    rgba(255, 255, 255, 0.045);
+}
+
+.player-setup-badge {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border-radius: 999px;
+  color: #071414;
+  background: linear-gradient(135deg, var(--accent-3), #ff9bed);
+  font-weight: 950;
+}
+
+.player-setup-fields {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 112px 82px;
   gap: 10px;
   align-items: end;
+  min-width: 0;
+}
+
+.add-player-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  min-height: 48px;
+  border: 1px dashed rgba(53, 240, 193, 0.52);
+  border-radius: var(--radius);
+  color: #f8fffb;
+  background: rgba(53, 240, 193, 0.08);
+  cursor: pointer;
+  font-weight: 900;
+}
+
+.add-player-button span {
+  display: grid;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+  border-radius: 999px;
+  color: #071414;
+  background: var(--accent-3);
+  line-height: 1;
 }
 
 .course-card.selected {
@@ -3399,7 +3483,7 @@ select option {
 
 .course-actions {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr);
   gap: 8px;
   margin-top: 12px;
 }
@@ -3439,7 +3523,8 @@ select option {
   .action-band,
   .home-area,
   .course-main,
-  .player-setup-row {
+  .player-setup-row,
+  .player-setup-fields {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
     align-items: stretch;

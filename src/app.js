@@ -107,6 +107,7 @@ let notice = "";
 let scoreCardOpen = false;
 let roundScorecardOpen = false;
 let finishRoundPrompt = null;
+let roundSetupPlayerCount = 1;
 
 render();
 registerServiceWorker();
@@ -671,12 +672,6 @@ function renderSelectedCourseActions(course) {
   return `
     <div class="course-actions">
       <button class="secondary-action" type="button" data-action="quick-start" data-course-id="${course.id}">Start Round</button>
-      <button class="secondary-action" type="button" data-action="refresh-course-layout" data-course-id="${course.id}">OSM holes</button>
-      <button class="secondary-action" type="button" data-action="export-course-pack-json">Export course pack</button>
-      <label class="file-action secondary-action">
-        Import mapper JSON
-        <input type="file" accept="application/json,.json" data-action="course-geometry-file" data-course-id="${course.id}" />
-      </label>
     </div>
   `;
 }
@@ -942,26 +937,20 @@ function courseLocationLine(course) {
 function renderStartRound() {
   const selected = getCourse(state, state.selectedCourseId) || state.courses[0];
   return `
-    <section class="setup-panel">
-      <div>
-        <p class="eyebrow">Group Round</p>
-        <h2>Round Setup</h2>
+    <section class="setup-panel round-setup-panel">
+      <div class="round-setup-hero">
+        <p class="eyebrow">Round Setup</p>
+        <h2>${escapeHtml(selected?.name || "Choose Course")}</h2>
+        <p>${selected ? courseLocationLine(selected) : "Pick a course and build your group."}</p>
       </div>
       <form class="stack" data-form="start-round">
-        <label>
-          <span>Course</span>
-          <select name="courseId" data-action="setup-course">
-            ${state.courses.map((course) => `<option value="${course.id}" ${selected?.id === course.id ? "selected" : ""}>${escapeHtml(course.name)}</option>`).join("")}
-          </select>
-        </label>
+        <input type="hidden" name="courseId" value="${escapeAttribute(selected?.id || "")}" />
         <div class="player-setup-list">
           ${renderPlayerSetupRows(selected)}
         </div>
-        <button class="primary-action full" type="submit">Start Group Round</button>
+        ${roundSetupPlayerCount < 4 ? `<button class="add-player-button" type="button" data-action="add-setup-player"><span>+</span><strong>Add Player</strong></button>` : ""}
+        <button class="primary-action full" type="submit">Start Round</button>
       </form>
-    </section>
-    <section class="recent-strip">
-      ${renderCourseCard(selected)}
     </section>
   `;
 }
@@ -970,22 +959,25 @@ function renderPlayerSetupRows(course) {
   const teeOptions = (course?.tees || []).map((tee) => `<option value="${tee.id}">${escapeHtml(tee.name)}</option>`).join("");
   const defaults = ["Me", "", "", ""];
   const myHandicap = manualHandicapIndex();
-  return defaults.map((name, index) => `
+  return defaults.slice(0, roundSetupPlayerCount).map((name, index) => `
     <div class="player-setup-row">
-      <label>
-        <span>Player ${index + 1}</span>
-        <input name="playerName${index}" type="text" value="${escapeAttribute(name)}" placeholder="${index === 0 ? "Your name" : "Add player"}" />
-      </label>
-      <label>
-        <span>Tee</span>
-        <select name="playerTee${index}">
-          ${teeOptions}
-        </select>
-      </label>
-      <label>
-        <span>HCP</span>
-        <input name="playerHandicap${index}" type="number" min="-10" max="54" step="0.1" inputmode="decimal" value="${index === 0 && myHandicap !== null ? escapeAttribute(myHandicap) : ""}" placeholder="-" />
-      </label>
+      <div class="player-setup-badge">${index + 1}</div>
+      <div class="player-setup-fields">
+        <label>
+          <span>${index === 0 ? "You" : `Player ${index + 1}`}</span>
+          <input name="playerName${index}" type="text" value="${escapeAttribute(name)}" placeholder="${index === 0 ? "Your name" : "Player name"}" />
+        </label>
+        <label>
+          <span>Tee</span>
+          <select name="playerTee${index}">
+            ${teeOptions}
+          </select>
+        </label>
+        <label>
+          <span>HCP</span>
+          <input name="playerHandicap${index}" type="number" min="-10" max="54" step="0.1" inputmode="decimal" value="${index === 0 && myHandicap !== null ? escapeAttribute(myHandicap) : ""}" placeholder="-" />
+        </label>
+      </div>
     </div>
   `).join("");
 }
@@ -4227,6 +4219,11 @@ function handleClick(event) {
     openRoundSetup(button.dataset.courseId);
   }
 
+  if (action === "add-setup-player") {
+    roundSetupPlayerCount = clamp(roundSetupPlayerCount + 1, 1, 4);
+    render();
+  }
+
   if (action === "stats-filter") {
     statsFilter = button.dataset.filter || "all";
     render();
@@ -5554,6 +5551,7 @@ function startRound(courseId, teeId = "") {
   state.rounds = [round, ...state.rounds];
   state.activeRoundId = round.id;
   state.selectedCourseId = course.id;
+  roundSetupPlayerCount = 1;
   view = "play";
   window.location.hash = "play";
   queueCourseSatellitePreload(course, round.currentHole);
@@ -5564,6 +5562,7 @@ function openRoundSetup(courseId) {
   const course = getCourse(state, courseId);
   state.selectedCourseId = courseId;
   state.activeRoundId = "";
+  roundSetupPlayerCount = 1;
   view = "play";
   window.location.hash = "play";
   queueCourseSatellitePreload(course, 1);
