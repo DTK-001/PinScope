@@ -421,6 +421,25 @@ p {
   line-height: 0.98;
 }
 
+.play-hole-title {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.play-hole-title button {
+  min-height: 30px;
+  border: 1px solid rgba(53, 240, 193, 0.5);
+  border-radius: 999px;
+  padding: 0 10px;
+  color: #f8fffb;
+  background: rgba(53, 240, 193, 0.14);
+  cursor: pointer;
+  font-size: 0.68rem;
+  font-weight: 900;
+  text-shadow: inherit;
+}
+
 .play-meta-line {
   display: flex;
   flex-wrap: wrap;
@@ -2344,6 +2363,148 @@ select option {
   min-height: 44px;
 }
 
+.round-scorecard-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: #050609;
+  color: #f8fffb;
+}
+
+.round-scorecard-shell {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: 10px;
+  width: min(100vw, 1180px);
+  height: min(100dvh, 680px);
+  padding: 12px;
+  background:
+    linear-gradient(135deg, rgba(255, 79, 216, 0.08), transparent 34%),
+    linear-gradient(225deg, rgba(53, 240, 193, 0.08), transparent 38%),
+    #050609;
+}
+
+.round-scorecard-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.round-scorecard-head h2 {
+  font-size: 1.05rem;
+  line-height: 1.1;
+}
+
+.round-scorecard-head .secondary-action {
+  min-height: 34px;
+  padding-inline: 12px;
+  white-space: nowrap;
+}
+
+.round-scorecard-scroll {
+  min-height: 0;
+  overflow: auto;
+  border: 1px solid rgba(53, 240, 193, 0.28);
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.round-scorecard-table {
+  width: max(980px, 100%);
+  border-collapse: collapse;
+  table-layout: fixed;
+  color: #f8fffb;
+  font-size: clamp(0.58rem, 1.45vw, 0.82rem);
+  font-weight: 850;
+}
+
+.round-scorecard-table th,
+.round-scorecard-table td {
+  min-width: 38px;
+  height: 34px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  padding: 4px;
+  text-align: center;
+}
+
+.round-scorecard-table th:first-child,
+.round-scorecard-table td:first-child {
+  width: 126px;
+  text-align: left;
+}
+
+.round-scorecard-table thead th {
+  color: #071414;
+  background: rgba(248, 255, 251, 0.92);
+}
+
+.tee-yard-row {
+  color: var(--tee-row-text);
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--tee-row-color) 90%, #050609), color-mix(in srgb, var(--tee-row-color) 70%, #050609));
+}
+
+.tee-yard-row th {
+  display: table-cell;
+}
+
+.tee-yard-row small {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.66em;
+  opacity: 0.86;
+}
+
+.scorecard-info-row {
+  color: #071414;
+  background: rgba(248, 255, 251, 0.88);
+}
+
+.scorecard-info-row.hcp-row {
+  color: #f8fffb;
+  background: #158244;
+}
+
+.scorecard-player-row {
+  color: #f8fffb;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.scorecard-player-row th {
+  color: #f8fffb;
+  background: rgba(255, 79, 216, 0.18);
+}
+
+.round-scorecard-table .initials-cell {
+  width: 48px;
+  color: rgba(248, 255, 251, 0.58);
+  background: rgba(255, 255, 255, 0.05);
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  letter-spacing: 0;
+}
+
+.round-scorecard-sign {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  background: rgba(255, 255, 255, 0.28);
+  color: #071414;
+  font-size: 0.72rem;
+  font-weight: 900;
+}
+
+.round-scorecard-sign span {
+  min-height: 34px;
+  padding: 9px;
+  background: rgba(248, 255, 251, 0.92);
+}
+
 .gps-test-toolbar {
   position: absolute;
   right: 14px;
@@ -3080,6 +3241,24 @@ select option {
 
   .stats-grid {
     grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+
+@media (orientation: portrait) {
+  .round-scorecard-backdrop {
+    display: block;
+  }
+
+  .round-scorecard-shell {
+    position: absolute;
+    top: 0;
+    left: 100%;
+    width: 100dvh;
+    height: 100dvw;
+    max-width: none;
+    max-height: none;
+    transform: rotate(90deg);
+    transform-origin: top left;
   }
 }
 

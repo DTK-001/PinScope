@@ -105,6 +105,7 @@ let satellitePreloadedUrls = new Set();
 let satellitePreloadingUrls = new Set();
 let notice = "";
 let scoreCardOpen = false;
+let roundScorecardOpen = false;
 let finishRoundPrompt = null;
 
 render();
@@ -171,6 +172,7 @@ function render() {
     </header>
     <main class="screen">${renderView()}</main>
     ${scoreCardOpen ? renderScoreCardOverlay() : ""}
+    ${roundScorecardOpen ? renderRoundScorecardOverlay() : ""}
     ${finishRoundPrompt ? renderFinishRoundOverlay(finishRoundPrompt) : ""}
     ${notice ? `<aside class="toast" role="status">${escapeHtml(notice)}</aside>` : ""}
     <nav class="bottom-nav" aria-label="Primary">
@@ -722,7 +724,10 @@ function renderPlay() {
 
       <div class="play-hud play-hole-hud">
         <p class="eyebrow">${escapeHtml(course.name)}</p>
-        <h2>Hole ${hole.number}</h2>
+        <div class="play-hole-title">
+          <h2>Hole ${hole.number}</h2>
+          <button type="button" data-action="open-round-scorecard">Scorecard</button>
+        </div>
         <div class="play-meta-line">
           <span>Par ${hole.par}</span>
           <span>SI ${hole.strokeIndex}</span>
@@ -1043,6 +1048,150 @@ function renderScoreCardOverlay() {
       </div>
     </section>
   `;
+}
+
+function renderRoundScorecardOverlay() {
+  const round = getActiveRound(state);
+  const course = round ? getCourse(state, round.courseId) : null;
+  if (!round || !course) {
+    return "";
+  }
+  const players = getRoundPlayers(round);
+  const usedTeeIds = Array.from(new Set(players.map((player) => player.teeId || round.teeId || course.tees?.[0]?.id).filter(Boolean)));
+  const usedTees = usedTeeIds
+    .map((teeId) => (course.tees || []).find((tee) => tee.id === teeId) || { id: teeId, name: teeId, color: "#f8f7f1" })
+    .filter(Boolean);
+  const holes = course.holes || [];
+  const front = holes.slice(0, 9);
+  const back = holes.slice(9, 18);
+  return `
+    <section class="round-scorecard-backdrop" role="dialog" aria-modal="true" aria-label="Round scorecard">
+      <div class="round-scorecard-shell">
+        <header class="round-scorecard-head">
+          <div>
+            <p class="eyebrow">Round Card</p>
+            <h2>${escapeHtml(course.name)}</h2>
+          </div>
+          <button class="secondary-action" type="button" data-action="close-round-scorecard">Back to Play</button>
+        </header>
+        <div class="round-scorecard-scroll">
+          <table class="round-scorecard-table">
+            <thead>
+              <tr>
+                <th>TEES</th>
+                ${front.map((hole) => `<th>${hole.number}</th>`).join("")}
+                <th>OUT</th>
+                <th class="initials-cell">INITIALS</th>
+                ${back.map((hole) => `<th>${hole.number}</th>`).join("")}
+                <th>IN</th>
+                <th>TOTAL</th>
+                <th>HCP</th>
+                <th>NET</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${usedTees.map((tee) => renderRoundScorecardTeeRow(tee, front, back)).join("")}
+              ${renderRoundScorecardInfoRow("HCP", front, back, (hole) => hole.strokeIndex || "-")}
+              ${renderRoundScorecardInfoRow("PAR", front, back, (hole) => hole.par || "-", true)}
+              ${players.map((player) => renderRoundScorecardPlayerRow(round, course, player, front, back)).join("")}
+            </tbody>
+          </table>
+        </div>
+        <footer class="round-scorecard-sign">
+          <span>SCORER:</span>
+          <span>ATTEST:</span>
+          <span>DATE:</span>
+        </footer>
+      </div>
+    </section>
+  `;
+}
+
+function renderRoundScorecardTeeRow(tee, front, back) {
+  const frontYards = front.map((hole) => Number(hole.yards?.[tee.id] || 0));
+  const backYards = back.map((hole) => Number(hole.yards?.[tee.id] || 0));
+  const out = frontYards.reduce((sum, yards) => sum + yards, 0);
+  const inn = backYards.reduce((sum, yards) => sum + yards, 0);
+  return `
+    <tr class="tee-yard-row" style="${teeRowStyle(tee)}">
+      <th><strong>${escapeHtml(tee.name)}</strong><small>${tee.rating || "-"} / ${tee.slope || "-"}</small></th>
+      ${frontYards.map((yards) => `<td>${yards || "-"}</td>`).join("")}
+      <td>${out || "-"}</td>
+      <td class="initials-cell"></td>
+      ${backYards.map((yards) => `<td>${yards || "-"}</td>`).join("")}
+      <td>${inn || "-"}</td>
+      <td>${out + inn || "-"}</td>
+      <td></td>
+      <td></td>
+    </tr>
+  `;
+}
+
+function renderRoundScorecardInfoRow(label, front, back, valueForHole, includeTotals = false) {
+  const frontValues = front.map(valueForHole);
+  const backValues = back.map(valueForHole);
+  const out = includeTotals ? front.reduce((sum, hole) => sum + Number(hole.par || 0), 0) : "";
+  const inn = includeTotals ? back.reduce((sum, hole) => sum + Number(hole.par || 0), 0) : "";
+  return `
+    <tr class="scorecard-info-row ${label.toLowerCase()}-row">
+      <th>${escapeHtml(label)}</th>
+      ${frontValues.map((value) => `<td>${value}</td>`).join("")}
+      <td>${out || ""}</td>
+      <td class="initials-cell"></td>
+      ${backValues.map((value) => `<td>${value}</td>`).join("")}
+      <td>${inn || ""}</td>
+      <td>${out || inn ? out + inn : ""}</td>
+      <td></td>
+      <td></td>
+    </tr>
+  `;
+}
+
+function renderRoundScorecardPlayerRow(round, course, player, front, back) {
+  const frontScores = front.map((hole) => playerScorecardValue(round, hole.number, player.id));
+  const backScores = back.map((hole) => playerScorecardValue(round, hole.number, player.id));
+  const out = scorecardScoreTotal(frontScores);
+  const inn = scorecardScoreTotal(backScores);
+  const gross = out + inn;
+  return `
+    <tr class="scorecard-player-row">
+      <th>${escapeHtml(player.name)}</th>
+      ${frontScores.map((score) => `<td>${score || ""}</td>`).join("")}
+      <td>${out || ""}</td>
+      <td class="initials-cell"></td>
+      ${backScores.map((score) => `<td>${score || ""}</td>`).join("")}
+      <td>${inn || ""}</td>
+      <td>${gross || ""}</td>
+      <td></td>
+      <td></td>
+    </tr>
+  `;
+}
+
+function playerScorecardValue(round, holeNumber, playerId) {
+  const entry = getPlayerEntry(round, holeNumber, playerId);
+  return entry?.scoreEntered ? Number(entry.score || 0) : "";
+}
+
+function scorecardScoreTotal(scores) {
+  return scores.reduce((sum, score) => sum + Number(score || 0), 0);
+}
+
+function teeRowStyle(tee) {
+  const color = tee.color || "#f8f7f1";
+  return `--tee-row-color:${escapeAttribute(color)}; --tee-row-text:${darkTextForColor(color) ? "#071414" : "#f8fffb"};`;
+}
+
+function darkTextForColor(color) {
+  const hex = String(color || "").trim().replace("#", "");
+  if (![3, 6].includes(hex.length)) {
+    return false;
+  }
+  const expanded = hex.length === 3 ? hex.split("").map((char) => char + char).join("") : hex;
+  const red = parseInt(expanded.slice(0, 2), 16);
+  const green = parseInt(expanded.slice(2, 4), 16);
+  const blue = parseInt(expanded.slice(4, 6), 16);
+  return (red * 299 + green * 587 + blue * 114) / 1000 > 150;
 }
 
 function renderFinishRoundOverlay(prompt) {
@@ -4116,6 +4265,16 @@ function handleClick(event) {
     render();
   }
 
+  if (action === "open-round-scorecard") {
+    roundScorecardOpen = true;
+    render();
+  }
+
+  if (action === "close-round-scorecard") {
+    roundScorecardOpen = false;
+    render();
+  }
+
   if (action === "close-score-card") {
     scoreCardOpen = false;
     render();
@@ -5704,6 +5863,7 @@ function saveFinishedRound() {
   round.completedAt = new Date().toISOString();
   state.activeRoundId = "";
   scoreCardOpen = false;
+  roundScorecardOpen = false;
   finishRoundPrompt = null;
   view = "stats";
   window.location.hash = "stats";
@@ -5718,6 +5878,7 @@ function discardActiveRound() {
   state.rounds = state.rounds.filter((item) => item.id !== round.id);
   state.activeRoundId = "";
   scoreCardOpen = false;
+  roundScorecardOpen = false;
   finishRoundPrompt = null;
   view = "courses";
   window.location.hash = "courses";
