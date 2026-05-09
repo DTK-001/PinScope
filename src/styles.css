@@ -2370,7 +2370,10 @@ select option {
   display: grid;
   place-items: center;
   overflow: hidden;
-  background: #050609;
+  background:
+    radial-gradient(circle at 16% 18%, rgba(255, 79, 216, 0.14), transparent 30%),
+    radial-gradient(circle at 82% 76%, rgba(53, 240, 193, 0.12), transparent 34%),
+    #050609;
   color: #f8fffb;
 }
 
@@ -2382,16 +2385,24 @@ select option {
   height: min(100dvh, 680px);
   padding: 12px;
   background:
-    linear-gradient(135deg, rgba(255, 79, 216, 0.08), transparent 34%),
-    linear-gradient(225deg, rgba(53, 240, 193, 0.08), transparent 38%),
-    #050609;
+    linear-gradient(135deg, rgba(255, 79, 216, 0.12), transparent 32%),
+    linear-gradient(225deg, rgba(53, 240, 193, 0.1), transparent 38%),
+    rgba(7, 7, 13, 0.96);
 }
 
 .round-scorecard-head {
+  position: sticky;
+  top: 0;
+  z-index: 4;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 14px;
+  padding: 8px;
+  border: 1px solid rgba(53, 240, 193, 0.22);
+  border-radius: var(--radius);
+  background: rgba(7, 7, 13, 0.84);
+  backdrop-filter: blur(14px);
 }
 
 .round-scorecard-head h2 {
@@ -2403,6 +2414,8 @@ select option {
   min-height: 34px;
   padding-inline: 12px;
   white-space: nowrap;
+  border: 1px solid rgba(53, 240, 193, 0.46);
+  background: rgba(53, 240, 193, 0.12);
 }
 
 .round-scorecard-scroll {
@@ -2410,7 +2423,10 @@ select option {
   overflow: auto;
   border: 1px solid rgba(53, 240, 193, 0.28);
   border-radius: var(--radius);
-  background: rgba(255, 255, 255, 0.04);
+  background:
+    linear-gradient(180deg, rgba(53, 240, 193, 0.06), transparent 180px),
+    rgba(255, 255, 255, 0.04);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03);
 }
 
 .round-scorecard-table {
@@ -2426,7 +2442,7 @@ select option {
 .round-scorecard-table td {
   min-width: 38px;
   height: 34px;
-  border: 1px solid rgba(255, 255, 255, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   padding: 4px;
   text-align: center;
 }
@@ -2438,14 +2454,16 @@ select option {
 }
 
 .round-scorecard-table thead th {
-  color: #071414;
-  background: rgba(248, 255, 251, 0.92);
+  color: #f8fffb;
+  background: rgba(8, 9, 16, 0.92);
+  box-shadow: inset 0 -1px 0 rgba(53, 240, 193, 0.28);
 }
 
 .tee-yard-row {
   color: var(--tee-row-text);
   background:
-    linear-gradient(90deg, color-mix(in srgb, var(--tee-row-color) 90%, #050609), color-mix(in srgb, var(--tee-row-color) 70%, #050609));
+    linear-gradient(90deg, rgba(5, 6, 9, 0.16), rgba(5, 6, 9, 0.34)),
+    var(--tee-row-color);
 }
 
 .tee-yard-row th {
@@ -2460,29 +2478,29 @@ select option {
 }
 
 .scorecard-info-row {
-  color: #071414;
-  background: rgba(248, 255, 251, 0.88);
+  color: #f8fffb;
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .scorecard-info-row.hcp-row {
   color: #f8fffb;
-  background: #158244;
+  background: linear-gradient(90deg, rgba(53, 240, 193, 0.42), rgba(53, 240, 193, 0.18));
 }
 
 .scorecard-player-row {
   color: #f8fffb;
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.045);
 }
 
 .scorecard-player-row th {
   color: #f8fffb;
-  background: rgba(255, 79, 216, 0.18);
+  background: linear-gradient(90deg, rgba(255, 79, 216, 0.26), rgba(141, 92, 255, 0.16));
 }
 
 .round-scorecard-table .initials-cell {
   width: 48px;
   color: rgba(248, 255, 251, 0.58);
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(53, 240, 193, 0.06);
   writing-mode: vertical-rl;
   text-orientation: mixed;
   letter-spacing: 0;
@@ -2492,9 +2510,9 @@ select option {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 1px;
-  border: 1px solid rgba(255, 255, 255, 0.28);
-  background: rgba(255, 255, 255, 0.28);
-  color: #071414;
+  border: 1px solid rgba(53, 240, 193, 0.22);
+  background: rgba(53, 240, 193, 0.22);
+  color: #f8fffb;
   font-size: 0.72rem;
   font-weight: 900;
 }
@@ -2502,7 +2520,7 @@ select option {
 .round-scorecard-sign span {
   min-height: 34px;
   padding: 9px;
-  background: rgba(248, 255, 251, 0.92);
+  background: rgba(255, 255, 255, 0.055);
 }
 
 .gps-test-toolbar {
@@ -3259,6 +3277,17 @@ select option {
     max-height: none;
     transform: rotate(90deg);
     transform-origin: top left;
+  }
+
+  .round-scorecard-head {
+    position: fixed;
+    top: 12px;
+    right: 12px;
+    left: 12px;
+  }
+
+  .round-scorecard-scroll {
+    margin-top: 66px;
   }
 }
 
