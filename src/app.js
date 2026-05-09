@@ -969,6 +969,7 @@ function renderStartRound() {
 function renderPlayerSetupRows(course) {
   const teeOptions = (course?.tees || []).map((tee) => `<option value="${tee.id}">${escapeHtml(tee.name)}</option>`).join("");
   const defaults = ["Me", "", "", ""];
+  const myHandicap = manualHandicapIndex();
   return defaults.map((name, index) => `
     <div class="player-setup-row">
       <label>
@@ -980,6 +981,10 @@ function renderPlayerSetupRows(course) {
         <select name="playerTee${index}">
           ${teeOptions}
         </select>
+      </label>
+      <label>
+        <span>HCP</span>
+        <input name="playerHandicap${index}" type="number" min="-10" max="54" step="0.1" inputmode="decimal" value="${index === 0 && myHandicap !== null ? escapeAttribute(myHandicap) : ""}" placeholder="-" />
       </label>
     </div>
   `).join("");
@@ -1098,9 +1103,9 @@ function renderRoundScorecardOverlay() {
           </table>
         </div>
         <footer class="round-scorecard-sign">
-          <span>SCORER:</span>
-          <span>ATTEST:</span>
-          <span>DATE:</span>
+          <label>SCORER:<input data-action="round-signature" data-field="scorer" type="text" value="${escapeAttribute(round.signatures?.scorer || "")}" /></label>
+          <label>ATTEST:<input data-action="round-signature" data-field="attest" type="text" value="${escapeAttribute(round.signatures?.attest || "")}" /></label>
+          <label>DATE:<input data-action="round-signature" data-field="date" type="date" value="${escapeAttribute(round.signatures?.date || new Date(round.startedAt || Date.now()).toISOString().slice(0, 10))}" /></label>
         </footer>
       </div>
     </section>
@@ -1153,19 +1158,48 @@ function renderRoundScorecardPlayerRow(round, course, player, front, back) {
   const out = scorecardScoreTotal(frontScores);
   const inn = scorecardScoreTotal(backScores);
   const gross = out + inn;
+  const handicap = playerHandicap(player);
+  const frontShots = front.map((hole) => handicapShotsForHole(handicap, hole.strokeIndex, course.holes.length));
+  const backShots = back.map((hole) => handicapShotsForHole(handicap, hole.strokeIndex, course.holes.length));
+  const totalShots = [...frontShots, ...backShots].reduce((sum, shots) => sum + Math.max(0, shots), 0);
+  const net = gross ? gross - totalShots : "";
   return `
     <tr class="scorecard-player-row">
-      <th>${escapeHtml(player.name)}</th>
-      ${frontScores.map((score) => `<td>${score || ""}</td>`).join("")}
+      <th>${escapeHtml(player.name)}${handicap !== null ? `<small>HCP ${formatHandicapIndex(handicap)}</small>` : ""}</th>
+      ${frontScores.map((score, index) => renderPlayerScoreCell(score, frontShots[index])).join("")}
       <td>${out || ""}</td>
       <td class="initials-cell"></td>
-      ${backScores.map((score) => `<td>${score || ""}</td>`).join("")}
+      ${backScores.map((score, index) => renderPlayerScoreCell(score, backShots[index])).join("")}
       <td>${inn || ""}</td>
       <td>${gross || ""}</td>
-      <td></td>
-      <td></td>
+      <td>${handicap !== null ? formatHandicapIndex(handicap) : ""}</td>
+      <td>${net || ""}</td>
     </tr>
   `;
+}
+
+function renderPlayerScoreCell(score, shots) {
+  const dots = shots > 0 ? `<span class="stroke-dots" aria-label="${shots} handicap shot${shots === 1 ? "" : "s"}">${Array.from({ length: shots }, () => "&bull;").join("")}</span>` : "";
+  return `<td class="${shots > 0 ? "stroke-hole" : ""}">${score || ""}${dots}</td>`;
+}
+
+function playerHandicap(player) {
+  if (player.handicap === null || player.handicap === undefined || player.handicap === "") {
+    return null;
+  }
+  const value = Number(player.handicap);
+  return Number.isFinite(value) ? clamp(value, -10, 54) : null;
+}
+
+function handicapShotsForHole(handicap, strokeIndex, holeCount = 18) {
+  if (!Number.isFinite(handicap) || handicap <= 0 || !Number.isFinite(Number(strokeIndex))) {
+    return 0;
+  }
+  const holes = Math.max(1, Number(holeCount) || 18);
+  const rounded = Math.round(handicap);
+  const base = Math.floor(rounded / holes);
+  const remainder = rounded % holes;
+  return base + (Number(strokeIndex) <= remainder ? 1 : 0);
 }
 
 function playerScorecardValue(round, holeNumber, playerId) {
@@ -4336,7 +4370,8 @@ function handleSubmit(event) {
       .map((index) => ({
         id: `player-${index + 1}`,
         name: String(data.get(`playerName${index}`) || "").trim(),
-        teeId: String(data.get(`playerTee${index}`) || "white")
+        teeId: String(data.get(`playerTee${index}`) || "white"),
+        handicap: parseHandicapInput(data.get(`playerHandicap${index}`))
       }))
       .filter((player, index) => player.name || index === 0)
       .map((player, index) => ({
@@ -4375,6 +4410,14 @@ function handleSubmit(event) {
     persist("Handicap saved.");
   }
 
+}
+
+function parseHandicapInput(value) {
+  if (value === null || value === undefined || String(value).trim() === "") {
+    return null;
+  }
+  const handicap = Number(value);
+  return Number.isFinite(handicap) ? clamp(handicap, -10, 54) : null;
 }
 
 function handicapSettings() {
@@ -4457,6 +4500,9 @@ function handleInput(event) {
   }
   if (event.target.matches("[data-action='club-select']")) {
     updateClub(event.target);
+  }
+  if (event.target.matches("[data-action='round-signature']")) {
+    updateRoundSignature(event.target);
   }
 }
 
@@ -5584,6 +5630,22 @@ function updateClub(select) {
     : entry;
   playerEntry.teeClubId = select.value;
   persistScoreEntry();
+}
+
+function updateRoundSignature(input) {
+  const round = getActiveRound(state);
+  if (!round) {
+    return;
+  }
+  const field = input.dataset.field;
+  if (!["scorer", "attest", "date"].includes(field)) {
+    return;
+  }
+  round.signatures = {
+    ...(round.signatures || {}),
+    [field]: String(input.value || "").trim()
+  };
+  saveState(state);
 }
 
 function moveHole(delta) {

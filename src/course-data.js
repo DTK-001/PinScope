@@ -108,7 +108,8 @@ function normalizeRoundPlayers(course, playerSetup) {
       .map((player, index) => ({
         id: player.id || `player-${index + 1}`,
         name: String(player.name).trim(),
-        teeId: player.teeId || course.tees?.[0]?.id || "white"
+        teeId: player.teeId || course.tees?.[0]?.id || "white",
+        handicap: normalizeHandicap(player.handicap)
       }));
   }
 
@@ -116,9 +117,18 @@ function normalizeRoundPlayers(course, playerSetup) {
     {
       id: "player-1",
       name: "Me",
-      teeId: playerSetup || course.tees?.[0]?.id || "white"
+      teeId: playerSetup || course.tees?.[0]?.id || "white",
+      handicap: null
     }
   ];
+}
+
+function normalizeHandicap(value) {
+  if (value === null || value === undefined || value === "") {
+    return null;
+  }
+  const handicap = Number(value);
+  return Number.isFinite(handicap) ? clamp(handicap, -10, 54) : null;
 }
 
 function makePlayerEntry(hole, playerId) {

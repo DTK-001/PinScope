@@ -952,7 +952,7 @@ p {
 
 .player-setup-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 120px;
+  grid-template-columns: minmax(0, 1fr) 112px 82px;
   gap: 10px;
   align-items: end;
 }
@@ -2497,6 +2497,33 @@ select option {
   background: linear-gradient(90deg, rgba(255, 79, 216, 0.26), rgba(141, 92, 255, 0.16));
 }
 
+.scorecard-player-row th small {
+  display: block;
+  margin-top: 2px;
+  color: rgba(248, 255, 251, 0.72);
+  font-size: 0.64em;
+}
+
+.scorecard-player-row td {
+  position: relative;
+}
+
+.scorecard-player-row td.stroke-hole {
+  background: rgba(53, 240, 193, 0.12);
+  box-shadow: inset 0 0 0 1px rgba(53, 240, 193, 0.26);
+}
+
+.stroke-dots {
+  position: absolute;
+  right: 3px;
+  bottom: 2px;
+  color: var(--accent-3);
+  font-size: 0.72em;
+  letter-spacing: 0;
+  line-height: 1;
+  text-shadow: 0 0 8px rgba(53, 240, 193, 0.7);
+}
+
 .round-scorecard-table .initials-cell {
   width: 48px;
   color: rgba(248, 255, 251, 0.58);
@@ -2513,14 +2540,32 @@ select option {
   border: 1px solid rgba(53, 240, 193, 0.22);
   background: rgba(53, 240, 193, 0.22);
   color: #f8fffb;
-  font-size: 0.72rem;
+  font-size: 0.62rem;
   font-weight: 900;
 }
 
-.round-scorecard-sign span {
-  min-height: 34px;
-  padding: 9px;
+.round-scorecard-sign label {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 6px;
+  align-items: center;
+  min-height: 28px;
+  padding: 5px 7px;
   background: rgba(255, 255, 255, 0.055);
+  color: rgba(248, 255, 251, 0.78);
+  font-size: inherit;
+  font-weight: 900;
+}
+
+.round-scorecard-sign input {
+  min-height: 24px;
+  border: 0;
+  border-radius: 0;
+  padding: 0 4px;
+  color: #f8fffb;
+  background: transparent;
+  font-size: 0.72rem;
+  font-weight: 800;
 }
 
 .gps-test-toolbar {
@@ -3393,7 +3438,8 @@ select option {
   .section-head,
   .action-band,
   .home-area,
-  .course-main {
+  .course-main,
+  .player-setup-row {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
     align-items: stretch;
