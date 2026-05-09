@@ -105,6 +105,7 @@ let satellitePreloadedUrls = new Set();
 let satellitePreloadingUrls = new Set();
 let notice = "";
 let scoreCardOpen = false;
+let finishRoundPrompt = null;
 
 render();
 registerServiceWorker();
@@ -170,6 +171,7 @@ function render() {
     </header>
     <main class="screen">${renderView()}</main>
     ${scoreCardOpen ? renderScoreCardOverlay() : ""}
+    ${finishRoundPrompt ? renderFinishRoundOverlay(finishRoundPrompt) : ""}
     ${notice ? `<aside class="toast" role="status">${escapeHtml(notice)}</aside>` : ""}
     <nav class="bottom-nav" aria-label="Primary">
       ${navItem("courses", "Courses", "C")}
@@ -783,8 +785,9 @@ function renderShotTracker(round, hole) {
   return `
     <div class="shot-tracker ${shotState.active ? "tracking" : ""}" aria-live="polite">
       ${shotState.status ? `<p>${escapeHtml(shotState.status)}</p>` : ""}
-      <button class="shot-track-button" type="button" data-action="track-shot">
-        ${escapeHtml(label)}
+      <button class="shot-track-button" type="button" data-action="track-shot" aria-label="${escapeAttribute(label)}">
+        <img src="${SCORE_BUTTON_IMAGE_SRC}" alt="" aria-hidden="true" />
+        <span>${escapeHtml(label)}</span>
       </button>
     </div>
   `;
@@ -865,6 +868,7 @@ function syncTrackedScore(round, holeNumber) {
   const score = trackedShotScore(entry);
   if (playerEntry && score > 0) {
     playerEntry.score = clamp(score, 1, 12);
+    playerEntry.scoreEntered = true;
   }
 }
 
@@ -1036,8 +1040,34 @@ function renderScoreCardOverlay() {
         </div>
         <footer class="score-card-footer">
           <button class="secondary-action" type="button" data-action="hole-prev">Prev</button>
-          <button class="primary-action" type="button" data-action="score-card-next">Save & Next</button>
+          <button class="primary-action" type="button" data-action="score-card-next">${Number(round.currentHole) >= course.holes.length ? "Finish Round" : "Save & Next"}</button>
         </footer>
+      </div>
+    </section>
+  `;
+}
+
+function renderFinishRoundOverlay(prompt) {
+  const missing = prompt.missing || [];
+  const hasMissing = missing.length > 0;
+  return `
+    <section class="score-card-backdrop finish-round-backdrop" role="dialog" aria-modal="true" aria-label="Finish round">
+      <div class="finish-round-sheet">
+        <header class="score-card-head">
+          <div>
+            <p class="eyebrow">${hasMissing ? "Score Check" : "Finish Round"}</p>
+            <h2>${hasMissing ? "Some holes need scores" : "Save this round?"}</h2>
+            <p>${hasMissing
+              ? `Missing score entry for hole${missing.length === 1 ? "" : "s"} ${missing.join(", ")}.`
+              : "Your scorecard is complete. Save it to stats or discard it."}</p>
+          </div>
+          <button class="icon-action" type="button" data-action="close-finish-round" aria-label="Close finish round">X</button>
+        </header>
+        <div class="finish-round-actions">
+          ${hasMissing ? `<button class="secondary-action" type="button" data-action="review-missing-scores">Add Missing Scores</button>` : ""}
+          <button class="primary-action" type="button" data-action="confirm-save-round">Save Round</button>
+          <button class="finish-action" type="button" data-action="discard-round">Discard Round</button>
+        </div>
       </div>
     </section>
   `;
@@ -4059,12 +4089,28 @@ function handleClick(event) {
   }
 
   if (action === "score-card-next") {
-    scoreCardOpen = false;
-    moveHole(1);
+    handleScoreCardNext();
   }
 
   if (action === "finish-round") {
-    finishRound();
+    requestFinishRound();
+  }
+
+  if (action === "close-finish-round") {
+    finishRoundPrompt = null;
+    render();
+  }
+
+  if (action === "review-missing-scores") {
+    reviewMissingScores();
+  }
+
+  if (action === "confirm-save-round") {
+    saveFinishedRound();
+  }
+
+  if (action === "discard-round") {
+    discardActiveRound();
   }
 
   if (action === "open-score-card") {
@@ -5208,6 +5254,9 @@ function updateEntryStep(button) {
   const min = Number(button.dataset.min);
   const max = Number(button.dataset.max);
   playerEntry[field] = clamp(Number(playerEntry[field] || 0) + delta, min, max);
+  if (field === "score") {
+    playerEntry.scoreEntered = true;
+  }
   persistScoreEntry();
 }
 
@@ -5221,6 +5270,9 @@ function updateEntryValue(button) {
     ? getPlayerEntry(round, Number(button.dataset.hole), button.dataset.playerId)
     : entry;
   playerEntry[button.dataset.field] = button.dataset.value;
+  if (button.dataset.field === "score") {
+    playerEntry.scoreEntered = true;
+  }
   persistScoreEntry();
 }
 
@@ -5461,7 +5513,64 @@ function downloadTextFile(filename, text, type = "text/plain") {
   URL.revokeObjectURL(url);
 }
 
-function finishRound() {
+function handleScoreCardNext() {
+  const round = getActiveRound(state);
+  const course = round ? getCourse(state, round.courseId) : null;
+  if (!round || !course) {
+    return;
+  }
+  if (Number(round.currentHole) >= course.holes.length) {
+    requestFinishRound();
+    return;
+  }
+  scoreCardOpen = false;
+  moveHole(1);
+}
+
+function requestFinishRound() {
+  const round = getActiveRound(state);
+  const course = round ? getCourse(state, round.courseId) : null;
+  if (!round || !course) {
+    return;
+  }
+  const missing = missingScoreHoles(round, course);
+  finishRoundPrompt = {
+    missing,
+    requestedAt: Date.now()
+  };
+  if (missing.length) {
+    flash(`Missing scores on hole${missing.length === 1 ? "" : "s"} ${missing.join(", ")}.`);
+  }
+  render();
+}
+
+function missingScoreHoles(round, course) {
+  return (course.holes || [])
+    .filter((hole) => {
+      const players = getRoundPlayers(round);
+      return players.some((player) => {
+        const entry = getPlayerEntry(round, hole.number, player.id) || getRoundEntry(round, hole.number);
+        return !entry || entry.scoreEntered !== true;
+      });
+    })
+    .map((hole) => hole.number);
+}
+
+function reviewMissingScores() {
+  const round = getActiveRound(state);
+  const missing = finishRoundPrompt?.missing || [];
+  if (!round || !missing.length) {
+    finishRoundPrompt = null;
+    render();
+    return;
+  }
+  round.currentHole = missing[0];
+  finishRoundPrompt = null;
+  scoreCardOpen = true;
+  persist("Add the missing score, then finish again.");
+}
+
+function saveFinishedRound() {
   const round = getActiveRound(state);
   if (!round) {
     return;
@@ -5469,9 +5578,25 @@ function finishRound() {
   round.status = "complete";
   round.completedAt = new Date().toISOString();
   state.activeRoundId = "";
+  scoreCardOpen = false;
+  finishRoundPrompt = null;
   view = "stats";
   window.location.hash = "stats";
   persist("Round saved.");
+}
+
+function discardActiveRound() {
+  const round = getActiveRound(state);
+  if (!round) {
+    return;
+  }
+  state.rounds = state.rounds.filter((item) => item.id !== round.id);
+  state.activeRoundId = "";
+  scoreCardOpen = false;
+  finishRoundPrompt = null;
+  view = "courses";
+  window.location.hash = "courses";
+  persist("Round discarded.");
 }
 
 async function importNearbyCourses() {

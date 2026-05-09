@@ -125,6 +125,7 @@ function makePlayerEntry(hole, playerId) {
   return {
     playerId,
     score: hole.par,
+    scoreEntered: false,
     putts: 2,
     fairway: "unset",
     gir: false,
