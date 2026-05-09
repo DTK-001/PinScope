@@ -536,15 +536,15 @@ p {
   right: calc(16px + env(safe-area-inset-right));
   bottom: calc(92px + env(safe-area-inset-bottom));
   z-index: 22;
-  min-height: 34px;
+  min-height: 42px;
   border: 1px solid rgba(255, 79, 216, 0.74);
   border-radius: 999px;
-  padding: 0 13px;
+  padding: 0 18px;
   color: #f8fffb;
   background: rgba(255, 79, 216, 0.18);
   cursor: pointer;
-  font-size: 0.72rem;
-  font-weight: 850;
+  font-size: 0.86rem;
+  font-weight: 950;
   text-shadow: 0 2px 10px rgba(0, 0, 0, 0.86);
 }
 
