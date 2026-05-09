@@ -1,4 +1,4 @@
-const CACHE_NAME = "local-loop-golf-v93";
+const CACHE_NAME = "local-loop-golf-v95";
 
 const APP_SHELL = [
   "./",
@@ -10,6 +10,8 @@ const APP_SHELL = [
   "./assets/home.png",
   "./assets/icon.svg",
   "./assets/pinscope-app-icon.png",
+  "./assets/pinscope-icon-192.png",
+  "./assets/pinscope-icon-512.png",
   "./assets/pinscope-complete-logo.png",
   "./assets/pinscope-name-logo.png",
   "./src/app.js",
