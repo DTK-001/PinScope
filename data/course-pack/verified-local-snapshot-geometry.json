@@ -3,7 +3,7 @@
     "id": "verified-ingrebourne-links",
     "source": "shared",
     "name": "Ingrebourne Links Golf & Country Club",
-    "geometrySource": "OpenStreetMap golf=hole ways fetched 2026-05-10; mapper exports rejected because they contained off-course duplicate green-only geometry",
+    "geometrySource": "OpenStreetMap golf=hole ways fetched 2026-05-10; duplicate OSM refs separated into Ingrebourne North front nine and East back nine by scorecard yardage; mapper exports rejected because they contained off-course duplicate green-only geometry",
     "attribution": "Hole geometry from OpenStreetMap contributors under ODbL. Imagery: Azure Maps.",
     "holes": [
       {
@@ -20,6 +20,7 @@
           "source": "OpenStreetMap golf=hole way",
           "osm": "way/904333426",
           "yards": 408,
+          "route": "North",
           "updatedAt": "2026-05-10T00:00:00.000Z"
         }
       },
@@ -37,6 +38,7 @@
           "source": "OpenStreetMap golf=hole way",
           "osm": "way/904333431",
           "yards": 395,
+          "route": "North",
           "updatedAt": "2026-05-10T00:00:00.000Z"
         }
       },
@@ -54,6 +56,7 @@
           "source": "OpenStreetMap golf=hole way",
           "osm": "way/904333432",
           "yards": 498,
+          "route": "North",
           "updatedAt": "2026-05-10T00:00:00.000Z"
         }
       },
@@ -71,6 +74,7 @@
           "source": "OpenStreetMap golf=hole way",
           "osm": "way/904333446",
           "yards": 421,
+          "route": "North",
           "updatedAt": "2026-05-10T00:00:00.000Z"
         }
       },
@@ -88,40 +92,43 @@
           "source": "OpenStreetMap golf=hole way",
           "osm": "way/904333434",
           "yards": 458,
+          "route": "North",
           "updatedAt": "2026-05-10T00:00:00.000Z"
         }
       },
       {
         "number": 6,
         "tee": {
-          "lat": 51.513305,
-          "lng": 0.239421
+          "lat": 51.516312,
+          "lng": 0.232236
         },
         "greenCenter": {
-          "lat": 51.51419,
-          "lng": 0.231374
+          "lat": 51.5189,
+          "lng": 0.235483
         },
         "mapping": {
           "source": "OpenStreetMap golf=hole way",
-          "osm": "way/904333449",
-          "yards": 618,
+          "osm": "way/904333445",
+          "yards": 399,
+          "route": "North",
           "updatedAt": "2026-05-10T00:00:00.000Z"
         }
       },
       {
         "number": 7,
         "tee": {
-          "lat": 51.513512,
-          "lng": 0.230634
+          "lat": 51.519079,
+          "lng": 0.234988
         },
         "greenCenter": {
-          "lat": 51.513228,
-          "lng": 0.23634
+          "lat": 51.516506,
+          "lng": 0.231642
         },
         "mapping": {
           "source": "OpenStreetMap golf=hole way",
-          "osm": "way/904333450",
-          "yards": 433,
+          "osm": "way/904333433",
+          "yards": 403,
+          "route": "North",
           "updatedAt": "2026-05-10T00:00:00.000Z"
         }
       },
@@ -139,11 +146,174 @@
           "source": "OpenStreetMap golf=hole way",
           "osm": "way/904333444",
           "yards": 152,
+          "route": "North",
           "updatedAt": "2026-05-10T00:00:00.000Z"
         }
       },
       {
         "number": 9,
+        "tee": {
+          "lat": 51.516273,
+          "lng": 0.228727
+        },
+        "greenCenter": {
+          "lat": 51.513884,
+          "lng": 0.22434
+        },
+        "mapping": {
+          "source": "OpenStreetMap golf=hole way",
+          "osm": "way/904333430",
+          "yards": 441,
+          "route": "North",
+          "updatedAt": "2026-05-10T00:00:00.000Z"
+        }
+      },
+      {
+        "number": 10,
+        "tee": {
+          "lat": 51.512641,
+          "lng": 0.224851
+        },
+        "greenCenter": {
+          "lat": 51.513876,
+          "lng": 0.229251
+        },
+        "mapping": {
+          "source": "OpenStreetMap golf=hole way",
+          "osm": "way/904333427",
+          "yards": 365,
+          "route": "East",
+          "updatedAt": "2026-05-10T00:00:00.000Z"
+        }
+      },
+      {
+        "number": 11,
+        "tee": {
+          "lat": 51.514269,
+          "lng": 0.228343
+        },
+        "greenCenter": {
+          "lat": 51.513581,
+          "lng": 0.226101
+        },
+        "mapping": {
+          "source": "OpenStreetMap golf=hole way",
+          "osm": "way/904333452",
+          "yards": 189,
+          "route": "East",
+          "updatedAt": "2026-05-10T00:00:00.000Z"
+        }
+      },
+      {
+        "number": 12,
+        "tee": {
+          "lat": 51.514129,
+          "lng": 0.225905
+        },
+        "greenCenter": {
+          "lat": 51.515383,
+          "lng": 0.231377
+        },
+        "mapping": {
+          "source": "OpenStreetMap golf=hole way",
+          "osm": "way/904333429",
+          "yards": 441,
+          "route": "East",
+          "updatedAt": "2026-05-10T00:00:00.000Z"
+        }
+      },
+      {
+        "number": 13,
+        "tee": {
+          "lat": 51.515264,
+          "lng": 0.233272
+        },
+        "greenCenter": {
+          "lat": 51.515736,
+          "lng": 0.238207
+        },
+        "mapping": {
+          "source": "OpenStreetMap golf=hole way",
+          "osm": "way/904333448",
+          "yards": 378,
+          "route": "East",
+          "updatedAt": "2026-05-10T00:00:00.000Z"
+        }
+      },
+      {
+        "number": 14,
+        "tee": {
+          "lat": 51.515713,
+          "lng": 0.238941
+        },
+        "greenCenter": {
+          "lat": 51.514141,
+          "lng": 0.238947
+        },
+        "mapping": {
+          "source": "OpenStreetMap golf=hole way",
+          "osm": "way/904333447",
+          "yards": 191,
+          "route": "East",
+          "updatedAt": "2026-05-10T00:00:00.000Z"
+        }
+      },
+      {
+        "number": 15,
+        "tee": {
+          "lat": 51.513305,
+          "lng": 0.239421
+        },
+        "greenCenter": {
+          "lat": 51.51419,
+          "lng": 0.231374
+        },
+        "mapping": {
+          "source": "OpenStreetMap golf=hole way",
+          "osm": "way/904333449",
+          "yards": 618,
+          "route": "East",
+          "updatedAt": "2026-05-10T00:00:00.000Z"
+        }
+      },
+      {
+        "number": 16,
+        "tee": {
+          "lat": 51.513512,
+          "lng": 0.230634
+        },
+        "greenCenter": {
+          "lat": 51.513228,
+          "lng": 0.23634
+        },
+        "mapping": {
+          "source": "OpenStreetMap golf=hole way",
+          "osm": "way/904333450",
+          "yards": 433,
+          "route": "East",
+          "updatedAt": "2026-05-10T00:00:00.000Z"
+        }
+      },
+      {
+        "number": 17,
+        "tee": {
+          "lat": 51.512847,
+          "lng": 0.235621
+        },
+        "greenCenter": {
+          "lat": 51.512907,
+          "lng": 0.233791
+        },
+        "mapping": {
+          "source": "OpenStreetMap golf=hole way",
+          "osm": "way/904333451",
+          "yards": 139,
+          "route": "East",
+          "updatedAt": "2026-05-10T00:00:00.000Z"
+        }
+      },
+      {
+        "number": 18,
         "tee": {
           "lat": 51.513101,
           "lng": 0.232973
@@ -156,6 +326,7 @@
           "source": "OpenStreetMap golf=hole way",
           "osm": "way/904333428",
           "yards": 574,
+          "route": "East",
           "updatedAt": "2026-05-10T00:00:00.000Z"
         }
       }
@@ -472,6 +643,717 @@
           "osm": "way/958449517",
           "yards": 379,
           "updatedAt": "2026-05-10T00:00:00.000Z"
+        }
+      }
+    ]
+  },
+  {
+    "id": "verified-langdon-hills-langdon",
+    "source": "shared",
+    "name": "Langdon Hills Golf & Country Club - Langdon",
+    "geometrySource": "Derived 2026-05-10 from verified-langdon-hills holes 1-9, matching the Langdon loop",
+    "attribution": "Hole geometry from OpenStreetMap contributors under ODbL. Imagery: Azure Maps.",
+    "holes": [
+      {
+        "number": 1,
+        "tee": {
+          "lat": 51.545101,
+          "lng": 0.396195
+        },
+        "greenCenter": {
+          "lat": 51.546681,
+          "lng": 0.399796
+        },
+        "mapping": {
+          "source": "Derived from Langdon Hills OpenStreetMap golf=hole way",
+          "osm": "way/1285961891",
+          "yards": 333,
+          "updatedAt": "2026-05-10T00:00:00.000Z",
+          "originalCourse": "verified-langdon-hills",
+          "originalHole": 1
+        }
+      },
+      {
+        "number": 2,
+        "tee": {
+          "lat": 51.54679,
+          "lng": 0.400398
+        },
+        "greenCenter": {
+          "lat": 51.549627,
+          "lng": 0.398303
+        },
+        "mapping": {
+          "source": "Derived from Langdon Hills OpenStreetMap golf=hole way",
+          "osm": "way/1285967212",
+          "yards": 380,
+          "updatedAt": "2026-05-10T00:00:00.000Z",
+          "originalCourse": "verified-langdon-hills",
+          "originalHole": 2
+        }
+      },
+      {
+        "number": 3,
+        "tee": {
+          "lat": 51.549524,
+          "lng": 0.397475
+        },
+        "greenCenter": {
+          "lat": 51.54687,
+          "lng": 0.39829
+        },
+        "mapping": {
+          "source": "Derived from Langdon Hills OpenStreetMap golf=hole way",
+          "osm": "way/1285972856",
+          "yards": 328,
+          "updatedAt": "2026-05-10T00:00:00.000Z",
+          "originalCourse": "verified-langdon-hills",
+          "originalHole": 3
+        }
+      },
+      {
+        "number": 4,
+        "tee": {
+          "lat": 51.546539,
+          "lng": 0.397311
+        },
+        "greenCenter": {
+          "lat": 51.549388,
+          "lng": 0.396935
+        },
+        "mapping": {
+          "source": "Derived from Langdon Hills OpenStreetMap golf=hole way",
+          "osm": "way/1287358330",
+          "yards": 348,
+          "updatedAt": "2026-05-10T00:00:00.000Z",
+          "originalCourse": "verified-langdon-hills",
+          "originalHole": 4
+        }
+      },
+      {
+        "number": 5,
+        "tee": {
+          "lat": 51.549499,
+          "lng": 0.396456
+        },
+        "greenCenter": {
+          "lat": 51.549215,
+          "lng": 0.39433
+        },
+        "mapping": {
+          "source": "Derived from Langdon Hills OpenStreetMap golf=hole way",
+          "osm": "way/1287363281",
+          "yards": 164,
+          "updatedAt": "2026-05-10T00:00:00.000Z",
+          "originalCourse": "verified-langdon-hills",
+          "originalHole": 5
+        }
+      },
+      {
+        "number": 6,
+        "tee": {
+          "lat": 51.548764,
+          "lng": 0.394368
+        },
+        "greenCenter": {
+          "lat": 51.545352,
+          "lng": 0.395698
+        },
+        "mapping": {
+          "source": "Derived from Langdon Hills OpenStreetMap golf=hole way",
+          "osm": "way/1287367398",
+          "yards": 427,
+          "updatedAt": "2026-05-10T00:00:00.000Z",
+          "originalCourse": "verified-langdon-hills",
+          "originalHole": 6
+        }
+      },
+      {
+        "number": 7,
+        "tee": {
+          "lat": 51.544949,
+          "lng": 0.396322
+        },
+        "greenCenter": {
+          "lat": 51.546313,
+          "lng": 0.400138
+        },
+        "mapping": {
+          "source": "Derived from Langdon Hills OpenStreetMap golf=hole way",
+          "osm": "way/1287374830",
+          "yards": 333,
+          "updatedAt": "2026-05-10T00:00:00.000Z",
+          "originalCourse": "verified-langdon-hills",
+          "originalHole": 7
+        }
+      },
+      {
+        "number": 8,
+        "tee": {
+          "lat": 51.546354,
+          "lng": 0.400626
+        },
+        "greenCenter": {
+          "lat": 51.544973,
+          "lng": 0.400676
+        },
+        "mapping": {
+          "source": "Derived from Langdon Hills OpenStreetMap golf=hole way",
+          "osm": "way/1287377290",
+          "yards": 168,
+          "updatedAt": "2026-05-10T00:00:00.000Z",
+          "originalCourse": "verified-langdon-hills",
+          "originalHole": 8
+        }
+      },
+      {
+        "number": 9,
+        "tee": {
+          "lat": 51.544669,
+          "lng": 0.400801
+        },
+        "greenCenter": {
+          "lat": 51.544646,
+          "lng": 0.396548
+        },
+        "mapping": {
+          "source": "Derived from Langdon Hills OpenStreetMap golf=hole way",
+          "osm": "way/1287383012",
+          "yards": 322,
+          "updatedAt": "2026-05-10T00:00:00.000Z",
+          "originalCourse": "verified-langdon-hills",
+          "originalHole": 9
+        }
+      }
+    ]
+  },
+  {
+    "id": "verified-langdon-hills-bulphan",
+    "source": "shared",
+    "name": "Langdon Hills Golf & Country Club - Bulphan",
+    "geometrySource": "Derived 2026-05-10 from verified-langdon-hills holes 10-18, matching the Bulphan loop",
+    "attribution": "Hole geometry from OpenStreetMap contributors under ODbL. Imagery: Azure Maps.",
+    "holes": [
+      {
+        "number": 1,
+        "tee": {
+          "lat": 51.5441,
+          "lng": 0.394848
+        },
+        "greenCenter": {
+          "lat": 51.540863,
+          "lng": 0.391744
+        },
+        "mapping": {
+          "source": "Derived from Langdon Hills OpenStreetMap golf=hole way",
+          "osm": "way/958440692",
+          "yards": 458,
+          "updatedAt": "2026-05-10T00:00:00.000Z",
+          "originalCourse": "verified-langdon-hills",
+          "originalHole": 10
+        }
+      },
+      {
+        "number": 2,
+        "tee": {
+          "lat": 51.54184,
+          "lng": 0.391328
+        },
+        "greenCenter": {
+          "lat": 51.545028,
+          "lng": 0.390447
+        },
+        "mapping": {
+          "source": "Derived from Langdon Hills OpenStreetMap golf=hole way",
+          "osm": "way/958440696",
+          "yards": 393,
+          "updatedAt": "2026-05-10T00:00:00.000Z",
+          "originalCourse": "verified-langdon-hills",
+          "originalHole": 11
+        }
+      },
+      {
+        "number": 3,
+        "tee": {
+          "lat": 51.54481,
+          "lng": 0.389964
+        },
+        "greenCenter": {
+          "lat": 51.548691,
+          "lng": 0.388697
+        },
+        "mapping": {
+          "source": "Derived from Langdon Hills OpenStreetMap golf=hole way",
+          "osm": "way/958443850",
+          "yards": 482,
+          "updatedAt": "2026-05-10T00:00:00.000Z",
+          "originalCourse": "verified-langdon-hills",
+          "originalHole": 12
+        }
+      },
+      {
+        "number": 4,
+        "tee": {
+          "lat": 51.548907,
+          "lng": 0.388447
+        },
+        "greenCenter": {
+          "lat": 51.54875,
+          "lng": 0.392659
+        },
+        "mapping": {
+          "source": "Derived from Langdon Hills OpenStreetMap golf=hole way",
+          "osm": "way/958443857",
+          "yards": 319,
+          "updatedAt": "2026-05-10T00:00:00.000Z",
+          "originalCourse": "verified-langdon-hills",
+          "originalHole": 13
+        }
+      },
+      {
+        "number": 5,
+        "tee": {
+          "lat": 51.548754,
+          "lng": 0.393128
+        },
+        "greenCenter": {
+          "lat": 51.547825,
+          "lng": 0.394161
+        },
+        "mapping": {
+          "source": "Derived from Langdon Hills OpenStreetMap golf=hole way",
+          "osm": "way/958443866",
+          "yards": 137,
+          "updatedAt": "2026-05-10T00:00:00.000Z",
+          "originalCourse": "verified-langdon-hills",
+          "originalHole": 14
+        }
+      },
+      {
+        "number": 6,
+        "tee": {
+          "lat": 51.547175,
+          "lng": 0.394422
+        },
+        "greenCenter": {
+          "lat": 51.548446,
+          "lng": 0.389852
+        },
+        "mapping": {
+          "source": "Derived from Langdon Hills OpenStreetMap golf=hole way",
+          "osm": "way/1285789776",
+          "yards": 379,
+          "updatedAt": "2026-05-10T00:00:00.000Z",
+          "originalCourse": "verified-langdon-hills",
+          "originalHole": 15
+        }
+      },
+      {
+        "number": 7,
+        "tee": {
+          "lat": 51.547704,
+          "lng": 0.390235
+        },
+        "greenCenter": {
+          "lat": 51.543819,
+          "lng": 0.391711
+        },
+        "mapping": {
+          "source": "Derived from Langdon Hills OpenStreetMap golf=hole way",
+          "osm": "way/958446085",
+          "yards": 485,
+          "updatedAt": "2026-05-10T00:00:00.000Z",
+          "originalCourse": "verified-langdon-hills",
+          "originalHole": 16
+        }
+      },
+      {
+        "number": 8,
+        "tee": {
+          "lat": 51.543334,
+          "lng": 0.39186
+        },
+        "greenCenter": {
+          "lat": 51.542175,
+          "lng": 0.392058
+        },
+        "mapping": {
+          "source": "Derived from Langdon Hills OpenStreetMap golf=hole way",
+          "osm": "way/958446855",
+          "yards": 142,
+          "updatedAt": "2026-05-10T00:00:00.000Z",
+          "originalCourse": "verified-langdon-hills",
+          "originalHole": 17
+        }
+      },
+      {
+        "number": 9,
+        "tee": {
+          "lat": 51.541611,
+          "lng": 0.392081
+        },
+        "greenCenter": {
+          "lat": 51.544386,
+          "lng": 0.394372
+        },
+        "mapping": {
+          "source": "Derived from Langdon Hills OpenStreetMap golf=hole way",
+          "osm": "way/958449517",
+          "yards": 379,
+          "updatedAt": "2026-05-10T00:00:00.000Z",
+          "originalCourse": "verified-langdon-hills",
+          "originalHole": 18
+        }
+      }
+    ]
+  },
+  {
+    "id": "verified-langdon-hills-bulphan-langdon",
+    "source": "shared",
+    "name": "Langdon Hills Golf & Country Club - Bulphan/Langdon",
+    "geometrySource": "Derived 2026-05-10 from verified-langdon-hills Bulphan holes 10-18 followed by Langdon holes 1-9",
+    "attribution": "Hole geometry from OpenStreetMap contributors under ODbL. Imagery: Azure Maps.",
+    "holes": [
+      {
+        "number": 1,
+        "tee": {
+          "lat": 51.5441,
+          "lng": 0.394848
+        },
+        "greenCenter": {
+          "lat": 51.540863,
+          "lng": 0.391744
+        },
+        "mapping": {
+          "source": "Derived from Langdon Hills OpenStreetMap golf=hole way",
+          "osm": "way/958440692",
+          "yards": 458,
+          "updatedAt": "2026-05-10T00:00:00.000Z",
+          "originalCourse": "verified-langdon-hills",
+          "originalHole": 10
+        }
+      },
+      {
+        "number": 2,
+        "tee": {
+          "lat": 51.54184,
+          "lng": 0.391328
+        },
+        "greenCenter": {
+          "lat": 51.545028,
+          "lng": 0.390447
+        },
+        "mapping": {
+          "source": "Derived from Langdon Hills OpenStreetMap golf=hole way",
+          "osm": "way/958440696",
+          "yards": 393,
+          "updatedAt": "2026-05-10T00:00:00.000Z",
+          "originalCourse": "verified-langdon-hills",
+          "originalHole": 11
+        }
+      },
+      {
+        "number": 3,
+        "tee": {
+          "lat": 51.54481,
+          "lng": 0.389964
+        },
+        "greenCenter": {
+          "lat": 51.548691,
+          "lng": 0.388697
+        },
+        "mapping": {
+          "source": "Derived from Langdon Hills OpenStreetMap golf=hole way",
+          "osm": "way/958443850",
+          "yards": 482,
+          "updatedAt": "2026-05-10T00:00:00.000Z",
+          "originalCourse": "verified-langdon-hills",
+          "originalHole": 12
+        }
+      },
+      {
+        "number": 4,
+        "tee": {
+          "lat": 51.548907,
+          "lng": 0.388447
+        },
+        "greenCenter": {
+          "lat": 51.54875,
+          "lng": 0.392659
+        },
+        "mapping": {
+          "source": "Derived from Langdon Hills OpenStreetMap golf=hole way",
+          "osm": "way/958443857",
+          "yards": 319,
+          "updatedAt": "2026-05-10T00:00:00.000Z",
+          "originalCourse": "verified-langdon-hills",
+          "originalHole": 13
+        }
+      },
+      {
+        "number": 5,
+        "tee": {
+          "lat": 51.548754,
+          "lng": 0.393128
+        },
+        "greenCenter": {
+          "lat": 51.547825,
+          "lng": 0.394161
+        },
+        "mapping": {
+          "source": "Derived from Langdon Hills OpenStreetMap golf=hole way",
+          "osm": "way/958443866",
+          "yards": 137,
+          "updatedAt": "2026-05-10T00:00:00.000Z",
+          "originalCourse": "verified-langdon-hills",
+          "originalHole": 14
+        }
+      },
+      {
+        "number": 6,
+        "tee": {
+          "lat": 51.547175,
+          "lng": 0.394422
+        },
+        "greenCenter": {
+          "lat": 51.548446,
+          "lng": 0.389852
+        },
+        "mapping": {
+          "source": "Derived from Langdon Hills OpenStreetMap golf=hole way",
+          "osm": "way/1285789776",
+          "yards": 379,
+          "updatedAt": "2026-05-10T00:00:00.000Z",
+          "originalCourse": "verified-langdon-hills",
+          "originalHole": 15
+        }
+      },
+      {
+        "number": 7,
+        "tee": {
+          "lat": 51.547704,
+          "lng": 0.390235
+        },
+        "greenCenter": {
+          "lat": 51.543819,
+          "lng": 0.391711
+        },
+        "mapping": {
+          "source": "Derived from Langdon Hills OpenStreetMap golf=hole way",
+          "osm": "way/958446085",
+          "yards": 485,
+          "updatedAt": "2026-05-10T00:00:00.000Z",
+          "originalCourse": "verified-langdon-hills",
+          "originalHole": 16
+        }
+      },
+      {
+        "number": 8,
+        "tee": {
+          "lat": 51.543334,
+          "lng": 0.39186
+        },
+        "greenCenter": {
+          "lat": 51.542175,
+          "lng": 0.392058
+        },
+        "mapping": {
+          "source": "Derived from Langdon Hills OpenStreetMap golf=hole way",
+          "osm": "way/958446855",
+          "yards": 142,
+          "updatedAt": "2026-05-10T00:00:00.000Z",
+          "originalCourse": "verified-langdon-hills",
+          "originalHole": 17
+        }
+      },
+      {
+        "number": 9,
+        "tee": {
+          "lat": 51.541611,
+          "lng": 0.392081
+        },
+        "greenCenter": {
+          "lat": 51.544386,
+          "lng": 0.394372
+        },
+        "mapping": {
+          "source": "Derived from Langdon Hills OpenStreetMap golf=hole way",
+          "osm": "way/958449517",
+          "yards": 379,
+          "updatedAt": "2026-05-10T00:00:00.000Z",
+          "originalCourse": "verified-langdon-hills",
+          "originalHole": 18
+        }
+      },
+      {
+        "number": 10,
+        "tee": {
+          "lat": 51.545101,
+          "lng": 0.396195
+        },
+        "greenCenter": {
+          "lat": 51.546681,
+          "lng": 0.399796
+        },
+        "mapping": {
+          "source": "Derived from Langdon Hills OpenStreetMap golf=hole way",
+          "osm": "way/1285961891",
+          "yards": 333,
+          "updatedAt": "2026-05-10T00:00:00.000Z",
+          "originalCourse": "verified-langdon-hills",
+          "originalHole": 1
+        }
+      },
+      {
+        "number": 11,
+        "tee": {
+          "lat": 51.54679,
+          "lng": 0.400398
+        },
+        "greenCenter": {
+          "lat": 51.549627,
+          "lng": 0.398303
+        },
+        "mapping": {
+          "source": "Derived from Langdon Hills OpenStreetMap golf=hole way",
+          "osm": "way/1285967212",
+          "yards": 380,
+          "updatedAt": "2026-05-10T00:00:00.000Z",
+          "originalCourse": "verified-langdon-hills",
+          "originalHole": 2
+        }
+      },
+      {
+        "number": 12,
+        "tee": {
+          "lat": 51.549524,
+          "lng": 0.397475
+        },
+        "greenCenter": {
+          "lat": 51.54687,
+          "lng": 0.39829
+        },
+        "mapping": {
+          "source": "Derived from Langdon Hills OpenStreetMap golf=hole way",
+          "osm": "way/1285972856",
+          "yards": 328,
+          "updatedAt": "2026-05-10T00:00:00.000Z",
+          "originalCourse": "verified-langdon-hills",
+          "originalHole": 3
+        }
+      },
+      {
+        "number": 13,
+        "tee": {
+          "lat": 51.546539,
+          "lng": 0.397311
+        },
+        "greenCenter": {
+          "lat": 51.549388,
+          "lng": 0.396935
+        },
+        "mapping": {
+          "source": "Derived from Langdon Hills OpenStreetMap golf=hole way",
+          "osm": "way/1287358330",
+          "yards": 348,
+          "updatedAt": "2026-05-10T00:00:00.000Z",
+          "originalCourse": "verified-langdon-hills",
+          "originalHole": 4
+        }
+      },
+      {
+        "number": 14,
+        "tee": {
+          "lat": 51.549499,
+          "lng": 0.396456
+        },
+        "greenCenter": {
+          "lat": 51.549215,
+          "lng": 0.39433
+        },
+        "mapping": {
+          "source": "Derived from Langdon Hills OpenStreetMap golf=hole way",
+          "osm": "way/1287363281",
+          "yards": 164,
+          "updatedAt": "2026-05-10T00:00:00.000Z",
+          "originalCourse": "verified-langdon-hills",
+          "originalHole": 5
+        }
+      },
+      {
+        "number": 15,
+        "tee": {
+          "lat": 51.548764,
+          "lng": 0.394368
+        },
+        "greenCenter": {
+          "lat": 51.545352,
+          "lng": 0.395698
+        },
+        "mapping": {
+          "source": "Derived from Langdon Hills OpenStreetMap golf=hole way",
+          "osm": "way/1287367398",
+          "yards": 427,
+          "updatedAt": "2026-05-10T00:00:00.000Z",
+          "originalCourse": "verified-langdon-hills",
+          "originalHole": 6
+        }
+      },
+      {
+        "number": 16,
+        "tee": {
+          "lat": 51.544949,
+          "lng": 0.396322
+        },
+        "greenCenter": {
+          "lat": 51.546313,
+          "lng": 0.400138
+        },
+        "mapping": {
+          "source": "Derived from Langdon Hills OpenStreetMap golf=hole way",
+          "osm": "way/1287374830",
+          "yards": 333,
+          "updatedAt": "2026-05-10T00:00:00.000Z",
+          "originalCourse": "verified-langdon-hills",
+          "originalHole": 7
+        }
+      },
+      {
+        "number": 17,
+        "tee": {
+          "lat": 51.546354,
+          "lng": 0.400626
+        },
+        "greenCenter": {
+          "lat": 51.544973,
+          "lng": 0.400676
+        },
+        "mapping": {
+          "source": "Derived from Langdon Hills OpenStreetMap golf=hole way",
+          "osm": "way/1287377290",
+          "yards": 168,
+          "updatedAt": "2026-05-10T00:00:00.000Z",
+          "originalCourse": "verified-langdon-hills",
+          "originalHole": 8
+        }
+      },
+      {
+        "number": 18,
+        "tee": {
+          "lat": 51.544669,
+          "lng": 0.400801
+        },
+        "greenCenter": {
+          "lat": 51.544646,
+          "lng": 0.396548
+        },
+        "mapping": {
+          "source": "Derived from Langdon Hills OpenStreetMap golf=hole way",
+          "osm": "way/1287383012",
+          "yards": 322,
+          "updatedAt": "2026-05-10T00:00:00.000Z",
+          "originalCourse": "verified-langdon-hills",
+          "originalHole": 9
         }
       }
     ]
