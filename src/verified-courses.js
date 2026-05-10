@@ -18,6 +18,16 @@ const MARDYKE_COURSE_ID = "verified-mardyke-valley";
 const ORSETT_COURSE_ID = "verified-orsett";
 const WARLEY_COURSE_ID = "verified-warley-park";
 const CANVEY_COURSE_ID = "verified-castle-point-canvey";
+const MID_KENT_COURSE_ID = "verified-mid-kent";
+const ST_CLERES_COURSE_ID = "verified-st-cleres-hall";
+const TOP_MEADOW_COURSE_ID = "verified-top-meadow";
+const INGREBOURNE_COURSE_ID = "verified-ingrebourne-links";
+const PRINCES_PARK_COURSE_ID = "verified-princes-park";
+const GRAVESEND_COURSE_ID = "verified-gravesend-golf-centre";
+const LANGDON_HILLS_COURSE_ID = "verified-langdon-hills";
+const DARTFORD_COURSE_ID = "verified-dartford";
+const FAWKHAM_COURSE_ID = "verified-corinthian-fawkham-valley";
+const BARNEHURST_COURSE_ID = "verified-barnehurst";
 
 const BELHUS_SCORECARD = {
   par: [4, 4, 4, 4, 4, 3, 4, 3, 4, 4, 3, 4, 4, 3, 4, 5, 3, 5],
@@ -67,12 +77,93 @@ const WARLEY_SCORECARD = {
   yellow: [286, 435, 117, 385, 524, 406, 263, 138, 376, 335, 220, 338, 451, 147, 315, 246, 286, 157]
 };
 
+const MID_KENT_SCORECARD = {
+  par: [3, 4, 5, 3, 5, 4, 3, 5, 3, 4, 4, 4, 3, 4, 4, 3, 5, 4],
+  strokeIndex: [14, 4, 10, 12, 16, 2, 18, 6, 8, 3, 17, 1, 13, 7, 15, 9, 11, 5],
+  white: [157, 375, 473, 165, 476, 432, 146, 560, 188, 421, 245, 448, 179, 346, 324, 202, 518, 445],
+  yellow: [145, 365, 463, 158, 462, 422, 141, 553, 174, 394, 240, 438, 174, 337, 315, 194, 512, 436]
+};
+
+const ST_CLERES_SCORECARD = {
+  par: [3, 3, 3, 3, 3, 3, 3, 3, 3],
+  strokeIndex: [1, 2, 3, 4, 5, 6, 7, 8, 9],
+  yellow: [114, 91, 130, 85, 78, 182, 50, 96, 82]
+};
+
+const TOP_MEADOW_SCORECARD = {
+  par: [3, 4, 5, 4, 3, 4, 4, 4, 4, 5, 3, 4, 4, 5, 4, 4, 5, 3],
+  strokeIndex: [13, 9, 11, 3, 16, 18, 7, 5, 15, 2, 10, 14, 12, 6, 1, 4, 8, 17],
+  white: [177, 332, 528, 366, 132, 292, 366, 359, 246, 579, 184, 316, 368, 510, 445, 403, 486, 139],
+  yellow: [151, 325, 512, 343, 127, 273, 353, 348, 239, 561, 177, 306, 358, 495, 433, 386, 475, 130]
+};
+
+const INGREBOURNE_SCORECARD = {
+  par: [4, 4, 5, 4, 4, 4, 4, 3, 5, 4, 3, 4, 4, 3, 5, 4, 3, 5],
+  strokeIndex: [5, 9, 13, 3, 1, 11, 7, 17, 15, 16, 10, 4, 6, 12, 2, 8, 18, 14],
+  black: [413, 408, 503, 428, 459, 411, 409, 168, 502, 378, 186, 454, 413, 192, 634, 443, 140, 581],
+  white: [402, 390, 480, 404, 431, 381, 382, 154, 477, 347, 168, 434, 385, 166, 599, 386, 120, 527],
+  yellow: [391, 371, 442, 384, 392, 358, 365, 141, 472, 321, 147, 423, 367, 130, 563, 329, 120, 471]
+};
+
+const PRINCES_PARK_SCORECARD = {
+  par: [3, 3, 3, 3, 3, 3, 3, 3, 3],
+  strokeIndex: [3, 5, 7, 2, 6, 4, 1, 9, 8],
+  white: [119, 121, 88, 136, 118, 130, 140, 81, 87]
+};
+
+const GRAVESEND_SCORECARD = {
+  par: [3, 3, 3, 3, 3, 3, 3, 3, 3],
+  strokeIndex: [8, 5, 1, 4, 2, 7, 9, 3, 6],
+  yellow: [101, 118, 149, 168, 154, 118, 100, 155, 127],
+  red: [300, 300, 300, 300, 300, 300, 300, 300, 300]
+};
+
+const LANGDON_HILLS_SCORECARD = {
+  par: [4, 4, 4, 4, 3, 5, 4, 3, 4, 5, 4, 5, 4, 3, 4, 5, 3, 4],
+  strokeIndex: [16, 4, 14, 8, 18, 12, 2, 10, 6, 13, 3, 9, 17, 7, 1, 11, 15, 5],
+  blue: [369, 417, 340, 407, 194, 562, 380, 182, 361, 511, 472, 553, 317, 162, 445, 504, 194, 454],
+  white: [369, 417, 340, 407, 173, 482, 380, 182, 350, 511, 404, 553, 317, 162, 412, 504, 165, 454],
+  yellow: [349, 393, 333, 375, 173, 469, 359, 174, 325, 491, 400, 495, 310, 144, 394, 495, 141, 396]
+};
+
+const DARTFORD_SCORECARD = {
+  par: [3, 4, 4, 4, 4, 3, 4, 5, 3, 4, 3, 5, 4, 4, 4, 3, 4, 4],
+  strokeIndex: [11, 5, 13, 1, 7, 17, 3, 15, 9, 8, 18, 10, 2, 14, 4, 6, 12, 16],
+  white: [202, 365, 374, 422, 394, 117, 431, 487, 212, 282, 141, 487, 427, 362, 370, 245, 321, 270],
+  yellow: [185, 353, 362, 410, 382, 117, 419, 468, 200, 270, 141, 475, 412, 348, 354, 245, 307, 270],
+  red: [172, 340, 331, 354, 362, 106, 381, 425, 190, 248, 126, 441, 425, 320, 266, 233, 281, 258]
+};
+
+const FAWKHAM_SCORECARD = {
+  par: [5, 3, 4, 4, 4, 4, 5, 3, 4],
+  strokeIndex: [5, 13, 11, 9, 1, 7, 15, 17, 3],
+  white: [552, 148, 326, 361, 423, 410, 504, 248, 368],
+  yellow: [539, 137, 322, 360, 418, 402, 491, 230, 356]
+};
+
+const BARNEHURST_SCORECARD = {
+  par: [3, 5, 3, 3, 4, 4, 4, 4, 4],
+  strokeIndex: [7, 3, 15, 13, 11, 9, 5, 1, 17],
+  white: [233, 505, 145, 150, 243, 263, 344, 416, 236],
+  yellow: [223, 453, 135, 126, 232, 240, 333, 405, 225]
+};
+
 const SCORECARD_COURSE_LABELS = {
   [BASILDON_COURSE_ID]: "Basildon",
   [CANVEY_COURSE_ID]: "Canvey",
   [MARDYKE_COURSE_ID]: "Mardyke Valley",
   [ORSETT_COURSE_ID]: "Orsett",
-  [WARLEY_COURSE_ID]: "Warley Park"
+  [WARLEY_COURSE_ID]: "Warley Park",
+  [MID_KENT_COURSE_ID]: "Mid Kent",
+  [ST_CLERES_COURSE_ID]: "St Cleres Hall",
+  [TOP_MEADOW_COURSE_ID]: "Top Meadow",
+  [INGREBOURNE_COURSE_ID]: "Ingrebourne Links",
+  [PRINCES_PARK_COURSE_ID]: "Princes Park",
+  [GRAVESEND_COURSE_ID]: "Gravesend Golf Centre",
+  [LANGDON_HILLS_COURSE_ID]: "Langdon Hills",
+  [DARTFORD_COURSE_ID]: "Dartford",
+  [FAWKHAM_COURSE_ID]: "Corinthian Fawkham Valley",
+  [BARNEHURST_COURSE_ID]: "Barnehurst"
 };
 
 const CRANHAM_COORDS = [
@@ -393,6 +484,313 @@ export const verifiedCourses = [
       { id: "red", name: "Red", color: "#e85d3f", rating: "72.3", slope: "121", totalYards: 5610 }
     ],
     holes: Array.from({ length: 18 }, (_, index) => makeScorecardOnlyHole(index, CANVEY_SCORECARD, CANVEY_COURSE_ID))
+  },
+  {
+    id: MID_KENT_COURSE_ID,
+    source: "verified",
+    homeAreaId: homeArea.id,
+    name: "Mid Kent Golf Club",
+    town: "Gravesend",
+    postcode: "DA11 7RB",
+    country: "England",
+    holesCount: 18,
+    par: "70",
+    distanceMiles: 4.1,
+    website: "https://www.mkgc.co.uk/",
+    phone: "+44 1474 568035",
+    location: { lat: 51.422099, lng: 0.365254 },
+    attribution: "Course identity, address, ratings, and scorecard from Mid Kent Golf Club official scorecard. BlueGolf and Albrecht used as secondary cross-checks. Green GPS alignment pending map/OSM sync.",
+    verification: {
+      status: "verified",
+      updated: "2026-05-10",
+      confidence: "Official Mid Kent scorecard confirms the current WHS white/yellow hole yardages, par, stroke index, ratings, and slopes. BlueGolf and Albrecht broadly agree, but the official club card has newer totals, so it is authoritative here.",
+      sources: [
+        { label: "Official scorecard", url: "https://www.mkgc.co.uk/scorecard" },
+        { label: "BlueGolf detailed scorecard", url: "https://course.bluegolf.com/bluegolf/course/course/midkent/detailedscorecard.htm" },
+        { label: "Albrecht Golf Guide", url: "https://www.1golf.eu/en/club/mid-kent-golf-club" }
+      ]
+    },
+    tees: [
+      { id: "white", name: "White", color: "#f8f7f1", rating: "70.30", slope: "126", totalYards: 6100 },
+      { id: "yellow", name: "Yellow", color: "#d7a44d", rating: "69.40", slope: "123", totalYards: 5923 }
+    ],
+    holes: Array.from({ length: 18 }, (_, index) => makeScorecardOnlyHole(index, MID_KENT_SCORECARD, MID_KENT_COURSE_ID))
+  },
+  {
+    id: ST_CLERES_COURSE_ID,
+    source: "verified",
+    homeAreaId: homeArea.id,
+    name: "St Cleres Hall Golf Club",
+    town: "Stanford-le-Hope",
+    postcode: "SS17 0LX",
+    country: "England",
+    holesCount: 9,
+    par: "27",
+    distanceMiles: 4.3,
+    website: "https://www.stcleresgolf.com/",
+    phone: "+44 1375 361565",
+    location: { lat: 51.50759, lng: 0.410656 },
+    attribution: "Current playable layout verified as the 9-hole par-3 course from GolfPass and 18Birdies; historic 18-hole data is intentionally not used. Green GPS alignment pending map/OSM sync.",
+    verification: {
+      status: "verified",
+      updated: "2026-05-10",
+      confidence: "GolfPass marks the old 18-hole course as closed and lists the active 9-hole par-3 card. 18Birdies agrees on the same 908-yard, par-27 hole yardages.",
+      sources: [
+        { label: "GolfPass 9-hole scorecard", url: "https://www.golfpass.com/travel-advisor/courses/34115-st-cleres-hall-golf-club-9-hole-course" },
+        { label: "18Birdies scorecard", url: "https://18birdies.com/golf-courses/club/bf637260-86ac-11e4-8c28-020000005b00/st-cleres-hall" },
+        { label: "Albrecht Golf Guide", url: "https://www.1golf.eu/en/club/st-clere-s-hall-golf-club/" }
+      ]
+    },
+    tees: [
+      { id: "yellow", name: "Yellow", color: "#d7a44d", rating: "27.3", slope: "87", totalYards: 908 }
+    ],
+    holes: Array.from({ length: 9 }, (_, index) => makeScorecardOnlyHole(index, ST_CLERES_SCORECARD, ST_CLERES_COURSE_ID))
+  },
+  {
+    id: TOP_MEADOW_COURSE_ID,
+    source: "verified",
+    homeAreaId: homeArea.id,
+    name: "Top Meadow Golf Club",
+    town: "Upminster",
+    postcode: "RM14 3PR",
+    country: "England",
+    holesCount: 18,
+    par: "72",
+    distanceMiles: 4.6,
+    website: "https://www.topmeadow.co.uk/",
+    phone: "+44 1708 852239",
+    location: { lat: 51.541154, lng: 0.312411 },
+    attribution: "Scorecard seeded from GolfSherpa and cross-checked against Offcourse and Golfshake. Green GPS alignment pending map/OSM sync.",
+    verification: {
+      status: "verified",
+      updated: "2026-05-10",
+      confidence: "GolfSherpa and Offcourse agree on white/yellow hole yardages, par, and the 6228/5992-yard totals. Golfshake agrees on the white 6228-yard par-72 total, with a small yellow total discrepancy noted.",
+      sources: [
+        { label: "GolfSherpa scorecard", url: "https://golfsherpa.co.uk/courses/england/top-meadow-golf-club-and-hotel" },
+        { label: "Offcourse scorecard", url: "https://www.offcourse.co/courses/scorecard/top-meadow-golf-club" },
+        { label: "Golfshake course page", url: "https://www.golfshake.com/course/view/16445/Top_Meadow_Golf_Club.html" }
+      ]
+    },
+    tees: [
+      { id: "white", name: "White", color: "#f8f7f1", rating: "", slope: "", totalYards: 6228 },
+      { id: "yellow", name: "Yellow", color: "#d7a44d", rating: "", slope: "", totalYards: 5992 }
+    ],
+    holes: Array.from({ length: 18 }, (_, index) => makeScorecardOnlyHole(index, TOP_MEADOW_SCORECARD, TOP_MEADOW_COURSE_ID))
+  },
+  {
+    id: INGREBOURNE_COURSE_ID,
+    source: "verified",
+    homeAreaId: homeArea.id,
+    name: "Ingrebourne Links Golf & Country Club",
+    town: "Rainham",
+    postcode: "RM13 9FL",
+    country: "England",
+    holesCount: 18,
+    par: "72",
+    distanceMiles: 4.8,
+    website: "https://www.ingrebournelinks.com/",
+    phone: "+44 1708 201301",
+    location: { lat: 51.513613, lng: 0.230958 },
+    attribution: "North/East Championship scorecard from BlueGolf, cross-checked against GolfNow/GolfPass tee ratings and The Social Golfer hole yardages. Green GPS alignment pending map/OSM sync.",
+    verification: {
+      status: "verified",
+      updated: "2026-05-10",
+      confidence: "BlueGolf provides the full North/East 18-hole scorecard for black, white, and yellow tees. GolfNow/GolfPass agree on the black/white/yellow totals, ratings, and slopes; The Social Golfer agrees on the black hole-by-hole card.",
+      sources: [
+        { label: "BlueGolf detailed scorecard", url: "https://course.bluegolf.com/bluegolf/course/course/ingrebournelinksnort/detailedscorecard.htm" },
+        { label: "GolfNow course details", url: "https://www.golfnow.co.uk/courses/-6384-ingrebourne-links-championship-northeast-course-details" },
+        { label: "The Social Golfer black card", url: "https://www.thesocialgolfer.com/golf-courses/united-kingdom/essex/ingrebourne-links-golf-complex/scorecard/northeastblack-black-tee-scorecard" }
+      ]
+    },
+    tees: [
+      { id: "black", name: "Black", color: "#27272a", rating: "74.2", slope: "121", totalYards: 7122 },
+      { id: "white", name: "White", color: "#f8f7f1", rating: "71.8", slope: "117", totalYards: 6633 },
+      { id: "yellow", name: "Yellow", color: "#d7a44d", rating: "69.7", slope: "111", totalYards: 6187 }
+    ],
+    holes: Array.from({ length: 18 }, (_, index) => makeScorecardOnlyHole(index, INGREBOURNE_SCORECARD, INGREBOURNE_COURSE_ID))
+  },
+  {
+    id: PRINCES_PARK_COURSE_ID,
+    source: "verified",
+    homeAreaId: homeArea.id,
+    name: "Princes Park Golf Course",
+    town: "Dartford",
+    postcode: "DA1 1RT",
+    country: "England",
+    holesCount: 9,
+    par: "27",
+    distanceMiles: 4.9,
+    website: "https://www.dartfordfc.com/golf-course",
+    phone: "+44 1322 299991",
+    location: { lat: 51.449228, lng: 0.234188 },
+    attribution: "9-hole par-3 scorecard from GolfSherpa. Green GPS alignment pending map/OSM sync.",
+    verification: {
+      status: "verified",
+      updated: "2026-05-10",
+      confidence: "GolfSherpa provides the full 9-hole Princes Park par-27 card, including hole yardages and stroke indexes.",
+      sources: [
+        { label: "GolfSherpa scorecard", url: "https://golfsherpa.co.uk/courses/england/princes-park-golf-course" }
+      ]
+    },
+    tees: [
+      { id: "white", name: "White", color: "#f8f7f1", rating: "", slope: "", totalYards: 1020 }
+    ],
+    holes: Array.from({ length: 9 }, (_, index) => makeScorecardOnlyHole(index, PRINCES_PARK_SCORECARD, PRINCES_PARK_COURSE_ID))
+  },
+  {
+    id: GRAVESEND_COURSE_ID,
+    source: "verified",
+    homeAreaId: homeArea.id,
+    name: "Gravesend Golf Centre",
+    town: "Gravesend",
+    postcode: "DA12 4LG",
+    country: "England",
+    holesCount: 9,
+    par: "27",
+    distanceMiles: 5,
+    website: "https://www.gravesendgolfcentre.com/",
+    phone: "+44 1474 335002",
+    location: { lat: 51.422422, lng: 0.405488 },
+    attribution: "Current 9-hole par-3 scorecard from Golfify and 18Birdies, cross-checked against GolfSherpa. Green GPS alignment pending map/OSM sync.",
+    verification: {
+      status: "verified",
+      updated: "2026-05-10",
+      confidence: "Golfify and 18Birdies agree on the current 1190-yard yellow par-27 card; GolfSherpa agrees on yellow/red totals and stroke indexes. Older directory pages describing an 18-hole course are not used for hole data.",
+      sources: [
+        { label: "Golfify scorecard", url: "https://www.golfify.io/courses/gravesend-golf-centre" },
+        { label: "18Birdies scorecard", url: "https://18birdies.com/golf-courses/club/c6ca6620-04be-11e7-93e9-0680a328ea36/gravesend-golf-centre" },
+        { label: "GolfSherpa scorecard", url: "https://golfsherpa.co.uk/courses/england/gravesend-golf-centre" }
+      ]
+    },
+    tees: [
+      { id: "yellow", name: "Yellow", color: "#d7a44d", rating: "", slope: "", totalYards: 1190 },
+      { id: "red", name: "Red", color: "#e85d3f", rating: "", slope: "", totalYards: 2700 }
+    ],
+    holes: Array.from({ length: 9 }, (_, index) => makeScorecardOnlyHole(index, GRAVESEND_SCORECARD, GRAVESEND_COURSE_ID))
+  },
+  {
+    id: LANGDON_HILLS_COURSE_ID,
+    source: "verified",
+    homeAreaId: homeArea.id,
+    name: "Langdon Hills Golf & Country Club",
+    town: "Bulphan",
+    postcode: "RM14 3TY",
+    country: "England",
+    holesCount: 18,
+    par: "72",
+    distanceMiles: 5.7,
+    website: "https://www.golflangdon.co.uk/",
+    phone: "+44 1375 361011",
+    location: { lat: 51.531174, lng: 0.365153 },
+    attribution: "Langdon/Bulphan scorecard from BlueGolf, cross-checked against GolfPass and Golfshake. Green GPS alignment pending map/OSM sync.",
+    verification: {
+      status: "verified",
+      updated: "2026-05-10",
+      confidence: "BlueGolf provides the complete Langdon/Bulphan 18-hole card. GolfPass agrees on the separate Langdon and Bulphan nines, while Golfshake agrees on the combined blue, white, and yellow totals.",
+      sources: [
+        { label: "BlueGolf detailed scorecard", url: "https://course.bluegolf.com/bluegolf/course/course/langdonhillslangdon/detailedscorecard.htm" },
+        { label: "GolfPass Langdon course", url: "https://www.golfpass.com/travel-advisor/courses/33451-langdon-hills-golf-country-club-langdon-course" },
+        { label: "GolfPass Bulphan course", url: "https://www.golfpass.com/travel-advisor/courses/33452-langdon-hills-golf-country-club-bulphan-course" },
+        { label: "Golfshake course page", url: "https://www.golfshake.com/course/view/15252/Langdon_Hills_Golf_and_Country_Club.html" }
+      ]
+    },
+    tees: [
+      { id: "blue", name: "Blue", color: "#4f8fd9", rating: "", slope: "", totalYards: 6824 },
+      { id: "white", name: "White", color: "#f8f7f1", rating: "", slope: "", totalYards: 6582 },
+      { id: "yellow", name: "Yellow", color: "#d7a44d", rating: "", slope: "", totalYards: 6216 }
+    ],
+    holes: Array.from({ length: 18 }, (_, index) => makeScorecardOnlyHole(index, LANGDON_HILLS_SCORECARD, LANGDON_HILLS_COURSE_ID))
+  },
+  {
+    id: DARTFORD_COURSE_ID,
+    source: "verified",
+    homeAreaId: homeArea.id,
+    name: "Dartford Golf Club",
+    town: "Dartford",
+    postcode: "DA1 2TN",
+    country: "England",
+    holesCount: 18,
+    par: "69",
+    distanceMiles: 6,
+    website: "https://www.dartfordgolfclub.co.uk/",
+    phone: "+44 1322 226455",
+    location: { lat: 51.435069, lng: 0.20045 },
+    attribution: "Course identity, address, and scorecard from Dartford Golf Club official scorecard. BlueGolf used as a secondary cross-check. Green GPS alignment pending map/OSM sync.",
+    verification: {
+      status: "verified",
+      updated: "2026-05-10",
+      confidence: "The official Dartford scorecard confirms white, yellow, and red hole yardages, par, stroke indexes, and WHS ratings for white/yellow. BlueGolf agrees on the full hole-by-hole card.",
+      sources: [
+        { label: "Official scorecard", url: "https://www.dartfordgolfclub.co.uk/course-scorecard" },
+        { label: "BlueGolf detailed scorecard", url: "https://course.bluegolf.com/bluegolf/course/course/dartford/detailedscorecard.htm" }
+      ]
+    },
+    tees: [
+      { id: "white", name: "White", color: "#f8f7f1", rating: "69.20", slope: "119", totalYards: 5909 },
+      { id: "yellow", name: "Yellow", color: "#d7a44d", rating: "68.30", slope: "117", totalYards: 5718 },
+      { id: "red", name: "Red", color: "#e85d3f", rating: "", slope: "", totalYards: 5259 }
+    ],
+    holes: Array.from({ length: 18 }, (_, index) => makeScorecardOnlyHole(index, DARTFORD_SCORECARD, DARTFORD_COURSE_ID))
+  },
+  {
+    id: FAWKHAM_COURSE_ID,
+    source: "verified",
+    homeAreaId: homeArea.id,
+    name: "Corinthian Sports Club",
+    town: "Fawkham",
+    postcode: "DA3 8LY",
+    country: "England",
+    holesCount: 9,
+    par: "36",
+    distanceMiles: 6.4,
+    website: "https://www.corinthiansportsclub.co.uk/golf-course",
+    phone: "+44 1474 573116",
+    location: { lat: 51.385299, lng: 0.294437 },
+    attribution: "Current 9-hole Corinthian/Fawkham Valley scorecard from GolfPass and GolfSherpa, cross-checked against Golfshake/GolfNow totals. Green GPS alignment pending map/OSM sync.",
+    verification: {
+      status: "verified",
+      updated: "2026-05-10",
+      confidence: "The old Fawkham Valley record is a 9-hole course with varied tees for an 18-hole round. This seed uses the current 9-hole card so the app does not pretend there are 18 separate greens before tee-loop support is added.",
+      sources: [
+        { label: "GolfPass scorecard", url: "https://www.golfpass.com/travel-advisor/courses/33017-corinthian-sports-club" },
+        { label: "GolfSherpa scorecard", url: "https://golfsherpa.co.uk/courses/england/corinthian-golf-club" },
+        { label: "Golfshake course page", url: "https://www.golfshake.com/course/view/14720/Corinthians_Fawkham_Valley_Golf_Club.html" }
+      ]
+    },
+    tees: [
+      { id: "white", name: "White", color: "#f8f7f1", rating: "72.2", slope: "125", totalYards: 3340 },
+      { id: "yellow", name: "Yellow", color: "#d7a44d", rating: "71.4", slope: "122", totalYards: 3255 }
+    ],
+    holes: Array.from({ length: 9 }, (_, index) => makeScorecardOnlyHole(index, FAWKHAM_SCORECARD, FAWKHAM_COURSE_ID))
+  },
+  {
+    id: BARNEHURST_COURSE_ID,
+    source: "verified",
+    homeAreaId: homeArea.id,
+    name: "Barnehurst Golf Course",
+    town: "Barnehurst",
+    postcode: "DA7 6JU",
+    country: "England",
+    holesCount: 9,
+    par: "34",
+    distanceMiles: 6.6,
+    website: "https://www.mytimeactive.co.uk/golf/centres/barnehurst/",
+    phone: "+44 1322 471128",
+    location: { lat: 51.460138, lng: 0.172763 },
+    attribution: "9-hole scorecard from LondonGolfCourses. Green GPS alignment pending map/OSM sync.",
+    verification: {
+      status: "verified",
+      updated: "2026-05-10",
+      confidence: "LondonGolfCourses provides the complete current Barnehurst 9-hole scorecard with white/yellow/red yardages, par, and indexes. This seed keeps the men’s white/yellow par/SI until tee-specific par is supported.",
+      sources: [
+        { label: "LondonGolfCourses scorecard", url: "https://londongolfcourses.com/course/barnehurst" }
+      ]
+    },
+    tees: [
+      { id: "white", name: "White", color: "#f8f7f1", rating: "", slope: "", totalYards: 2535 },
+      { id: "yellow", name: "Yellow", color: "#d7a44d", rating: "", slope: "", totalYards: 2372 }
+    ],
+    holes: Array.from({ length: 9 }, (_, index) => makeScorecardOnlyHole(index, BARNEHURST_SCORECARD, BARNEHURST_COURSE_ID))
   }
 ];
 
