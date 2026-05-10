@@ -19,6 +19,25 @@
           "source": "OpenStreetMap golf=hole way",
           "osm": "way/980173580",
           "yards": 141
+        },
+        "snapshot": {
+          "imageUrl": "./assets/snapshots/verified-mid-kent/hole-01-9845f4a380.jpg",
+          "storageKey": "assets/snapshots/verified-mid-kent/hole-01-9845f4a380.jpg",
+          "width": 1000,
+          "height": 1500,
+          "center": {
+            "lat": 51.425251,
+            "lng": 0.367544
+          },
+          "zoom": 19,
+          "tileSize": 256,
+          "pixelRatio": 2,
+          "provider": "azure-maps",
+          "tileset": "microsoft.imagery",
+          "attribution": "Imagery: Azure Maps",
+          "generatedAt": "2026-05-10T06:33:20.084Z",
+          "fingerprint": "9845f4a380",
+          "geometrySignature": "76b49b00"
         }
       },
       {
@@ -35,6 +54,25 @@
           "source": "OpenStreetMap golf=hole way",
           "osm": "way/980173591",
           "yards": 351
+        },
+        "snapshot": {
+          "imageUrl": "./assets/snapshots/verified-mid-kent/hole-02-8d362cb051.jpg",
+          "storageKey": "assets/snapshots/verified-mid-kent/hole-02-8d362cb051.jpg",
+          "width": 1000,
+          "height": 1500,
+          "center": {
+            "lat": 51.423049,
+            "lng": 0.36654
+          },
+          "zoom": 17,
+          "tileSize": 256,
+          "pixelRatio": 2,
+          "provider": "azure-maps",
+          "tileset": "microsoft.imagery",
+          "attribution": "Imagery: Azure Maps",
+          "generatedAt": "2026-05-10T06:33:21.090Z",
+          "fingerprint": "8d362cb051",
+          "geometrySignature": "afd943cd"
         }
       },
       {
@@ -51,6 +89,25 @@
           "source": "OpenStreetMap golf=hole way",
           "osm": "way/980512872",
           "yards": 461
+        },
+        "snapshot": {
+          "imageUrl": "./assets/snapshots/verified-mid-kent/hole-03-2d3b814214.jpg",
+          "storageKey": "assets/snapshots/verified-mid-kent/hole-03-2d3b814214.jpg",
+          "width": 1000,
+          "height": 1500,
+          "center": {
+            "lat": 51.420649,
+            "lng": 0.366501
+          },
+          "zoom": 17,
+          "tileSize": 256,
+          "pixelRatio": 2,
+          "provider": "azure-maps",
+          "tileset": "microsoft.imagery",
+          "attribution": "Imagery: Azure Maps",
+          "generatedAt": "2026-05-10T06:33:22.087Z",
+          "fingerprint": "2d3b814214",
+          "geometrySignature": "1dbf2b1d"
         }
       },
       {
@@ -67,6 +124,25 @@
           "source": "OpenStreetMap golf=hole way",
           "osm": "way/980512885",
           "yards": 167
+        },
+        "snapshot": {
+          "imageUrl": "./assets/snapshots/verified-mid-kent/hole-04-577be59a86.jpg",
+          "storageKey": "assets/snapshots/verified-mid-kent/hole-04-577be59a86.jpg",
+          "width": 1000,
+          "height": 1500,
+          "center": {
+            "lat": 51.418282,
+            "lng": 0.365478
+          },
+          "zoom": 18,
+          "tileSize": 256,
+          "pixelRatio": 2,
+          "provider": "azure-maps",
+          "tileset": "microsoft.imagery",
+          "attribution": "Imagery: Azure Maps",
+          "generatedAt": "2026-05-10T06:33:22.985Z",
+          "fingerprint": "577be59a86",
+          "geometrySignature": "4748391a"
         }
       },
       {
@@ -83,6 +159,25 @@
           "source": "OpenStreetMap golf=hole way",
           "osm": "way/980512914",
           "yards": 467
+        },
+        "snapshot": {
+          "imageUrl": "./assets/snapshots/verified-mid-kent/hole-05-e41edbf7f5.jpg",
+          "storageKey": "assets/snapshots/verified-mid-kent/hole-05-e41edbf7f5.jpg",
+          "width": 1000,
+          "height": 1500,
+          "center": {
+            "lat": 51.419687,
+            "lng": 0.363711
+          },
+          "zoom": 17,
+          "tileSize": 256,
+          "pixelRatio": 2,
+          "provider": "azure-maps",
+          "tileset": "microsoft.imagery",
+          "attribution": "Imagery: Azure Maps",
+          "generatedAt": "2026-05-10T06:33:23.950Z",
+          "fingerprint": "e41edbf7f5",
+          "geometrySignature": "2437aca6"
         }
       },
       {
@@ -99,6 +194,25 @@
           "source": "OpenStreetMap golf=hole way",
           "osm": "way/980559663",
           "yards": 427
+        },
+        "snapshot": {
+          "imageUrl": "./assets/snapshots/verified-mid-kent/hole-06-290a6d1846.jpg",
+          "storageKey": "assets/snapshots/verified-mid-kent/hole-06-290a6d1846.jpg",
+          "width": 1000,
+          "height": 1500,
+          "center": {
+            "lat": 51.420548,
+            "lng": 0.36446
+          },
+          "zoom": 17,
+          "tileSize": 256,
+          "pixelRatio": 2,
+          "provider": "azure-maps",
+          "tileset": "microsoft.imagery",
+          "attribution": "Imagery: Azure Maps",
+          "generatedAt": "2026-05-10T06:33:24.951Z",
+          "fingerprint": "290a6d1846",
+          "geometrySignature": "d7a56f53"
         }
       },
       {
@@ -115,6 +229,25 @@
           "source": "OpenStreetMap golf=hole way",
           "osm": "way/980559675",
           "yards": 141
+        },
+        "snapshot": {
+          "imageUrl": "./assets/snapshots/verified-mid-kent/hole-07-fd52d406b3.jpg",
+          "storageKey": "assets/snapshots/verified-mid-kent/hole-07-fd52d406b3.jpg",
+          "width": 1678,
+          "height": 2048,
+          "center": {
+            "lat": 51.419208,
+            "lng": 0.366064
+          },
+          "zoom": 19,
+          "tileSize": 256,
+          "pixelRatio": 2,
+          "provider": "azure-maps",
+          "tileset": "microsoft.imagery",
+          "attribution": "Imagery: Azure Maps",
+          "generatedAt": "2026-05-10T06:33:26.902Z",
+          "fingerprint": "fd52d406b3",
+          "geometrySignature": "c486eec0"
         }
       },
       {
@@ -131,6 +264,25 @@
           "source": "OpenStreetMap golf=hole way",
           "osm": "way/980559691",
           "yards": 537
+        },
+        "snapshot": {
+          "imageUrl": "./assets/snapshots/verified-mid-kent/hole-08-5c326f3eee.jpg",
+          "storageKey": "assets/snapshots/verified-mid-kent/hole-08-5c326f3eee.jpg",
+          "width": 1000,
+          "height": 1500,
+          "center": {
+            "lat": 51.422498,
+            "lng": 0.364709
+          },
+          "zoom": 17,
+          "tileSize": 256,
+          "pixelRatio": 2,
+          "provider": "azure-maps",
+          "tileset": "microsoft.imagery",
+          "attribution": "Imagery: Azure Maps",
+          "generatedAt": "2026-05-10T06:33:27.804Z",
+          "fingerprint": "5c326f3eee",
+          "geometrySignature": "2a628ef3"
         }
       },
       {
@@ -147,6 +299,25 @@
           "source": "OpenStreetMap golf=hole way",
           "osm": "way/980559705",
           "yards": 183
+        },
+        "snapshot": {
+          "imageUrl": "./assets/snapshots/verified-mid-kent/hole-09-31538ff258.jpg",
+          "storageKey": "assets/snapshots/verified-mid-kent/hole-09-31538ff258.jpg",
+          "width": 1870,
+          "height": 2498,
+          "center": {
+            "lat": 51.424316,
+            "lng": 0.364958
+          },
+          "zoom": 19,
+          "tileSize": 256,
+          "pixelRatio": 2,
+          "provider": "azure-maps",
+          "tileset": "microsoft.imagery",
+          "attribution": "Imagery: Azure Maps",
+          "generatedAt": "2026-05-10T06:33:30.212Z",
+          "fingerprint": "31538ff258",
+          "geometrySignature": "22c1353d"
         }
       },
       {
@@ -163,6 +334,25 @@
           "source": "OpenStreetMap golf=hole way",
           "osm": "way/980559718",
           "yards": 402
+        },
+        "snapshot": {
+          "imageUrl": "./assets/snapshots/verified-mid-kent/hole-10-c4bdd93086.jpg",
+          "storageKey": "assets/snapshots/verified-mid-kent/hole-10-c4bdd93086.jpg",
+          "width": 2163,
+          "height": 2807,
+          "center": {
+            "lat": 51.42445,
+            "lng": 0.365346
+          },
+          "zoom": 18,
+          "tileSize": 256,
+          "pixelRatio": 2,
+          "provider": "azure-maps",
+          "tileset": "microsoft.imagery",
+          "attribution": "Imagery: Azure Maps",
+          "generatedAt": "2026-05-10T06:33:33.837Z",
+          "fingerprint": "c4bdd93086",
+          "geometrySignature": "65c3c88c"
         }
       },
       {
@@ -179,6 +369,25 @@
           "source": "OpenStreetMap golf=hole way",
           "osm": "way/980559732",
           "yards": 240
+        },
+        "snapshot": {
+          "imageUrl": "./assets/snapshots/verified-mid-kent/hole-11-7a9b3970ee.jpg",
+          "storageKey": "assets/snapshots/verified-mid-kent/hole-11-7a9b3970ee.jpg",
+          "width": 1000,
+          "height": 1500,
+          "center": {
+            "lat": 51.425639,
+            "lng": 0.363878
+          },
+          "zoom": 18,
+          "tileSize": 256,
+          "pixelRatio": 2,
+          "provider": "azure-maps",
+          "tileset": "microsoft.imagery",
+          "attribution": "Imagery: Azure Maps",
+          "generatedAt": "2026-05-10T06:33:34.606Z",
+          "fingerprint": "7a9b3970ee",
+          "geometrySignature": "5417e27f"
         }
       },
       {
@@ -195,6 +404,25 @@
           "source": "OpenStreetMap golf=hole way",
           "osm": "way/980559744",
           "yards": 442
+        },
+        "snapshot": {
+          "imageUrl": "./assets/snapshots/verified-mid-kent/hole-12-20d4e6c00e.jpg",
+          "storageKey": "assets/snapshots/verified-mid-kent/hole-12-20d4e6c00e.jpg",
+          "width": 2143,
+          "height": 2951,
+          "center": {
+            "lat": 51.423513,
+            "lng": 0.362921
+          },
+          "zoom": 18,
+          "tileSize": 256,
+          "pixelRatio": 2,
+          "provider": "azure-maps",
+          "tileset": "microsoft.imagery",
+          "attribution": "Imagery: Azure Maps",
+          "generatedAt": "2026-05-10T06:33:38.293Z",
+          "fingerprint": "20d4e6c00e",
+          "geometrySignature": "c0ed4e6f"
         }
       },
       {
@@ -211,6 +439,25 @@
           "source": "OpenStreetMap golf=hole way",
           "osm": "way/980605975",
           "yards": 175
+        },
+        "snapshot": {
+          "imageUrl": "./assets/snapshots/verified-mid-kent/hole-13-cd9097039a.jpg",
+          "storageKey": "assets/snapshots/verified-mid-kent/hole-13-cd9097039a.jpg",
+          "width": 1000,
+          "height": 1500,
+          "center": {
+            "lat": 51.42108,
+            "lng": 0.361694
+          },
+          "zoom": 19,
+          "tileSize": 256,
+          "pixelRatio": 2,
+          "provider": "azure-maps",
+          "tileset": "microsoft.imagery",
+          "attribution": "Imagery: Azure Maps",
+          "generatedAt": "2026-05-10T06:33:39.177Z",
+          "fingerprint": "cd9097039a",
+          "geometrySignature": "477ee569"
         }
       },
       {
@@ -227,6 +474,25 @@
           "source": "OpenStreetMap golf=hole way",
           "osm": "way/980605987",
           "yards": 335
+        },
+        "snapshot": {
+          "imageUrl": "./assets/snapshots/verified-mid-kent/hole-14-eb33675ca1.jpg",
+          "storageKey": "assets/snapshots/verified-mid-kent/hole-14-eb33675ca1.jpg",
+          "width": 1770,
+          "height": 2320,
+          "center": {
+            "lat": 51.419075,
+            "lng": 0.363068
+          },
+          "zoom": 18,
+          "tileSize": 256,
+          "pixelRatio": 2,
+          "provider": "azure-maps",
+          "tileset": "microsoft.imagery",
+          "attribution": "Imagery: Azure Maps",
+          "generatedAt": "2026-05-10T06:33:41.482Z",
+          "fingerprint": "eb33675ca1",
+          "geometrySignature": "49f63c37"
         }
       },
       {
@@ -243,6 +509,25 @@
           "source": "OpenStreetMap golf=hole way",
           "osm": "way/980606012",
           "yards": 317
+        },
+        "snapshot": {
+          "imageUrl": "./assets/snapshots/verified-mid-kent/hole-15-c57dcaac7c.jpg",
+          "storageKey": "assets/snapshots/verified-mid-kent/hole-15-c57dcaac7c.jpg",
+          "width": 2048,
+          "height": 1500,
+          "center": {
+            "lat": 51.41785,
+            "lng": 0.366587
+          },
+          "zoom": 18,
+          "tileSize": 256,
+          "pixelRatio": 2,
+          "provider": "azure-maps",
+          "tileset": "microsoft.imagery",
+          "attribution": "Imagery: Azure Maps",
+          "generatedAt": "2026-05-10T06:33:43.235Z",
+          "fingerprint": "c57dcaac7c",
+          "geometrySignature": "9d9338ea"
         }
       },
       {
@@ -259,6 +544,25 @@
           "source": "OpenStreetMap golf=hole way",
           "osm": "way/980606011",
           "yards": 194
+        },
+        "snapshot": {
+          "imageUrl": "./assets/snapshots/verified-mid-kent/hole-16-bb1328f0a1.jpg",
+          "storageKey": "assets/snapshots/verified-mid-kent/hole-16-bb1328f0a1.jpg",
+          "width": 1000,
+          "height": 1500,
+          "center": {
+            "lat": 51.418449,
+            "lng": 0.368345
+          },
+          "zoom": 18,
+          "tileSize": 256,
+          "pixelRatio": 2,
+          "provider": "azure-maps",
+          "tileset": "microsoft.imagery",
+          "attribution": "Imagery: Azure Maps",
+          "generatedAt": "2026-05-10T06:33:44.128Z",
+          "fingerprint": "bb1328f0a1",
+          "geometrySignature": "45e86fac"
         }
       },
       {
@@ -275,6 +579,25 @@
           "source": "OpenStreetMap golf=hole way",
           "osm": "way/980606021",
           "yards": 486
+        },
+        "snapshot": {
+          "imageUrl": "./assets/snapshots/verified-mid-kent/hole-17-303527ad2c.jpg",
+          "storageKey": "assets/snapshots/verified-mid-kent/hole-17-303527ad2c.jpg",
+          "width": 1000,
+          "height": 1500,
+          "center": {
+            "lat": 51.420904,
+            "lng": 0.367592
+          },
+          "zoom": 17,
+          "tileSize": 256,
+          "pixelRatio": 2,
+          "provider": "azure-maps",
+          "tileset": "microsoft.imagery",
+          "attribution": "Imagery: Azure Maps",
+          "generatedAt": "2026-05-10T06:33:45.128Z",
+          "fingerprint": "303527ad2c",
+          "geometrySignature": "9dcd99c1"
         }
       },
       {
@@ -291,6 +614,25 @@
           "source": "OpenStreetMap golf=hole way",
           "osm": "way/980606029",
           "yards": 435
+        },
+        "snapshot": {
+          "imageUrl": "./assets/snapshots/verified-mid-kent/hole-18-d77a89163c.jpg",
+          "storageKey": "assets/snapshots/verified-mid-kent/hole-18-d77a89163c.jpg",
+          "width": 1939,
+          "height": 2801,
+          "center": {
+            "lat": 51.424134,
+            "lng": 0.366897
+          },
+          "zoom": 18,
+          "tileSize": 256,
+          "pixelRatio": 2,
+          "provider": "azure-maps",
+          "tileset": "microsoft.imagery",
+          "attribution": "Imagery: Azure Maps",
+          "generatedAt": "2026-05-10T06:33:48.220Z",
+          "fingerprint": "d77a89163c",
+          "geometrySignature": "ca6b3f77"
         }
       }
     ]
