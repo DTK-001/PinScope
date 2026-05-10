@@ -642,7 +642,7 @@
     "id": "verified-langdon-hills-langdon",
     "source": "shared",
     "name": "Langdon Hills Golf & Country Club - Langdon",
-    "geometrySource": "Derived 2026-05-10 from confirmed Langdon/Bulphan snapshot geometry. All loops in this layout are covered by confirmed Langdon/Bulphan geometry.",
+    "geometrySource": "Derived 2026-05-10 from confirmed Langdon/Bulphan snapshot geometry.",
     "attribution": "Hole geometry from OpenStreetMap contributors under ODbL. Imagery: Azure Maps.",
     "holes": [
       {
@@ -831,7 +831,7 @@
     "id": "verified-langdon-hills-bulphan",
     "source": "shared",
     "name": "Langdon Hills Golf & Country Club - Bulphan",
-    "geometrySource": "Derived 2026-05-10 from confirmed Langdon/Bulphan snapshot geometry. All loops in this layout are covered by confirmed Langdon/Bulphan geometry.",
+    "geometrySource": "Derived 2026-05-10 from confirmed Langdon/Bulphan snapshot geometry.",
     "attribution": "Hole geometry from OpenStreetMap contributors under ODbL. Imagery: Azure Maps.",
     "holes": [
       {
@@ -1017,10 +1017,199 @@
     ]
   },
   {
+    "id": "verified-langdon-hills-horndon",
+    "source": "shared",
+    "name": "Langdon Hills Golf & Country Club - Horndon",
+    "geometrySource": "Derived 2026-05-10 from confirmed Langdon/Bulphan OSM geometry plus manually placed Horndon holes 1-9 from PinScope Green Mapper.",
+    "attribution": "Hole geometry from OpenStreetMap contributors under ODbL. Imagery: Azure Maps.",
+    "holes": [
+      {
+        "number": 1,
+        "tee": {
+          "lat": 51.5436194,
+          "lng": 0.3964037
+        },
+        "greenCenter": {
+          "lat": 51.5411372,
+          "lng": 0.3965539
+        },
+        "mapping": {
+          "source": "PinScope Green Mapper manual Horndon placement",
+          "route": "Horndon",
+          "updatedAt": "2026-05-10T19:13:00.204Z",
+          "mapperFile": "langdon-hills-51-545288-0-395595-geometry(1).json",
+          "loop": "horndon",
+          "originalCourse": "verified-langdon-hills-horndon",
+          "originalHole": 1
+        }
+      },
+      {
+        "number": 2,
+        "tee": {
+          "lat": 51.5411772,
+          "lng": 0.3972405
+        },
+        "greenCenter": {
+          "lat": 51.5436862,
+          "lng": 0.3978628
+        },
+        "mapping": {
+          "source": "PinScope Green Mapper manual Horndon placement",
+          "route": "Horndon",
+          "updatedAt": "2026-05-10T19:13:30.758Z",
+          "mapperFile": "langdon-hills-51-545288-0-395595-geometry(1).json",
+          "loop": "horndon",
+          "originalCourse": "verified-langdon-hills-horndon",
+          "originalHole": 2
+        }
+      },
+      {
+        "number": 3,
+        "tee": {
+          "lat": 51.5439797,
+          "lng": 0.3982061
+        },
+        "greenCenter": {
+          "lat": 51.5440198,
+          "lng": 0.4002661
+        },
+        "mapping": {
+          "source": "PinScope Green Mapper manual Horndon placement",
+          "route": "Horndon",
+          "updatedAt": "2026-05-10T19:13:58.479Z",
+          "mapperFile": "langdon-hills-51-545288-0-395595-geometry(1).json",
+          "loop": "horndon",
+          "originalCourse": "verified-langdon-hills-horndon",
+          "originalHole": 3
+        }
+      },
+      {
+        "number": 4,
+        "tee": {
+          "lat": 51.5439797,
+          "lng": 0.4013819
+        },
+        "greenCenter": {
+          "lat": 51.5411772,
+          "lng": 0.397777
+        },
+        "mapping": {
+          "source": "PinScope Green Mapper manual Horndon placement",
+          "route": "Horndon",
+          "updatedAt": "2026-05-10T19:14:30.278Z",
+          "mapperFile": "langdon-hills-51-545288-0-395595-geometry(1).json",
+          "loop": "horndon",
+          "originalCourse": "verified-langdon-hills-horndon",
+          "originalHole": 4
+        }
+      },
+      {
+        "number": 5,
+        "tee": {
+          "lat": 51.5411239,
+          "lng": 0.3985065
+        },
+        "greenCenter": {
+          "lat": 51.5433125,
+          "lng": 0.4013175
+        },
+        "mapping": {
+          "source": "PinScope Green Mapper manual Horndon placement",
+          "route": "Horndon",
+          "updatedAt": "2026-05-10T19:15:09.953Z",
+          "mapperFile": "langdon-hills-51-545288-0-395595-geometry(1).json",
+          "loop": "horndon",
+          "originalCourse": "verified-langdon-hills-horndon",
+          "originalHole": 5
+        }
+      },
+      {
+        "number": 6,
+        "tee": {
+          "lat": 51.5425518,
+          "lng": 0.4020256
+        },
+        "greenCenter": {
+          "lat": 51.5409504,
+          "lng": 0.3991288
+        },
+        "mapping": {
+          "source": "PinScope Green Mapper manual Horndon placement",
+          "route": "Horndon",
+          "updatedAt": "2026-05-10T19:15:43.468Z",
+          "mapperFile": "langdon-hills-51-545288-0-395595-geometry(1).json",
+          "loop": "horndon",
+          "originalCourse": "verified-langdon-hills-horndon",
+          "originalHole": 6
+        }
+      },
+      {
+        "number": 7,
+        "tee": {
+          "lat": 51.5407769,
+          "lng": 0.3987211
+        },
+        "greenCenter": {
+          "lat": 51.5401763,
+          "lng": 0.3922194
+        },
+        "mapping": {
+          "source": "PinScope Green Mapper manual Horndon placement",
+          "route": "Horndon",
+          "updatedAt": "2026-05-10T19:16:03.063Z",
+          "mapperFile": "langdon-hills-51-545288-0-395595-geometry(1).json",
+          "loop": "horndon",
+          "originalCourse": "verified-langdon-hills-horndon",
+          "originalHole": 7
+        }
+      },
+      {
+        "number": 8,
+        "tee": {
+          "lat": 51.54051,
+          "lng": 0.3921551
+        },
+        "greenCenter": {
+          "lat": 51.5411772,
+          "lng": 0.3941935
+        },
+        "mapping": {
+          "source": "PinScope Green Mapper manual Horndon placement",
+          "route": "Horndon",
+          "updatedAt": "2026-05-10T19:16:43.597Z",
+          "mapperFile": "langdon-hills-51-545288-0-395595-geometry(1).json",
+          "loop": "horndon",
+          "originalCourse": "verified-langdon-hills-horndon",
+          "originalHole": 8
+        }
+      },
+      {
+        "number": 9,
+        "tee": {
+          "lat": 51.5411239,
+          "lng": 0.3955239
+        },
+        "greenCenter": {
+          "lat": 51.5436061,
+          "lng": 0.395481
+        },
+        "mapping": {
+          "source": "PinScope Green Mapper manual Horndon placement",
+          "route": "Horndon",
+          "updatedAt": "2026-05-10T19:17:06.136Z",
+          "mapperFile": "langdon-hills-51-545288-0-395595-geometry(1).json",
+          "loop": "horndon",
+          "originalCourse": "verified-langdon-hills-horndon",
+          "originalHole": 9
+        }
+      }
+    ]
+  },
+  {
     "id": "verified-langdon-hills-bulphan-langdon",
     "source": "shared",
     "name": "Langdon Hills Golf & Country Club - Bulphan/Langdon",
-    "geometrySource": "Derived 2026-05-10 from confirmed Langdon/Bulphan snapshot geometry. All loops in this layout are covered by confirmed Langdon/Bulphan geometry.",
+    "geometrySource": "Derived 2026-05-10 from confirmed Langdon/Bulphan snapshot geometry.",
     "attribution": "Hole geometry from OpenStreetMap contributors under ODbL. Imagery: Azure Maps.",
     "holes": [
       {
@@ -1389,7 +1578,7 @@
     "id": "verified-langdon-hills-langdon-horndon",
     "source": "shared",
     "name": "Langdon Hills Golf & Country Club - Langdon/Horndon",
-    "geometrySource": "Derived 2026-05-10 from confirmed Langdon/Bulphan snapshot geometry. No Horndon geometry baked yet; latest mapper export was rejected because it was off-course and missing hole 1.",
+    "geometrySource": "Derived 2026-05-10 from confirmed Langdon/Bulphan OSM geometry plus manually placed Horndon holes 1-9 from PinScope Green Mapper.",
     "attribution": "Hole geometry from OpenStreetMap contributors under ODbL. Imagery: Azure Maps.",
     "holes": [
       {
@@ -1571,6 +1760,186 @@
           "originalCourse": "verified-langdon-hills",
           "originalHole": 9
         }
+      },
+      {
+        "number": 10,
+        "tee": {
+          "lat": 51.5436194,
+          "lng": 0.3964037
+        },
+        "greenCenter": {
+          "lat": 51.5411372,
+          "lng": 0.3965539
+        },
+        "mapping": {
+          "source": "PinScope Green Mapper manual Horndon placement",
+          "route": "Horndon",
+          "updatedAt": "2026-05-10T19:13:00.204Z",
+          "mapperFile": "langdon-hills-51-545288-0-395595-geometry(1).json",
+          "loop": "horndon",
+          "originalCourse": "verified-langdon-hills-horndon",
+          "originalHole": 1
+        }
+      },
+      {
+        "number": 11,
+        "tee": {
+          "lat": 51.5411772,
+          "lng": 0.3972405
+        },
+        "greenCenter": {
+          "lat": 51.5436862,
+          "lng": 0.3978628
+        },
+        "mapping": {
+          "source": "PinScope Green Mapper manual Horndon placement",
+          "route": "Horndon",
+          "updatedAt": "2026-05-10T19:13:30.758Z",
+          "mapperFile": "langdon-hills-51-545288-0-395595-geometry(1).json",
+          "loop": "horndon",
+          "originalCourse": "verified-langdon-hills-horndon",
+          "originalHole": 2
+        }
+      },
+      {
+        "number": 12,
+        "tee": {
+          "lat": 51.5439797,
+          "lng": 0.3982061
+        },
+        "greenCenter": {
+          "lat": 51.5440198,
+          "lng": 0.4002661
+        },
+        "mapping": {
+          "source": "PinScope Green Mapper manual Horndon placement",
+          "route": "Horndon",
+          "updatedAt": "2026-05-10T19:13:58.479Z",
+          "mapperFile": "langdon-hills-51-545288-0-395595-geometry(1).json",
+          "loop": "horndon",
+          "originalCourse": "verified-langdon-hills-horndon",
+          "originalHole": 3
+        }
+      },
+      {
+        "number": 13,
+        "tee": {
+          "lat": 51.5439797,
+          "lng": 0.4013819
+        },
+        "greenCenter": {
+          "lat": 51.5411772,
+          "lng": 0.397777
+        },
+        "mapping": {
+          "source": "PinScope Green Mapper manual Horndon placement",
+          "route": "Horndon",
+          "updatedAt": "2026-05-10T19:14:30.278Z",
+          "mapperFile": "langdon-hills-51-545288-0-395595-geometry(1).json",
+          "loop": "horndon",
+          "originalCourse": "verified-langdon-hills-horndon",
+          "originalHole": 4
+        }
+      },
+      {
+        "number": 14,
+        "tee": {
+          "lat": 51.5411239,
+          "lng": 0.3985065
+        },
+        "greenCenter": {
+          "lat": 51.5433125,
+          "lng": 0.4013175
+        },
+        "mapping": {
+          "source": "PinScope Green Mapper manual Horndon placement",
+          "route": "Horndon",
+          "updatedAt": "2026-05-10T19:15:09.953Z",
+          "mapperFile": "langdon-hills-51-545288-0-395595-geometry(1).json",
+          "loop": "horndon",
+          "originalCourse": "verified-langdon-hills-horndon",
+          "originalHole": 5
+        }
+      },
+      {
+        "number": 15,
+        "tee": {
+          "lat": 51.5425518,
+          "lng": 0.4020256
+        },
+        "greenCenter": {
+          "lat": 51.5409504,
+          "lng": 0.3991288
+        },
+        "mapping": {
+          "source": "PinScope Green Mapper manual Horndon placement",
+          "route": "Horndon",
+          "updatedAt": "2026-05-10T19:15:43.468Z",
+          "mapperFile": "langdon-hills-51-545288-0-395595-geometry(1).json",
+          "loop": "horndon",
+          "originalCourse": "verified-langdon-hills-horndon",
+          "originalHole": 6
+        }
+      },
+      {
+        "number": 16,
+        "tee": {
+          "lat": 51.5407769,
+          "lng": 0.3987211
+        },
+        "greenCenter": {
+          "lat": 51.5401763,
+          "lng": 0.3922194
+        },
+        "mapping": {
+          "source": "PinScope Green Mapper manual Horndon placement",
+          "route": "Horndon",
+          "updatedAt": "2026-05-10T19:16:03.063Z",
+          "mapperFile": "langdon-hills-51-545288-0-395595-geometry(1).json",
+          "loop": "horndon",
+          "originalCourse": "verified-langdon-hills-horndon",
+          "originalHole": 7
+        }
+      },
+      {
+        "number": 17,
+        "tee": {
+          "lat": 51.54051,
+          "lng": 0.3921551
+        },
+        "greenCenter": {
+          "lat": 51.5411772,
+          "lng": 0.3941935
+        },
+        "mapping": {
+          "source": "PinScope Green Mapper manual Horndon placement",
+          "route": "Horndon",
+          "updatedAt": "2026-05-10T19:16:43.597Z",
+          "mapperFile": "langdon-hills-51-545288-0-395595-geometry(1).json",
+          "loop": "horndon",
+          "originalCourse": "verified-langdon-hills-horndon",
+          "originalHole": 8
+        }
+      },
+      {
+        "number": 18,
+        "tee": {
+          "lat": 51.5411239,
+          "lng": 0.3955239
+        },
+        "greenCenter": {
+          "lat": 51.5436061,
+          "lng": 0.395481
+        },
+        "mapping": {
+          "source": "PinScope Green Mapper manual Horndon placement",
+          "route": "Horndon",
+          "updatedAt": "2026-05-10T19:17:06.136Z",
+          "mapperFile": "langdon-hills-51-545288-0-395595-geometry(1).json",
+          "loop": "horndon",
+          "originalCourse": "verified-langdon-hills-horndon",
+          "originalHole": 9
+        }
       }
     ]
   },
@@ -1578,7 +1947,7 @@
     "id": "verified-langdon-hills-bulphan-horndon",
     "source": "shared",
     "name": "Langdon Hills Golf & Country Club - Bulphan/Horndon",
-    "geometrySource": "Derived 2026-05-10 from confirmed Langdon/Bulphan snapshot geometry. No Horndon geometry baked yet; latest mapper export was rejected because it was off-course and missing hole 1.",
+    "geometrySource": "Derived 2026-05-10 from confirmed Langdon/Bulphan OSM geometry plus manually placed Horndon holes 1-9 from PinScope Green Mapper.",
     "attribution": "Hole geometry from OpenStreetMap contributors under ODbL. Imagery: Azure Maps.",
     "holes": [
       {
@@ -1760,6 +2129,186 @@
           "originalCourse": "verified-langdon-hills",
           "originalHole": 18
         }
+      },
+      {
+        "number": 10,
+        "tee": {
+          "lat": 51.5436194,
+          "lng": 0.3964037
+        },
+        "greenCenter": {
+          "lat": 51.5411372,
+          "lng": 0.3965539
+        },
+        "mapping": {
+          "source": "PinScope Green Mapper manual Horndon placement",
+          "route": "Horndon",
+          "updatedAt": "2026-05-10T19:13:00.204Z",
+          "mapperFile": "langdon-hills-51-545288-0-395595-geometry(1).json",
+          "loop": "horndon",
+          "originalCourse": "verified-langdon-hills-horndon",
+          "originalHole": 1
+        }
+      },
+      {
+        "number": 11,
+        "tee": {
+          "lat": 51.5411772,
+          "lng": 0.3972405
+        },
+        "greenCenter": {
+          "lat": 51.5436862,
+          "lng": 0.3978628
+        },
+        "mapping": {
+          "source": "PinScope Green Mapper manual Horndon placement",
+          "route": "Horndon",
+          "updatedAt": "2026-05-10T19:13:30.758Z",
+          "mapperFile": "langdon-hills-51-545288-0-395595-geometry(1).json",
+          "loop": "horndon",
+          "originalCourse": "verified-langdon-hills-horndon",
+          "originalHole": 2
+        }
+      },
+      {
+        "number": 12,
+        "tee": {
+          "lat": 51.5439797,
+          "lng": 0.3982061
+        },
+        "greenCenter": {
+          "lat": 51.5440198,
+          "lng": 0.4002661
+        },
+        "mapping": {
+          "source": "PinScope Green Mapper manual Horndon placement",
+          "route": "Horndon",
+          "updatedAt": "2026-05-10T19:13:58.479Z",
+          "mapperFile": "langdon-hills-51-545288-0-395595-geometry(1).json",
+          "loop": "horndon",
+          "originalCourse": "verified-langdon-hills-horndon",
+          "originalHole": 3
+        }
+      },
+      {
+        "number": 13,
+        "tee": {
+          "lat": 51.5439797,
+          "lng": 0.4013819
+        },
+        "greenCenter": {
+          "lat": 51.5411772,
+          "lng": 0.397777
+        },
+        "mapping": {
+          "source": "PinScope Green Mapper manual Horndon placement",
+          "route": "Horndon",
+          "updatedAt": "2026-05-10T19:14:30.278Z",
+          "mapperFile": "langdon-hills-51-545288-0-395595-geometry(1).json",
+          "loop": "horndon",
+          "originalCourse": "verified-langdon-hills-horndon",
+          "originalHole": 4
+        }
+      },
+      {
+        "number": 14,
+        "tee": {
+          "lat": 51.5411239,
+          "lng": 0.3985065
+        },
+        "greenCenter": {
+          "lat": 51.5433125,
+          "lng": 0.4013175
+        },
+        "mapping": {
+          "source": "PinScope Green Mapper manual Horndon placement",
+          "route": "Horndon",
+          "updatedAt": "2026-05-10T19:15:09.953Z",
+          "mapperFile": "langdon-hills-51-545288-0-395595-geometry(1).json",
+          "loop": "horndon",
+          "originalCourse": "verified-langdon-hills-horndon",
+          "originalHole": 5
+        }
+      },
+      {
+        "number": 15,
+        "tee": {
+          "lat": 51.5425518,
+          "lng": 0.4020256
+        },
+        "greenCenter": {
+          "lat": 51.5409504,
+          "lng": 0.3991288
+        },
+        "mapping": {
+          "source": "PinScope Green Mapper manual Horndon placement",
+          "route": "Horndon",
+          "updatedAt": "2026-05-10T19:15:43.468Z",
+          "mapperFile": "langdon-hills-51-545288-0-395595-geometry(1).json",
+          "loop": "horndon",
+          "originalCourse": "verified-langdon-hills-horndon",
+          "originalHole": 6
+        }
+      },
+      {
+        "number": 16,
+        "tee": {
+          "lat": 51.5407769,
+          "lng": 0.3987211
+        },
+        "greenCenter": {
+          "lat": 51.5401763,
+          "lng": 0.3922194
+        },
+        "mapping": {
+          "source": "PinScope Green Mapper manual Horndon placement",
+          "route": "Horndon",
+          "updatedAt": "2026-05-10T19:16:03.063Z",
+          "mapperFile": "langdon-hills-51-545288-0-395595-geometry(1).json",
+          "loop": "horndon",
+          "originalCourse": "verified-langdon-hills-horndon",
+          "originalHole": 7
+        }
+      },
+      {
+        "number": 17,
+        "tee": {
+          "lat": 51.54051,
+          "lng": 0.3921551
+        },
+        "greenCenter": {
+          "lat": 51.5411772,
+          "lng": 0.3941935
+        },
+        "mapping": {
+          "source": "PinScope Green Mapper manual Horndon placement",
+          "route": "Horndon",
+          "updatedAt": "2026-05-10T19:16:43.597Z",
+          "mapperFile": "langdon-hills-51-545288-0-395595-geometry(1).json",
+          "loop": "horndon",
+          "originalCourse": "verified-langdon-hills-horndon",
+          "originalHole": 8
+        }
+      },
+      {
+        "number": 18,
+        "tee": {
+          "lat": 51.5411239,
+          "lng": 0.3955239
+        },
+        "greenCenter": {
+          "lat": 51.5436061,
+          "lng": 0.395481
+        },
+        "mapping": {
+          "source": "PinScope Green Mapper manual Horndon placement",
+          "route": "Horndon",
+          "updatedAt": "2026-05-10T19:17:06.136Z",
+          "mapperFile": "langdon-hills-51-545288-0-395595-geometry(1).json",
+          "loop": "horndon",
+          "originalCourse": "verified-langdon-hills-horndon",
+          "originalHole": 9
+        }
       }
     ]
   },
@@ -1767,9 +2316,189 @@
     "id": "verified-langdon-hills-horndon-bulphan",
     "source": "shared",
     "name": "Langdon Hills Golf & Country Club - Horndon/Bulphan",
-    "geometrySource": "Derived 2026-05-10 from confirmed Langdon/Bulphan snapshot geometry. No Horndon geometry baked yet; latest mapper export was rejected because it was off-course and missing hole 1.",
+    "geometrySource": "Derived 2026-05-10 from confirmed Langdon/Bulphan OSM geometry plus manually placed Horndon holes 1-9 from PinScope Green Mapper.",
     "attribution": "Hole geometry from OpenStreetMap contributors under ODbL. Imagery: Azure Maps.",
     "holes": [
+      {
+        "number": 1,
+        "tee": {
+          "lat": 51.5436194,
+          "lng": 0.3964037
+        },
+        "greenCenter": {
+          "lat": 51.5411372,
+          "lng": 0.3965539
+        },
+        "mapping": {
+          "source": "PinScope Green Mapper manual Horndon placement",
+          "route": "Horndon",
+          "updatedAt": "2026-05-10T19:13:00.204Z",
+          "mapperFile": "langdon-hills-51-545288-0-395595-geometry(1).json",
+          "loop": "horndon",
+          "originalCourse": "verified-langdon-hills-horndon",
+          "originalHole": 1
+        }
+      },
+      {
+        "number": 2,
+        "tee": {
+          "lat": 51.5411772,
+          "lng": 0.3972405
+        },
+        "greenCenter": {
+          "lat": 51.5436862,
+          "lng": 0.3978628
+        },
+        "mapping": {
+          "source": "PinScope Green Mapper manual Horndon placement",
+          "route": "Horndon",
+          "updatedAt": "2026-05-10T19:13:30.758Z",
+          "mapperFile": "langdon-hills-51-545288-0-395595-geometry(1).json",
+          "loop": "horndon",
+          "originalCourse": "verified-langdon-hills-horndon",
+          "originalHole": 2
+        }
+      },
+      {
+        "number": 3,
+        "tee": {
+          "lat": 51.5439797,
+          "lng": 0.3982061
+        },
+        "greenCenter": {
+          "lat": 51.5440198,
+          "lng": 0.4002661
+        },
+        "mapping": {
+          "source": "PinScope Green Mapper manual Horndon placement",
+          "route": "Horndon",
+          "updatedAt": "2026-05-10T19:13:58.479Z",
+          "mapperFile": "langdon-hills-51-545288-0-395595-geometry(1).json",
+          "loop": "horndon",
+          "originalCourse": "verified-langdon-hills-horndon",
+          "originalHole": 3
+        }
+      },
+      {
+        "number": 4,
+        "tee": {
+          "lat": 51.5439797,
+          "lng": 0.4013819
+        },
+        "greenCenter": {
+          "lat": 51.5411772,
+          "lng": 0.397777
+        },
+        "mapping": {
+          "source": "PinScope Green Mapper manual Horndon placement",
+          "route": "Horndon",
+          "updatedAt": "2026-05-10T19:14:30.278Z",
+          "mapperFile": "langdon-hills-51-545288-0-395595-geometry(1).json",
+          "loop": "horndon",
+          "originalCourse": "verified-langdon-hills-horndon",
+          "originalHole": 4
+        }
+      },
+      {
+        "number": 5,
+        "tee": {
+          "lat": 51.5411239,
+          "lng": 0.3985065
+        },
+        "greenCenter": {
+          "lat": 51.5433125,
+          "lng": 0.4013175
+        },
+        "mapping": {
+          "source": "PinScope Green Mapper manual Horndon placement",
+          "route": "Horndon",
+          "updatedAt": "2026-05-10T19:15:09.953Z",
+          "mapperFile": "langdon-hills-51-545288-0-395595-geometry(1).json",
+          "loop": "horndon",
+          "originalCourse": "verified-langdon-hills-horndon",
+          "originalHole": 5
+        }
+      },
+      {
+        "number": 6,
+        "tee": {
+          "lat": 51.5425518,
+          "lng": 0.4020256
+        },
+        "greenCenter": {
+          "lat": 51.5409504,
+          "lng": 0.3991288
+        },
+        "mapping": {
+          "source": "PinScope Green Mapper manual Horndon placement",
+          "route": "Horndon",
+          "updatedAt": "2026-05-10T19:15:43.468Z",
+          "mapperFile": "langdon-hills-51-545288-0-395595-geometry(1).json",
+          "loop": "horndon",
+          "originalCourse": "verified-langdon-hills-horndon",
+          "originalHole": 6
+        }
+      },
+      {
+        "number": 7,
+        "tee": {
+          "lat": 51.5407769,
+          "lng": 0.3987211
+        },
+        "greenCenter": {
+          "lat": 51.5401763,
+          "lng": 0.3922194
+        },
+        "mapping": {
+          "source": "PinScope Green Mapper manual Horndon placement",
+          "route": "Horndon",
+          "updatedAt": "2026-05-10T19:16:03.063Z",
+          "mapperFile": "langdon-hills-51-545288-0-395595-geometry(1).json",
+          "loop": "horndon",
+          "originalCourse": "verified-langdon-hills-horndon",
+          "originalHole": 7
+        }
+      },
+      {
+        "number": 8,
+        "tee": {
+          "lat": 51.54051,
+          "lng": 0.3921551
+        },
+        "greenCenter": {
+          "lat": 51.5411772,
+          "lng": 0.3941935
+        },
+        "mapping": {
+          "source": "PinScope Green Mapper manual Horndon placement",
+          "route": "Horndon",
+          "updatedAt": "2026-05-10T19:16:43.597Z",
+          "mapperFile": "langdon-hills-51-545288-0-395595-geometry(1).json",
+          "loop": "horndon",
+          "originalCourse": "verified-langdon-hills-horndon",
+          "originalHole": 8
+        }
+      },
+      {
+        "number": 9,
+        "tee": {
+          "lat": 51.5411239,
+          "lng": 0.3955239
+        },
+        "greenCenter": {
+          "lat": 51.5436061,
+          "lng": 0.395481
+        },
+        "mapping": {
+          "source": "PinScope Green Mapper manual Horndon placement",
+          "route": "Horndon",
+          "updatedAt": "2026-05-10T19:17:06.136Z",
+          "mapperFile": "langdon-hills-51-545288-0-395595-geometry(1).json",
+          "loop": "horndon",
+          "originalCourse": "verified-langdon-hills-horndon",
+          "originalHole": 9
+        }
+      },
       {
         "number": 10,
         "tee": {
@@ -1956,9 +2685,189 @@
     "id": "verified-langdon-hills-horndon-langdon",
     "source": "shared",
     "name": "Langdon Hills Golf & Country Club - Horndon/Langdon",
-    "geometrySource": "Derived 2026-05-10 from confirmed Langdon/Bulphan snapshot geometry. No Horndon geometry baked yet; latest mapper export was rejected because it was off-course and missing hole 1.",
+    "geometrySource": "Derived 2026-05-10 from confirmed Langdon/Bulphan OSM geometry plus manually placed Horndon holes 1-9 from PinScope Green Mapper.",
     "attribution": "Hole geometry from OpenStreetMap contributors under ODbL. Imagery: Azure Maps.",
     "holes": [
+      {
+        "number": 1,
+        "tee": {
+          "lat": 51.5436194,
+          "lng": 0.3964037
+        },
+        "greenCenter": {
+          "lat": 51.5411372,
+          "lng": 0.3965539
+        },
+        "mapping": {
+          "source": "PinScope Green Mapper manual Horndon placement",
+          "route": "Horndon",
+          "updatedAt": "2026-05-10T19:13:00.204Z",
+          "mapperFile": "langdon-hills-51-545288-0-395595-geometry(1).json",
+          "loop": "horndon",
+          "originalCourse": "verified-langdon-hills-horndon",
+          "originalHole": 1
+        }
+      },
+      {
+        "number": 2,
+        "tee": {
+          "lat": 51.5411772,
+          "lng": 0.3972405
+        },
+        "greenCenter": {
+          "lat": 51.5436862,
+          "lng": 0.3978628
+        },
+        "mapping": {
+          "source": "PinScope Green Mapper manual Horndon placement",
+          "route": "Horndon",
+          "updatedAt": "2026-05-10T19:13:30.758Z",
+          "mapperFile": "langdon-hills-51-545288-0-395595-geometry(1).json",
+          "loop": "horndon",
+          "originalCourse": "verified-langdon-hills-horndon",
+          "originalHole": 2
+        }
+      },
+      {
+        "number": 3,
+        "tee": {
+          "lat": 51.5439797,
+          "lng": 0.3982061
+        },
+        "greenCenter": {
+          "lat": 51.5440198,
+          "lng": 0.4002661
+        },
+        "mapping": {
+          "source": "PinScope Green Mapper manual Horndon placement",
+          "route": "Horndon",
+          "updatedAt": "2026-05-10T19:13:58.479Z",
+          "mapperFile": "langdon-hills-51-545288-0-395595-geometry(1).json",
+          "loop": "horndon",
+          "originalCourse": "verified-langdon-hills-horndon",
+          "originalHole": 3
+        }
+      },
+      {
+        "number": 4,
+        "tee": {
+          "lat": 51.5439797,
+          "lng": 0.4013819
+        },
+        "greenCenter": {
+          "lat": 51.5411772,
+          "lng": 0.397777
+        },
+        "mapping": {
+          "source": "PinScope Green Mapper manual Horndon placement",
+          "route": "Horndon",
+          "updatedAt": "2026-05-10T19:14:30.278Z",
+          "mapperFile": "langdon-hills-51-545288-0-395595-geometry(1).json",
+          "loop": "horndon",
+          "originalCourse": "verified-langdon-hills-horndon",
+          "originalHole": 4
+        }
+      },
+      {
+        "number": 5,
+        "tee": {
+          "lat": 51.5411239,
+          "lng": 0.3985065
+        },
+        "greenCenter": {
+          "lat": 51.5433125,
+          "lng": 0.4013175
+        },
+        "mapping": {
+          "source": "PinScope Green Mapper manual Horndon placement",
+          "route": "Horndon",
+          "updatedAt": "2026-05-10T19:15:09.953Z",
+          "mapperFile": "langdon-hills-51-545288-0-395595-geometry(1).json",
+          "loop": "horndon",
+          "originalCourse": "verified-langdon-hills-horndon",
+          "originalHole": 5
+        }
+      },
+      {
+        "number": 6,
+        "tee": {
+          "lat": 51.5425518,
+          "lng": 0.4020256
+        },
+        "greenCenter": {
+          "lat": 51.5409504,
+          "lng": 0.3991288
+        },
+        "mapping": {
+          "source": "PinScope Green Mapper manual Horndon placement",
+          "route": "Horndon",
+          "updatedAt": "2026-05-10T19:15:43.468Z",
+          "mapperFile": "langdon-hills-51-545288-0-395595-geometry(1).json",
+          "loop": "horndon",
+          "originalCourse": "verified-langdon-hills-horndon",
+          "originalHole": 6
+        }
+      },
+      {
+        "number": 7,
+        "tee": {
+          "lat": 51.5407769,
+          "lng": 0.3987211
+        },
+        "greenCenter": {
+          "lat": 51.5401763,
+          "lng": 0.3922194
+        },
+        "mapping": {
+          "source": "PinScope Green Mapper manual Horndon placement",
+          "route": "Horndon",
+          "updatedAt": "2026-05-10T19:16:03.063Z",
+          "mapperFile": "langdon-hills-51-545288-0-395595-geometry(1).json",
+          "loop": "horndon",
+          "originalCourse": "verified-langdon-hills-horndon",
+          "originalHole": 7
+        }
+      },
+      {
+        "number": 8,
+        "tee": {
+          "lat": 51.54051,
+          "lng": 0.3921551
+        },
+        "greenCenter": {
+          "lat": 51.5411772,
+          "lng": 0.3941935
+        },
+        "mapping": {
+          "source": "PinScope Green Mapper manual Horndon placement",
+          "route": "Horndon",
+          "updatedAt": "2026-05-10T19:16:43.597Z",
+          "mapperFile": "langdon-hills-51-545288-0-395595-geometry(1).json",
+          "loop": "horndon",
+          "originalCourse": "verified-langdon-hills-horndon",
+          "originalHole": 8
+        }
+      },
+      {
+        "number": 9,
+        "tee": {
+          "lat": 51.5411239,
+          "lng": 0.3955239
+        },
+        "greenCenter": {
+          "lat": 51.5436061,
+          "lng": 0.395481
+        },
+        "mapping": {
+          "source": "PinScope Green Mapper manual Horndon placement",
+          "route": "Horndon",
+          "updatedAt": "2026-05-10T19:17:06.136Z",
+          "mapperFile": "langdon-hills-51-545288-0-395595-geometry(1).json",
+          "loop": "horndon",
+          "originalCourse": "verified-langdon-hills-horndon",
+          "originalHole": 9
+        }
+      },
       {
         "number": 10,
         "tee": {
