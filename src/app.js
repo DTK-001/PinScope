@@ -720,7 +720,11 @@ function renderPlay() {
   if (!course) {
     return `<section class="empty-state"><h2>Course missing</h2><p>Select a saved course to continue.</p></section>`;
   }
-  const hole = course.holes.find((item) => item.number === activeRound.currentHole) || course.holes[0];
+  const holes = Array.isArray(course.holes) ? course.holes : [];
+  const hole = holes.find((item) => item.number === activeRound.currentHole) || holes[0];
+  if (!hole) {
+    return `<section class="empty-state"><h2>Hole data missing</h2><p>${escapeHtml(course.name)} needs hole data before a round can be played.</p><button class="primary-action" type="button" data-route="courses">Choose another course</button></section>`;
+  }
   queueCourseSatellitePreload(course, hole.number);
   const players = getRoundPlayers(activeRound);
   const leadTotals = roundTotals(activeRound, course, players[0]?.id);
@@ -2419,6 +2423,11 @@ function snapshotGeometrySignature(courseId, hole) {
     back: normalizeSignaturePoint(hole.greenBack),
     polygon: holeGreenPolygon(hole).map(normalizeSignaturePoint).filter(Boolean)
   })).toString(16).padStart(8, "0");
+}
+
+function holeGreenPolygon(hole) {
+  const polygon = hole?.geometry?.greenPolygon || hole?.greenPolygon || hole?.green?.polygon || [];
+  return Array.isArray(polygon) ? polygon.filter(validGeoPoint) : [];
 }
 
 function fnv1a(value) {
@@ -5492,6 +5501,11 @@ function eventToPanelPercent(panel, event) {
 function startRound(courseId, teeId = "") {
   const course = getCourse(state, courseId);
   if (!course) {
+    flash("Select a course first.");
+    return;
+  }
+  if (!Array.isArray(course.holes) || course.holes.length === 0) {
+    flash("That course needs hole data before starting a round.");
     return;
   }
   const tee = teeId || course.tees?.[0]?.id || "white";
@@ -5509,6 +5523,10 @@ function startRound(courseId, teeId = "") {
 
 function openRoundSetup(courseId) {
   const course = getCourse(state, courseId);
+  if (!course) {
+    flash("Course not found.");
+    return;
+  }
   state.selectedCourseId = courseId;
   state.activeRoundId = "";
   roundSetupPlayerCount = 1;
