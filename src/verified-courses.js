@@ -37,6 +37,28 @@ const DARTFORD_COURSE_ID = "verified-dartford";
 const FAWKHAM_COURSE_ID = "verified-corinthian-fawkham-valley";
 const BARNEHURST_COURSE_ID = "verified-barnehurst";
 
+const SNAPSHOT_VERIFIED_COURSE_IDS = new Set([
+  "osm-way-23454278",
+  BELHUS_COURSE_ID,
+  BASILDON_COURSE_ID,
+  MARDYKE_COURSE_ID,
+  ORSETT_COURSE_ID,
+  WARLEY_COURSE_ID,
+  CANVEY_COURSE_ID,
+  MID_KENT_COURSE_ID,
+  TOP_MEADOW_COURSE_ID,
+  INGREBOURNE_COURSE_ID,
+  LANGDON_HILLS_COURSE_ID,
+  LANGDON_HILLS_LANGDON_COURSE_ID,
+  LANGDON_HILLS_BULPHAN_COURSE_ID,
+  LANGDON_HILLS_HORNDON_COURSE_ID,
+  LANGDON_HILLS_BULPHAN_LANGDON_COURSE_ID,
+  LANGDON_HILLS_LANGDON_HORNDON_COURSE_ID,
+  LANGDON_HILLS_BULPHAN_HORNDON_COURSE_ID,
+  LANGDON_HILLS_HORNDON_BULPHAN_COURSE_ID,
+  LANGDON_HILLS_HORNDON_LANGDON_COURSE_ID
+]);
+
 const BELHUS_SCORECARD = {
   par: [4, 4, 4, 4, 4, 3, 4, 3, 4, 4, 3, 4, 4, 3, 4, 5, 3, 5],
   strokeIndex: [17, 13, 9, 1, 5, 7, 11, 15, 3, 16, 12, 6, 14, 10, 2, 4, 8, 18],
@@ -549,36 +571,6 @@ export const verifiedCourses = [
     holes: Array.from({ length: 18 }, (_, index) => makeScorecardOnlyHole(index, MID_KENT_SCORECARD, MID_KENT_COURSE_ID))
   },
   {
-    id: ST_CLERES_COURSE_ID,
-    source: "verified",
-    homeAreaId: homeArea.id,
-    name: "St Cleres Hall Golf Club",
-    town: "Stanford-le-Hope",
-    postcode: "SS17 0LX",
-    country: "England",
-    holesCount: 9,
-    par: "27",
-    distanceMiles: 4.3,
-    website: "https://www.stcleresgolf.com/",
-    phone: "+44 1375 361565",
-    location: { lat: 51.50759, lng: 0.410656 },
-    attribution: "Current playable layout verified as the 9-hole par-3 course from GolfPass and 18Birdies; historic 18-hole data is intentionally not used. Green GPS alignment pending map/OSM sync.",
-    verification: {
-      status: "verified",
-      updated: "2026-05-10",
-      confidence: "GolfPass marks the old 18-hole course as closed and lists the active 9-hole par-3 card. 18Birdies agrees on the same 908-yard, par-27 hole yardages.",
-      sources: [
-        { label: "GolfPass 9-hole scorecard", url: "https://www.golfpass.com/travel-advisor/courses/34115-st-cleres-hall-golf-club-9-hole-course" },
-        { label: "18Birdies scorecard", url: "https://18birdies.com/golf-courses/club/bf637260-86ac-11e4-8c28-020000005b00/st-cleres-hall" },
-        { label: "Albrecht Golf Guide", url: "https://www.1golf.eu/en/club/st-clere-s-hall-golf-club/" }
-      ]
-    },
-    tees: [
-      { id: "yellow", name: "Yellow", color: "#d7a44d", rating: "27.3", slope: "87", totalYards: 908 }
-    ],
-    holes: Array.from({ length: 9 }, (_, index) => makeScorecardOnlyHole(index, ST_CLERES_SCORECARD, ST_CLERES_COURSE_ID))
-  },
-  {
     id: TOP_MEADOW_COURSE_ID,
     source: "verified",
     homeAreaId: homeArea.id,
@@ -641,65 +633,6 @@ export const verifiedCourses = [
     ],
     holes: Array.from({ length: 18 }, (_, index) => makeScorecardOnlyHole(index, INGREBOURNE_SCORECARD, INGREBOURNE_COURSE_ID))
   },
-  {
-    id: PRINCES_PARK_COURSE_ID,
-    source: "verified",
-    homeAreaId: homeArea.id,
-    name: "Princes Park Golf Course",
-    town: "Dartford",
-    postcode: "DA1 1RT",
-    country: "England",
-    holesCount: 9,
-    par: "27",
-    distanceMiles: 4.9,
-    website: "https://www.dartfordfc.com/golf-course",
-    phone: "+44 1322 299991",
-    location: { lat: 51.449228, lng: 0.234188 },
-    attribution: "9-hole par-3 scorecard from GolfSherpa. Green GPS alignment pending map/OSM sync.",
-    verification: {
-      status: "verified",
-      updated: "2026-05-10",
-      confidence: "GolfSherpa provides the full 9-hole Princes Park par-27 card, including hole yardages and stroke indexes.",
-      sources: [
-        { label: "GolfSherpa scorecard", url: "https://golfsherpa.co.uk/courses/england/princes-park-golf-course" }
-      ]
-    },
-    tees: [
-      { id: "white", name: "White", color: "#f8f7f1", rating: "", slope: "", totalYards: 1020 }
-    ],
-    holes: Array.from({ length: 9 }, (_, index) => makeScorecardOnlyHole(index, PRINCES_PARK_SCORECARD, PRINCES_PARK_COURSE_ID))
-  },
-  {
-    id: GRAVESEND_COURSE_ID,
-    source: "verified",
-    homeAreaId: homeArea.id,
-    name: "Gravesend Golf Centre",
-    town: "Gravesend",
-    postcode: "DA12 4LG",
-    country: "England",
-    holesCount: 9,
-    par: "27",
-    distanceMiles: 5,
-    website: "https://www.gravesendgolfcentre.com/",
-    phone: "+44 1474 335002",
-    location: { lat: 51.422422, lng: 0.405488 },
-    attribution: "Current 9-hole par-3 scorecard from Golfify and 18Birdies, cross-checked against GolfSherpa. Green GPS alignment pending map/OSM sync.",
-    verification: {
-      status: "verified",
-      updated: "2026-05-10",
-      confidence: "Golfify and 18Birdies agree on the current 1190-yard yellow par-27 card; GolfSherpa agrees on yellow/red totals and stroke indexes. Older directory pages describing an 18-hole course are not used for hole data.",
-      sources: [
-        { label: "Golfify scorecard", url: "https://www.golfify.io/courses/gravesend-golf-centre" },
-        { label: "18Birdies scorecard", url: "https://18birdies.com/golf-courses/club/c6ca6620-04be-11e7-93e9-0680a328ea36/gravesend-golf-centre" },
-        { label: "GolfSherpa scorecard", url: "https://golfsherpa.co.uk/courses/england/gravesend-golf-centre" }
-      ]
-    },
-    tees: [
-      { id: "yellow", name: "Yellow", color: "#d7a44d", rating: "", slope: "", totalYards: 1190 },
-      { id: "red", name: "Red", color: "#e85d3f", rating: "", slope: "", totalYards: 2700 }
-    ],
-    holes: Array.from({ length: 9 }, (_, index) => makeScorecardOnlyHole(index, GRAVESEND_SCORECARD, GRAVESEND_COURSE_ID))
-  },
   makeLangdonHillsLayoutCourse({
     id: LANGDON_HILLS_LANGDON_COURSE_ID,
     layoutName: "Langdon",
@@ -755,68 +688,6 @@ export const verifiedCourses = [
     sourceUrl: "https://www.golfpass.com/travel-advisor/courses/33453-langdon-hills-golf-country-club-horndon-course"
   }),
   {
-    id: DARTFORD_COURSE_ID,
-    source: "verified",
-    homeAreaId: homeArea.id,
-    name: "Dartford Golf Club",
-    town: "Dartford",
-    postcode: "DA1 2TN",
-    country: "England",
-    holesCount: 18,
-    par: "69",
-    distanceMiles: 6,
-    website: "https://www.dartfordgolfclub.co.uk/",
-    phone: "+44 1322 226455",
-    location: { lat: 51.435069, lng: 0.20045 },
-    attribution: "Course identity, address, and scorecard from Dartford Golf Club official scorecard. BlueGolf used as a secondary cross-check. Green GPS alignment pending map/OSM sync.",
-    verification: {
-      status: "verified",
-      updated: "2026-05-10",
-      confidence: "The official Dartford scorecard confirms white, yellow, and red hole yardages, par, stroke indexes, and WHS ratings for white/yellow. BlueGolf agrees on the full hole-by-hole card.",
-      sources: [
-        { label: "Official scorecard", url: "https://www.dartfordgolfclub.co.uk/course-scorecard" },
-        { label: "BlueGolf detailed scorecard", url: "https://course.bluegolf.com/bluegolf/course/course/dartford/detailedscorecard.htm" }
-      ]
-    },
-    tees: [
-      { id: "white", name: "White", color: "#f8f7f1", rating: "69.20", slope: "119", totalYards: 5909 },
-      { id: "yellow", name: "Yellow", color: "#d7a44d", rating: "68.30", slope: "117", totalYards: 5718 },
-      { id: "red", name: "Red", color: "#e85d3f", rating: "", slope: "", totalYards: 5259 }
-    ],
-    holes: Array.from({ length: 18 }, (_, index) => makeScorecardOnlyHole(index, DARTFORD_SCORECARD, DARTFORD_COURSE_ID))
-  },
-  {
-    id: FAWKHAM_COURSE_ID,
-    source: "verified",
-    homeAreaId: homeArea.id,
-    name: "Corinthian Sports Club",
-    town: "Fawkham",
-    postcode: "DA3 8LY",
-    country: "England",
-    holesCount: 9,
-    par: "36",
-    distanceMiles: 6.4,
-    website: "https://www.corinthiansportsclub.co.uk/golf-course",
-    phone: "+44 1474 573116",
-    location: { lat: 51.385299, lng: 0.294437 },
-    attribution: "Current 9-hole Corinthian/Fawkham Valley scorecard from GolfPass and GolfSherpa, cross-checked against Golfshake/GolfNow totals. Green GPS alignment pending map/OSM sync.",
-    verification: {
-      status: "verified",
-      updated: "2026-05-10",
-      confidence: "The old Fawkham Valley record is a 9-hole course with varied tees for an 18-hole round. This seed uses the current 9-hole card so the app does not pretend there are 18 separate greens before tee-loop support is added.",
-      sources: [
-        { label: "GolfPass scorecard", url: "https://www.golfpass.com/travel-advisor/courses/33017-corinthian-sports-club" },
-        { label: "GolfSherpa scorecard", url: "https://golfsherpa.co.uk/courses/england/corinthian-golf-club" },
-        { label: "Golfshake course page", url: "https://www.golfshake.com/course/view/14720/Corinthians_Fawkham_Valley_Golf_Club.html" }
-      ]
-    },
-    tees: [
-      { id: "white", name: "White", color: "#f8f7f1", rating: "72.2", slope: "125", totalYards: 3340 },
-      { id: "yellow", name: "Yellow", color: "#d7a44d", rating: "71.4", slope: "122", totalYards: 3255 }
-    ],
-    holes: Array.from({ length: 9 }, (_, index) => makeScorecardOnlyHole(index, FAWKHAM_SCORECARD, FAWKHAM_COURSE_ID))
-  },
-  {
     id: BARNEHURST_COURSE_ID,
     source: "verified",
     homeAreaId: homeArea.id,
@@ -845,7 +716,7 @@ export const verifiedCourses = [
     ],
     holes: Array.from({ length: 9 }, (_, index) => makeScorecardOnlyHole(index, BARNEHURST_SCORECARD, BARNEHURST_COURSE_ID))
   }
-];
+].filter((course) => SNAPSHOT_VERIFIED_COURSE_IDS.has(course.id));
 
 function sliceScorecard(scorecard, start, end) {
   return Object.fromEntries(

@@ -101,7 +101,7 @@ function mergeSharedHoleDefault(baseHole, sharedHole) {
 
 const baseState = {
   schemaVersion: 1,
-  selectedCourseId: verifiedCourses[0]?.id || "",
+  selectedCourseId: "",
   activeRoundId: "",
   courses: builtInCourses,
   rounds: [],
@@ -113,7 +113,8 @@ const baseState = {
     handicap: {
       manualIndex: null,
       introDismissed: false
-    }
+    },
+    localArea: null
   }
 };
 
@@ -121,7 +122,7 @@ export function loadState() {
   const stored = readStoredState();
   const merged = mergeState(baseState, stored || {});
   merged.courses = ensureBuiltInCourses(merged.courses);
-  if (!merged.courses.some((course) => course.id === merged.selectedCourseId)) {
+  if (merged.selectedCourseId && !merged.courses.some((course) => course.id === merged.selectedCourseId)) {
     merged.selectedCourseId = merged.courses[0]?.id || "";
   }
   return merged;

@@ -264,6 +264,7 @@ function renderHome() {
     </section>
 
     ${renderHandicapIntro(handicap)}
+    ${renderLocalAreaSection()}
 
     <section class="home-grid">
       <article>
@@ -405,6 +406,27 @@ function formatHandicapIndex(value) {
   return value < 0 ? `+${Math.abs(value).toFixed(1)}` : value.toFixed(1);
 }
 
+function renderLocalAreaSection() {
+  const localArea = activeLocalArea();
+  return `
+    <section class="home-area">
+      <div>
+        <p class="eyebrow">Local Area</p>
+        <h2>${escapeHtml(localArea?.label || homeArea.label)}</h2>
+        <p>${escapeHtml(localArea ? `${localArea.subtitle} - ${savedHomeCourseCount()} saved here` : homeArea.subtitle)}</p>
+      </div>
+      <div class="local-area-actions">
+        <form class="local-area-search" data-form="local-area-search">
+          <input name="area" type="search" placeholder="Town, postcode, or area" autocomplete="address-level2" required />
+          <button class="primary-action" type="submit">Search</button>
+        </form>
+        <button class="secondary-action" type="button" data-action="use-current-location-courses">Use GPS</button>
+        ${localArea ? `<button class="secondary-action" type="button" data-action="refresh-local-area">Refresh</button>` : ""}
+      </div>
+    </section>
+  `;
+}
+
 function renderCourses() {
   const filteredCourses = filteredCourseList();
   const savedCourseCount = groupedVenueCourseList(state.courses).length;
@@ -419,14 +441,7 @@ function renderCourses() {
       <button class="primary-action" type="button" data-action="find-nearby">Find Near Me</button>
     </section>
 
-    <section class="home-area">
-      <div>
-        <p class="eyebrow">Home Area</p>
-        <h2>${homeArea.label}</h2>
-        <p>${homeArea.subtitle} - ${savedHomeCourseCount()} saved here</p>
-      </div>
-      <button class="secondary-action" type="button" data-action="import-home-area">Refresh Local</button>
-    </section>
+    ${renderLocalAreaSection()}
 
     <label class="course-search">
       <span>Search courses</span>
@@ -981,12 +996,54 @@ function trackShot() {
 }
 
 function savedHomeCourseCount() {
+  const localArea = activeLocalArea();
+  if (!localArea) {
+    return 0;
+  }
   return groupedVenueCourseList(state.courses).filter((course) => {
-    if (course.homeAreaId === homeArea.id) {
+    if (course.homeAreaId === localArea.id) {
       return true;
     }
-    return typeof course.distanceMiles === "number" && course.distanceMiles <= homeArea.radiusMiles;
+    return validGeoPoint(course.location)
+      ? yardsBetween(localArea.center, course.location) / 1760 <= localArea.radiusMiles
+      : false;
   }).length;
+}
+
+function activeLocalArea() {
+  const localArea = state.settings?.localArea;
+  const center = normalizeGeoPoint(localArea?.center);
+  if (!center) {
+    return null;
+  }
+  const radiusMiles = Number(localArea.radiusMiles) || homeArea.radiusMiles;
+  const radiusMeters = Number(localArea.radiusMeters) || homeArea.radiusMeters;
+  return {
+    ...homeArea,
+    ...localArea,
+    id: localArea.id || homeArea.id,
+    label: String(localArea.label || homeArea.label).trim() || homeArea.label,
+    subtitle: `${radiusMiles} mile course radius`,
+    center,
+    radiusMiles,
+    radiusMeters
+  };
+}
+
+function setActiveLocalArea(area) {
+  const center = normalizeGeoPoint(area?.center);
+  if (!center) {
+    return null;
+  }
+  state.settings = state.settings || {};
+  state.settings.localArea = {
+    id: area.id || homeArea.id,
+    label: String(area.label || homeArea.label).trim() || homeArea.label,
+    center,
+    radiusMiles: Number(area.radiusMiles) || homeArea.radiusMiles,
+    radiusMeters: Number(area.radiusMeters) || homeArea.radiusMeters
+  };
+  return activeLocalArea();
 }
 
 function courseLocationLine(course) {
@@ -4312,8 +4369,12 @@ function handleClick(event) {
     importNearbyCourses();
   }
 
-  if (action === "import-home-area") {
-    importHomeAreaCourses();
+  if (action === "use-current-location-courses") {
+    importCoursesForCurrentLocation();
+  }
+
+  if (action === "refresh-local-area" || action === "import-home-area") {
+    importSelectedLocalAreaCourses();
   }
 
   if (action === "refresh-course-layout") {
@@ -4458,6 +4519,16 @@ function handleSubmit(event) {
   }
   event.preventDefault();
   const data = new FormData(form);
+
+  if (form.dataset.form === "local-area-search") {
+    const query = String(data.get("area") || "").trim();
+    if (!query) {
+      flash("Add an area first.");
+      return;
+    }
+    form.reset();
+    importCoursesForAreaQuery(query);
+  }
 
   if (form.dataset.form === "add-course") {
     const name = String(data.get("name") || "").trim();
@@ -6101,6 +6172,10 @@ function discardActiveRound() {
 }
 
 async function importNearbyCourses() {
+  return importCoursesForCurrentLocation();
+}
+
+async function importCoursesForCurrentLocation() {
   if (!navigator.geolocation) {
     flash("GPS is not available in this browser.");
     return;
@@ -6108,27 +6183,106 @@ async function importNearbyCourses() {
   flash("Finding courses near you...");
   try {
     const position = await getCurrentPosition();
-    const courses = await findNearbyOsmCourses(
-      { lat: position.coords.latitude, lng: position.coords.longitude },
-      25000
-    );
-    mergeImportedCourses(courses, "");
+    const localArea = setActiveLocalArea({
+      id: "gps-local-area",
+      label: "Current Location",
+      center: {
+        lat: position.coords.latitude,
+        lng: position.coords.longitude
+      }
+    });
+    await importCoursesForLocalArea(localArea, "Current Location");
   } catch (error) {
     flash(error.message || "Could not import nearby courses.");
   }
 }
 
-async function importHomeAreaCourses() {
-  flash(`Refreshing ${homeArea.label} courses...`);
+async function importCoursesForAreaQuery(query) {
+  flash(`Finding courses near ${query}...`);
   try {
-    const courses = await findNearbyOsmCourses(homeArea.center, homeArea.radiusMeters);
-    mergeImportedCourses(
-      courses.map((course) => ({ ...course, homeAreaId: homeArea.id })),
-      homeArea.label
-    );
+    const result = await geocodeLocalArea(query);
+    const localArea = setActiveLocalArea({
+      id: `area-${slugifyLocalArea(result.label)}`,
+      label: result.label,
+      center: result.center
+    });
+    await importCoursesForLocalArea(localArea, result.label);
   } catch (error) {
-    flash(error.message || `Could not refresh ${homeArea.label} courses.`);
+    flash(error.message || `Could not find courses near ${query}.`);
   }
+}
+
+async function importSelectedLocalAreaCourses() {
+  const localArea = activeLocalArea();
+  if (!localArea) {
+    flash("Choose an area first.");
+    return;
+  }
+  flash(`Refreshing ${localArea.label} courses...`);
+  try {
+    await importCoursesForLocalArea(localArea, localArea.label);
+  } catch (error) {
+    flash(error.message || `Could not refresh ${localArea.label} courses.`);
+  }
+}
+
+async function importCoursesForLocalArea(localArea, label) {
+  if (!localArea?.center) {
+    throw new Error("Choose an area first.");
+  }
+  const courses = await findNearbyOsmCourses(localArea.center, localArea.radiusMeters);
+  mergeImportedCourses(
+    courses.map((course) => ({ ...course, homeAreaId: localArea.id })),
+    label
+  );
+}
+
+async function geocodeLocalArea(query) {
+  const url = new URL("https://nominatim.openstreetmap.org/search");
+  url.searchParams.set("format", "jsonv2");
+  url.searchParams.set("addressdetails", "1");
+  url.searchParams.set("limit", "1");
+  url.searchParams.set("countrycodes", "gb");
+  url.searchParams.set("q", query);
+  const response = await fetch(url.toString(), {
+    headers: {
+      Accept: "application/json"
+    }
+  });
+  if (!response.ok) {
+    throw new Error(`Area search failed (${response.status}).`);
+  }
+  const results = await response.json();
+  const match = Array.isArray(results) ? results[0] : null;
+  const center = normalizeGeoPoint({ lat: match?.lat, lng: match?.lon });
+  if (!center) {
+    throw new Error("No matching area found.");
+  }
+  return {
+    label: localAreaLabel(match, query),
+    center
+  };
+}
+
+function localAreaLabel(match, fallback) {
+  const address = match?.address || {};
+  return String(
+    address.city ||
+    address.town ||
+    address.village ||
+    address.hamlet ||
+    address.suburb ||
+    match?.name ||
+    fallback
+  ).trim();
+}
+
+function slugifyLocalArea(value) {
+  return String(value || "local")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 48) || "local";
 }
 
 function mergeImportedCourses(courses, label) {

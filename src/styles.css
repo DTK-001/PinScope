@@ -869,6 +869,22 @@ p {
   box-shadow: inset 0 0 0 1px var(--line);
 }
 
+.local-area-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 10px;
+  min-width: min(100%, 440px);
+}
+
+.local-area-search {
+  display: grid;
+  grid-template-columns: minmax(190px, 1fr) auto;
+  gap: 10px;
+  flex: 1 1 280px;
+}
+
 .action-band h2,
 .home-area h2,
 .played-courses h2,
@@ -3567,6 +3583,15 @@ select option {
   .home-area .secondary-action,
   .course-main .chip-button {
     width: 100%;
+  }
+
+  .local-area-actions,
+  .local-area-search {
+    width: 100%;
+  }
+
+  .local-area-search {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .played-course-actions {
