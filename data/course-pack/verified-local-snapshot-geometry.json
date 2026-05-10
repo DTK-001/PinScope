@@ -3049,5 +3049,302 @@
         }
       }
     ]
+  },
+  {
+    "id": "verified-top-meadow",
+    "source": "shared",
+    "name": "Top Meadow Golf Club",
+    "geometrySource": "PinScope Green Mapper manual placements exported 2026-05-10 from top-meadows-geometry(2).json; all 18 holes checked inside Top Meadow bounds.",
+    "attribution": "Manual tee/green geometry from PinScope Green Mapper. Imagery: Azure Maps.",
+    "holes": [
+      {
+        "number": 1,
+        "tee": {
+          "lat": 51.5421682,
+          "lng": 0.3050852
+        },
+        "greenCenter": {
+          "lat": 51.5425285,
+          "lng": 0.3070164
+        },
+        "mapping": {
+          "source": "PinScope Green Mapper manual Top Meadow placement",
+          "updatedAt": "2026-05-10T19:53:38.734Z",
+          "mapperFile": "top-meadows-geometry(2).json"
+        }
+      },
+      {
+        "number": 2,
+        "tee": {
+          "lat": 51.5418078,
+          "lng": 0.3065658
+        },
+        "greenCenter": {
+          "lat": 51.5393388,
+          "lng": 0.3060722
+        },
+        "mapping": {
+          "source": "PinScope Green Mapper manual Top Meadow placement",
+          "updatedAt": "2026-05-10T19:54:08.583Z",
+          "mapperFile": "top-meadows-geometry(2).json"
+        }
+      },
+      {
+        "number": 3,
+        "tee": {
+          "lat": 51.5396858,
+          "lng": 0.3066087
+        },
+        "greenCenter": {
+          "lat": 51.5403665,
+          "lng": 0.3131318
+        },
+        "mapping": {
+          "source": "PinScope Green Mapper manual Top Meadow placement",
+          "updatedAt": "2026-05-10T19:54:24.797Z",
+          "mapperFile": "top-meadows-geometry(2).json"
+        }
+      },
+      {
+        "number": 4,
+        "tee": {
+          "lat": 51.5405,
+          "lng": 0.3110504
+        },
+        "greenCenter": {
+          "lat": 51.5407001,
+          "lng": 0.306673
+        },
+        "mapping": {
+          "source": "PinScope Green Mapper manual Top Meadow placement",
+          "updatedAt": "2026-05-10T19:54:44.200Z",
+          "mapperFile": "top-meadows-geometry(2).json"
+        }
+      },
+      {
+        "number": 5,
+        "tee": {
+          "lat": 51.5407402,
+          "lng": 0.3081322
+        },
+        "greenCenter": {
+          "lat": 51.5415009,
+          "lng": 0.3071666
+        },
+        "mapping": {
+          "source": "PinScope Green Mapper manual Top Meadow placement",
+          "updatedAt": "2026-05-10T19:55:10.601Z",
+          "mapperFile": "top-meadows-geometry(2).json"
+        }
+      },
+      {
+        "number": 6,
+        "tee": {
+          "lat": 51.5417678,
+          "lng": 0.3069949
+        },
+        "greenCenter": {
+          "lat": 51.5407936,
+          "lng": 0.3100419
+        },
+        "mapping": {
+          "source": "PinScope Green Mapper manual Top Meadow placement",
+          "updatedAt": "2026-05-10T19:55:26.325Z",
+          "mapperFile": "top-meadows-geometry(2).json"
+        }
+      },
+      {
+        "number": 7,
+        "tee": {
+          "lat": 51.5409003,
+          "lng": 0.3109217
+        },
+        "greenCenter": {
+          "lat": 51.5401263,
+          "lng": 0.3151488
+        },
+        "mapping": {
+          "source": "PinScope Green Mapper manual Top Meadow placement",
+          "updatedAt": "2026-05-10T19:55:39.506Z",
+          "mapperFile": "top-meadows-geometry(2).json"
+        }
+      },
+      {
+        "number": 8,
+        "tee": {
+          "lat": 51.5399661,
+          "lng": 0.3146338
+        },
+        "greenCenter": {
+          "lat": 51.5395257,
+          "lng": 0.3101707
+        },
+        "mapping": {
+          "source": "PinScope Green Mapper manual Top Meadow placement",
+          "updatedAt": "2026-05-10T19:55:54.498Z",
+          "mapperFile": "top-meadows-geometry(2).json"
+        }
+      },
+      {
+        "number": 9,
+        "tee": {
+          "lat": 51.5394323,
+          "lng": 0.3096771
+        },
+        "greenCenter": {
+          "lat": 51.5392855,
+          "lng": 0.3066301
+        },
+        "mapping": {
+          "source": "PinScope Green Mapper manual Top Meadow placement",
+          "updatedAt": "2026-05-10T19:56:04.531Z",
+          "mapperFile": "top-meadows-geometry(2).json"
+        }
+      },
+      {
+        "number": 10,
+        "tee": {
+          "lat": 51.5419012,
+          "lng": 0.3069949
+        },
+        "greenCenter": {
+          "lat": 51.5414342,
+          "lng": 0.3141189
+        },
+        "mapping": {
+          "source": "PinScope Green Mapper manual Top Meadow placement",
+          "updatedAt": "2026-05-10T19:56:27.685Z",
+          "mapperFile": "top-meadows-geometry(2).json"
+        }
+      },
+      {
+        "number": 11,
+        "tee": {
+          "lat": 51.5416744,
+          "lng": 0.3140545
+        },
+        "greenCenter": {
+          "lat": 51.5430756,
+          "lng": 0.3136468
+        },
+        "mapping": {
+          "source": "PinScope Green Mapper manual Top Meadow placement",
+          "updatedAt": "2026-05-10T19:56:49.088Z",
+          "mapperFile": "top-meadows-geometry(2).json"
+        }
+      },
+      {
+        "number": 12,
+        "tee": {
+          "lat": 51.5433025,
+          "lng": 0.314312
+        },
+        "greenCenter": {
+          "lat": 51.5410071,
+          "lng": 0.315578
+        },
+        "mapping": {
+          "source": "PinScope Green Mapper manual Top Meadow placement",
+          "updatedAt": "2026-05-10T19:57:00.235Z",
+          "mapperFile": "top-meadows-geometry(2).json"
+        }
+      },
+      {
+        "number": 13,
+        "tee": {
+          "lat": 51.54058,
+          "lng": 0.3156424
+        },
+        "greenCenter": {
+          "lat": 51.5417144,
+          "lng": 0.3198481
+        },
+        "mapping": {
+          "source": "PinScope Green Mapper manual Top Meadow placement",
+          "updatedAt": "2026-05-10T19:57:16.564Z",
+          "mapperFile": "top-meadows-geometry(2).json"
+        }
+      },
+      {
+        "number": 14,
+        "tee": {
+          "lat": 51.541581,
+          "lng": 0.3217793
+        },
+        "greenCenter": {
+          "lat": 51.5402197,
+          "lng": 0.3156853
+        },
+        "mapping": {
+          "source": "PinScope Green Mapper manual Top Meadow placement",
+          "updatedAt": "2026-05-10T19:57:33.966Z",
+          "mapperFile": "top-meadows-geometry(2).json"
+        }
+      },
+      {
+        "number": 15,
+        "tee": {
+          "lat": 51.5419012,
+          "lng": 0.3136468
+        },
+        "greenCenter": {
+          "lat": 51.5427287,
+          "lng": 0.3090763
+        },
+        "mapping": {
+          "source": "PinScope Green Mapper manual Top Meadow placement",
+          "updatedAt": "2026-05-10T19:57:53.712Z",
+          "mapperFile": "top-meadows-geometry(2).json"
+        }
+      },
+      {
+        "number": 16,
+        "tee": {
+          "lat": 51.5422349,
+          "lng": 0.307703
+        },
+        "greenCenter": {
+          "lat": 51.5422082,
+          "lng": 0.3127456
+        },
+        "mapping": {
+          "source": "PinScope Green Mapper manual Top Meadow placement",
+          "updatedAt": "2026-05-10T19:58:07.749Z",
+          "mapperFile": "top-meadows-geometry(2).json"
+        }
+      },
+      {
+        "number": 17,
+        "tee": {
+          "lat": 51.5417811,
+          "lng": 0.3133678
+        },
+        "greenCenter": {
+          "lat": 51.5421148,
+          "lng": 0.3071451
+        },
+        "mapping": {
+          "source": "PinScope Green Mapper manual Top Meadow placement",
+          "updatedAt": "2026-05-10T19:58:18.630Z",
+          "mapperFile": "top-meadows-geometry(2).json"
+        }
+      },
+      {
+        "number": 18,
+        "tee": {
+          "lat": 51.5419546,
+          "lng": 0.306201
+        },
+        "greenCenter": {
+          "lat": 51.5414742,
+          "lng": 0.3046989
+        },
+        "mapping": {
+          "source": "PinScope Green Mapper manual Top Meadow placement",
+          "updatedAt": "2026-05-10T19:58:37.377Z",
+          "mapperFile": "top-meadows-geometry(2).json"
+        }
+      }
+    ]
   }
 ]
