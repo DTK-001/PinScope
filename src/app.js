@@ -955,6 +955,7 @@ function courseLocationLine(course) {
 
 function renderStartRound() {
   const selected = getCourse(state, state.selectedCourseId) || state.courses[0];
+  const routingOptions = roundRoutingOptions(selected);
   return `
     <section class="setup-panel round-setup-panel">
       <div class="round-setup-hero">
@@ -963,7 +964,7 @@ function renderStartRound() {
         <p>${selected ? courseLocationLine(selected) : "Pick a course and build your group."}</p>
       </div>
       <form class="stack" data-form="start-round">
-        <input type="hidden" name="courseId" value="${escapeAttribute(selected?.id || "")}" />
+        ${routingOptions.length ? renderRoundRoutingChoices(selected, routingOptions) : `<input type="hidden" name="courseId" value="${escapeAttribute(selected?.id || "")}" />`}
         <div class="player-setup-list">
           ${renderPlayerSetupRows(selected)}
         </div>
@@ -972,6 +973,62 @@ function renderStartRound() {
       </form>
     </section>
   `;
+}
+
+function roundRoutingOptions(course) {
+  if (!course?.venueId) {
+    return [];
+  }
+
+  const venueCourses = state.courses.filter((item) => item.venueId === course.venueId && Array.isArray(item.loopIds) && item.loopIds.length);
+  const loopCount = new Set(venueCourses.flatMap((item) => item.loopIds)).size;
+  const hasLargerVenue = loopCount > 2 || venueCourses.some((item) => Number(item.holesCount || item.holes?.length || 0) > 18);
+  if (!hasLargerVenue) {
+    return [];
+  }
+
+  return venueCourses
+    .filter((item) => [1, 2].includes(item.loopIds.length) && Number(item.holesCount || item.holes?.length || 0) <= 18)
+    .sort((a, b) => {
+      const aHoles = Number(a.holesCount || a.holes?.length || 0);
+      const bHoles = Number(b.holesCount || b.holes?.length || 0);
+      if (aHoles !== bHoles) {
+        return aHoles - bHoles;
+      }
+      return String(a.layoutName || a.name).localeCompare(String(b.layoutName || b.name));
+    });
+}
+
+function renderRoundRoutingChoices(selected, options) {
+  const checkedId = options.some((option) => option.id === selected?.id) ? selected.id : options.find((option) => Number(option.holesCount || option.holes?.length || 0) === 18)?.id || options[0]?.id || "";
+  return `
+    <fieldset class="round-routing-choice">
+      <legend>Choose holes</legend>
+      <div class="round-routing-grid">
+        ${options.map((option) => {
+          const holes = Number(option.holesCount || option.holes?.length || 0);
+          const loopLabel = escapeHtml(option.layoutName || option.name);
+          const subLabel = holes === 18 && Array.isArray(option.loopIds) && option.loopIds.length === 2
+            ? `Front: ${escapeHtml(formatLoopName(option.loopIds[0]))} - Back: ${escapeHtml(formatLoopName(option.loopIds[1]))}`
+            : `${holes} holes`;
+          return `
+            <label class="route-option">
+              <input type="radio" name="courseId" value="${escapeAttribute(option.id)}" ${option.id === checkedId ? "checked" : ""} />
+              <span>
+                <strong>${loopLabel}</strong>
+                <em>${subLabel}</em>
+              </span>
+            </label>
+          `;
+        }).join("")}
+      </div>
+    </fieldset>
+  `;
+}
+
+function formatLoopName(value) {
+  const text = String(value || "").replace(/[-_]+/g, " ").trim();
+  return text ? text.replace(/\b\w/g, (letter) => letter.toUpperCase()) : "Loop";
 }
 
 function renderPlayerSetupRows(course) {

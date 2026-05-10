@@ -28,7 +28,10 @@ const LANGDON_HILLS_COURSE_ID = "verified-langdon-hills";
 const LANGDON_HILLS_LANGDON_COURSE_ID = "verified-langdon-hills-langdon";
 const LANGDON_HILLS_BULPHAN_COURSE_ID = "verified-langdon-hills-bulphan";
 const LANGDON_HILLS_HORNDON_COURSE_ID = "verified-langdon-hills-horndon";
+const LANGDON_HILLS_BULPHAN_LANGDON_COURSE_ID = "verified-langdon-hills-bulphan-langdon";
+const LANGDON_HILLS_LANGDON_HORNDON_COURSE_ID = "verified-langdon-hills-langdon-horndon";
 const LANGDON_HILLS_BULPHAN_HORNDON_COURSE_ID = "verified-langdon-hills-bulphan-horndon";
+const LANGDON_HILLS_HORNDON_BULPHAN_COURSE_ID = "verified-langdon-hills-horndon-bulphan";
 const LANGDON_HILLS_HORNDON_LANGDON_COURSE_ID = "verified-langdon-hills-horndon-langdon";
 const DARTFORD_COURSE_ID = "verified-dartford";
 const FAWKHAM_COURSE_ID = "verified-corinthian-fawkham-valley";
@@ -185,7 +188,10 @@ const SCORECARD_COURSE_LABELS = {
   [LANGDON_HILLS_LANGDON_COURSE_ID]: "Langdon Hills",
   [LANGDON_HILLS_BULPHAN_COURSE_ID]: "Langdon Hills",
   [LANGDON_HILLS_HORNDON_COURSE_ID]: "Langdon Hills",
+  [LANGDON_HILLS_BULPHAN_LANGDON_COURSE_ID]: "Langdon Hills",
+  [LANGDON_HILLS_LANGDON_HORNDON_COURSE_ID]: "Langdon Hills",
   [LANGDON_HILLS_BULPHAN_HORNDON_COURSE_ID]: "Langdon Hills",
+  [LANGDON_HILLS_HORNDON_BULPHAN_COURSE_ID]: "Langdon Hills",
   [LANGDON_HILLS_HORNDON_LANGDON_COURSE_ID]: "Langdon Hills",
   [DARTFORD_COURSE_ID]: "Dartford",
   [FAWKHAM_COURSE_ID]: "Corinthian Fawkham Valley",
@@ -719,9 +725,27 @@ export const verifiedCourses = [
     sourceUrl: "https://course.bluegolf.com/bluegolf/course/course/langdonhillslangdon/detailedscorecard.htm"
   }),
   makeLangdonHillsLayoutCourse({
+    id: LANGDON_HILLS_BULPHAN_LANGDON_COURSE_ID,
+    layoutName: "Bulphan/Langdon",
+    loopIds: ["bulphan", "langdon"],
+    sourceUrl: "https://course.bluegolf.com/bluegolf/course/course/langdonhillslangdon/detailedscorecard.htm"
+  }),
+  makeLangdonHillsLayoutCourse({
+    id: LANGDON_HILLS_LANGDON_HORNDON_COURSE_ID,
+    layoutName: "Langdon/Horndon",
+    loopIds: ["langdon", "horndon"],
+    sourceUrl: "https://www.golfpass.com/travel-advisor/courses/33453-langdon-hills-golf-country-club-horndon-course"
+  }),
+  makeLangdonHillsLayoutCourse({
     id: LANGDON_HILLS_BULPHAN_HORNDON_COURSE_ID,
     layoutName: "Bulphan/Horndon",
     loopIds: ["bulphan", "horndon"],
+    sourceUrl: "https://course.bluegolf.com/bluegolf/course/course/langdonhillsbulphan/detailedscorecard.htm"
+  }),
+  makeLangdonHillsLayoutCourse({
+    id: LANGDON_HILLS_HORNDON_BULPHAN_COURSE_ID,
+    layoutName: "Horndon/Bulphan",
+    loopIds: ["horndon", "bulphan"],
     sourceUrl: "https://course.bluegolf.com/bluegolf/course/course/langdonhillsbulphan/detailedscorecard.htm"
   }),
   makeLangdonHillsLayoutCourse({
