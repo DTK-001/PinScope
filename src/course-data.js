@@ -150,7 +150,8 @@ export function getCourse(state, courseId) {
 }
 
 export function getActiveRound(state) {
-  return state.rounds.find((round) => round.id === state.activeRoundId && round.status === "active") || null;
+  const activeRound = state.rounds.find((round) => round.id === state.activeRoundId && round.status === "active");
+  return activeRound || state.rounds.find((round) => round.status === "active") || null;
 }
 
 export function getRoundEntry(round, holeNumber) {

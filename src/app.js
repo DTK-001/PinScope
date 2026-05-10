@@ -407,13 +407,14 @@ function formatHandicapIndex(value) {
 
 function renderCourses() {
   const filteredCourses = filteredCourseList();
+  const savedCourseCount = groupedVenueCourseList(state.courses).length;
   return `
     ${renderPlayedCoursesSection()}
 
     <section class="action-band">
       <div>
         <h2>Local Course Library</h2>
-        <p>${state.courses.length} saved ${state.courses.length === 1 ? "course" : "courses"}</p>
+        <p>${savedCourseCount} saved ${savedCourseCount === 1 ? "course" : "courses"}</p>
       </div>
       <button class="primary-action" type="button" data-action="find-nearby">Find Near Me</button>
     </section>
@@ -463,10 +464,7 @@ function renderCourses() {
 
 function filteredCourseList() {
   const query = courseSearchQuery.trim().toLowerCase();
-  if (!query) {
-    return state.courses;
-  }
-  return state.courses.filter((course) => [
+  const matches = state.courses.filter((course) => !query || [
     course.name,
     course.venueName,
     course.layoutName,
@@ -476,6 +474,41 @@ function filteredCourseList() {
     course.country,
     course.source
   ].some((value) => String(value || "").toLowerCase().includes(query)));
+  return groupedVenueCourseList(matches);
+}
+
+function groupedVenueCourseList(courses) {
+  const seenVenueIds = new Set();
+  return courses.reduce((list, course) => {
+    if (!course.venueId) {
+      list.push(course);
+      return list;
+    }
+    if (seenVenueIds.has(course.venueId)) {
+      return list;
+    }
+    seenVenueIds.add(course.venueId);
+    list.push(preferredVenueCourse(course.venueId, courses.filter((item) => item.venueId === course.venueId)) || course);
+    return list;
+  }, []);
+}
+
+function preferredVenueCourse(venueId, candidates = null) {
+  const venueCourses = candidates?.length ? candidates : state.courses.filter((course) => course.venueId === venueId);
+  const selected = venueCourses.find((course) => course.id === state.selectedCourseId);
+  if (selected) {
+    return selected;
+  }
+  return venueCourses.find((course) => Array.isArray(course.loopIds) && course.loopIds.length === 2) || venueCourses[0] || null;
+}
+
+function venueLoopCount(course) {
+  if (!course?.venueId) {
+    return 0;
+  }
+  return new Set(state.courses
+    .filter((item) => item.venueId === course.venueId)
+    .flatMap((item) => item.loopIds || [])).size;
 }
 
 function renderPlayedCoursesSection() {
@@ -499,7 +532,9 @@ function playedCourseSummaries() {
   const roundCounts = new Map();
   state.rounds.forEach((round) => {
     if (round.courseId) {
-      roundCounts.set(round.courseId, (roundCounts.get(round.courseId) || 0) + 1);
+      const course = getCourse(state, round.courseId);
+      const key = course?.venueId || round.courseId;
+      roundCounts.set(key, (roundCounts.get(key) || 0) + 1);
     }
   });
 
@@ -511,23 +546,24 @@ function playedCourseSummaries() {
     .filter(({ round, timestamp }) => round.courseId && Number.isFinite(timestamp))
     .sort((a, b) => b.timestamp - a.timestamp);
 
-  const seenCourseIds = new Set();
+  const seenCourseKeys = new Set();
   return newestRounds.reduce((summaries, { round, timestamp }) => {
-    if (seenCourseIds.has(round.courseId)) {
-      return summaries;
-    }
     const course = getCourse(state, round.courseId);
     if (!course) {
       return summaries;
     }
-    seenCourseIds.add(round.courseId);
+    const key = course.venueId || round.courseId;
+    if (seenCourseKeys.has(key)) {
+      return summaries;
+    }
+    seenCourseKeys.add(key);
     const players = getRoundPlayers(round);
     const leadTotals = round.status === "complete" ? roundTotals(round, course, players[0]?.id) : null;
     summaries.push({
       course,
       round,
       timestamp,
-      roundCount: roundCounts.get(round.courseId) || 1,
+      roundCount: roundCounts.get(key) || 1,
       leadTotals
     });
     return summaries;
@@ -536,7 +572,8 @@ function playedCourseSummaries() {
 
 function renderPlayedCourseCard(summary) {
   const { course, round, roundCount, leadTotals } = summary;
-  const selected = state.selectedCourseId === course.id;
+  const selected = isCourseSelected(course);
+  const activeRound = getActiveRound(state);
   const playedLabel = round.status === "active"
     ? "Round in progress"
     : `Last played ${formatShortDate(round.completedAt || round.startedAt)}`;
@@ -547,7 +584,7 @@ function renderPlayedCourseCard(summary) {
     <article class="played-course-card ${selected ? "selected" : ""}">
       <div>
         <p class="eyebrow">${playedLabel}</p>
-        <h3>${escapeHtml(course.name)}</h3>
+        <h3>${escapeHtml(courseDisplayName(course))}</h3>
         <p>${courseLocationLine(course)}</p>
       </div>
       <div class="played-course-meta">
@@ -555,7 +592,7 @@ function renderPlayedCourseCard(summary) {
         <span>${scoreLabel}</span>
       </div>
       <div class="played-course-actions">
-        <button class="primary-action" type="button" data-action="quick-start" data-course-id="${course.id}">Play</button>
+        <button class="primary-action" type="button" data-action="quick-start" data-course-id="${course.id}">${activeRound ? "Continue" : "Play"}</button>
         <button class="secondary-action" type="button" data-action="select-course" data-course-id="${course.id}">${selected ? "Selected" : "Select"}</button>
       </div>
     </article>
@@ -571,7 +608,9 @@ function formatShortDate(value) {
 }
 
 function renderFeaturedCourse(course) {
-  const selected = state.selectedCourseId === course.id;
+  const selected = isCourseSelected(course);
+  const activeRound = getActiveRound(state);
+  const title = courseDisplayName(course);
   return `
     <section class="course-hero">
       <div class="hero-orbit" aria-hidden="true">
@@ -579,11 +618,11 @@ function renderFeaturedCourse(course) {
       </div>
       <div>
         <p class="eyebrow">Stage 1 Verified Pack</p>
-        <h2>${escapeHtml(course.name)}</h2>
+        <h2>${escapeHtml(title)}</h2>
         <p>${courseLocationLine(course)}</p>
       </div>
       <div class="hero-actions">
-        ${selected ? `<button class="primary-action" type="button" data-action="quick-start" data-course-id="${course.id}">Setup Round</button>` : ""}
+        ${selected ? `<button class="primary-action" type="button" data-action="quick-start" data-course-id="${course.id}">${activeRound ? "Continue Round" : "Setup Round"}</button>` : ""}
         <button class="secondary-action" type="button" data-action="select-course" data-course-id="${course.id}">Select</button>
       </div>
       ${courseHasPhotoVisual(course) ? renderPhotoSourceControl(course, "hero") : ""}
@@ -632,15 +671,16 @@ function renderMiniCourseSignal(course) {
 }
 
 function renderCourseCard(course) {
-  const isSelected = state.selectedCourseId === course.id;
+  const isSelected = isCourseSelected(course);
   const selected = isSelected ? "selected" : "";
   const source = course.source === "verified" ? "Verified" : course.source === "shared" ? "Shared" : course.source === "osm" ? "OSM" : course.source === "manual" ? "Manual" : "Demo";
+  const loopCount = venueLoopCount(course);
   return `
     <article class="course-card ${selected}">
       <div class="course-main">
         <div>
           <p class="eyebrow">${source}</p>
-          <h3>${escapeHtml(course.name)}</h3>
+          <h3>${escapeHtml(courseDisplayName(course))}</h3>
           <p>${courseLocationLine(course)}</p>
         </div>
         <button class="chip-button" type="button" data-action="select-course" data-course-id="${course.id}">
@@ -649,7 +689,7 @@ function renderCourseCard(course) {
       </div>
       <div class="course-meta">
         ${course.verification ? `<span class="verified-chip">Scorecard checked</span>` : ""}
-        ${course.venueId ? `<span>${escapeHtml(course.layoutName || "Venue layout")}</span>` : ""}
+        ${loopCount ? `<span>${loopCount} nine-hole loops</span>` : ""}
         ${course.website ? `<a href="${escapeAttribute(course.website)}" target="_blank" rel="noreferrer">Website</a>` : "<span>Website pending</span>"}
         ${course.phone ? `<a href="tel:${escapeAttribute(course.phone)}">Call</a>` : "<span>Phone pending</span>"}
       </div>
@@ -657,6 +697,17 @@ function renderCourseCard(course) {
       ${isSelected ? renderSelectedCourseActions(course) : ""}
     </article>
   `;
+}
+
+function isCourseSelected(course) {
+  if (!course) {
+    return false;
+  }
+  if (!course.venueId) {
+    return state.selectedCourseId === course.id;
+  }
+  const selected = getCourse(state, state.selectedCourseId);
+  return selected?.venueId === course.venueId;
 }
 
 function renderCourseGeometryStatus(course) {
@@ -681,9 +732,10 @@ function renderCourseGeometryStatus(course) {
 }
 
 function renderSelectedCourseActions(course) {
+  const activeRound = getActiveRound(state);
   return `
     <div class="course-actions">
-      <button class="secondary-action" type="button" data-action="quick-start" data-course-id="${course.id}">Start Round</button>
+      <button class="secondary-action" type="button" data-action="quick-start" data-course-id="${course.id}">${activeRound ? "Continue Round" : "Start Round"}</button>
     </div>
   `;
 }
@@ -723,7 +775,7 @@ function renderPlay() {
   const holes = Array.isArray(course.holes) ? course.holes : [];
   const hole = holes.find((item) => item.number === activeRound.currentHole) || holes[0];
   if (!hole) {
-    return `<section class="empty-state"><h2>Hole data missing</h2><p>${escapeHtml(course.name)} needs hole data before a round can be played.</p><button class="primary-action" type="button" data-route="courses">Choose another course</button></section>`;
+    return `<section class="empty-state"><h2>Hole data missing</h2><p>${escapeHtml(courseDisplayName(course))} needs hole data before a round can be played.</p><button class="primary-action" type="button" data-route="courses">Choose another course</button></section>`;
   }
   queueCourseSatellitePreload(course, hole.number);
   const players = getRoundPlayers(activeRound);
@@ -734,7 +786,7 @@ function renderPlay() {
       ${renderHoleVisual(hole)}
 
       <div class="play-hud play-hole-hud">
-        <p class="eyebrow">${escapeHtml(course.name)}</p>
+        <p class="eyebrow">${escapeHtml(courseDisplayName(course))}</p>
         <div class="play-hole-title">
           <h2>Hole ${hole.number}</h2>
           <button type="button" data-action="open-round-scorecard">Scorecard</button>
@@ -929,7 +981,7 @@ function trackShot() {
 }
 
 function savedHomeCourseCount() {
-  return state.courses.filter((course) => {
+  return groupedVenueCourseList(state.courses).filter((course) => {
     if (course.homeAreaId === homeArea.id) {
       return true;
     }
@@ -940,7 +992,7 @@ function savedHomeCourseCount() {
 function courseLocationLine(course) {
   const bits = [];
   bits.push(escapeHtml(course.town || course.postcode || "Area pending"));
-  if (course.layoutName) {
+  if (course.layoutName && !course.venueName) {
     bits.push(escapeHtml(course.layoutName));
   }
   bits.push(`${course.holesCount || course.holes.length} holes`);
@@ -953,6 +1005,10 @@ function courseLocationLine(course) {
   return bits.join(" - ");
 }
 
+function courseDisplayName(course) {
+  return course?.venueName || course?.name || "Choose Course";
+}
+
 function renderStartRound() {
   const selected = getCourse(state, state.selectedCourseId) || state.courses[0];
   const routingOptions = roundRoutingOptions(selected);
@@ -960,7 +1016,7 @@ function renderStartRound() {
     <section class="setup-panel round-setup-panel">
       <div class="round-setup-hero">
         <p class="eyebrow">Round Setup</p>
-        <h2>${escapeHtml(selected?.name || "Choose Course")}</h2>
+        <h2>${escapeHtml(courseDisplayName(selected))}</h2>
         <p>${selected ? courseLocationLine(selected) : "Pick a course and build your group."}</p>
       </div>
       <form class="stack" data-form="start-round">
@@ -1001,29 +1057,72 @@ function roundRoutingOptions(course) {
 
 function renderRoundRoutingChoices(selected, options) {
   const checkedId = options.some((option) => option.id === selected?.id) ? selected.id : options.find((option) => Number(option.holesCount || option.holes?.length || 0) === 18)?.id || options[0]?.id || "";
+  const checked = options.find((option) => option.id === checkedId) || options[0];
+  const loops = roundRoutingLoops(options);
+  const frontLoop = checked?.loopIds?.[0] || loops[0]?.id || "";
+  const backLoop = checked?.loopIds?.[1] || "";
   return `
-    <fieldset class="round-routing-choice">
-      <legend>Choose holes</legend>
-      <div class="round-routing-grid">
-        ${options.map((option) => {
-          const holes = Number(option.holesCount || option.holes?.length || 0);
-          const loopLabel = escapeHtml(option.layoutName || option.name);
-          const subLabel = holes === 18 && Array.isArray(option.loopIds) && option.loopIds.length === 2
-            ? `Front: ${escapeHtml(formatLoopName(option.loopIds[0]))} - Back: ${escapeHtml(formatLoopName(option.loopIds[1]))}`
-            : `${holes} holes`;
-          return `
-            <label class="route-option">
-              <input type="radio" name="courseId" value="${escapeAttribute(option.id)}" ${option.id === checkedId ? "checked" : ""} />
-              <span>
-                <strong>${loopLabel}</strong>
-                <em>${subLabel}</em>
-              </span>
-            </label>
-          `;
-        }).join("")}
+    <section class="round-routing-choice">
+      <div class="routing-head">
+        <span>Choose holes</span>
+        <strong>${escapeHtml(courseDisplayName(selected))}</strong>
       </div>
-    </fieldset>
+      <input type="hidden" name="courseId" value="${escapeAttribute(checkedId)}" />
+      <div class="routing-select-grid">
+        <label>
+          <span>Front nine</span>
+          <select name="frontLoopId">
+            ${loops.map((loop) => `<option value="${escapeAttribute(loop.id)}" ${loop.id === frontLoop ? "selected" : ""}>${escapeHtml(loop.name)}</option>`).join("")}
+          </select>
+        </label>
+        <label>
+          <span>Back nine</span>
+          <select name="backLoopId">
+            <option value="" ${backLoop ? "" : "selected"}>None - play 9</option>
+            ${loops.map((loop) => `<option value="${escapeAttribute(loop.id)}" ${loop.id === backLoop ? "selected" : ""}>${escapeHtml(loop.name)}</option>`).join("")}
+          </select>
+        </label>
+      </div>
+    </section>
   `;
+}
+
+function roundRoutingLoops(options) {
+  const loopNames = new Map();
+  options.forEach((option) => {
+    if (Array.isArray(option.loopIds) && option.loopIds.length === 1) {
+      loopNames.set(option.loopIds[0], option.layoutName || formatLoopName(option.loopIds[0]));
+      return;
+    }
+    (option.loopIds || []).forEach((loopId) => {
+      if (!loopNames.has(loopId)) {
+        loopNames.set(loopId, formatLoopName(loopId));
+      }
+    });
+  });
+  return [...loopNames].map(([id, name]) => ({ id, name }));
+}
+
+function resolveRoundCourseId(formData, fallbackCourseId) {
+  const selected = getCourse(state, fallbackCourseId);
+  const options = roundRoutingOptions(selected);
+  if (!options.length) {
+    return fallbackCourseId;
+  }
+  const frontLoopId = String(formData.get("frontLoopId") || "");
+  const backLoopId = String(formData.get("backLoopId") || "");
+  const loopIds = [frontLoopId, backLoopId].filter(Boolean);
+  const match = options.find((option) => {
+    if (!Array.isArray(option.loopIds) || option.loopIds.length !== loopIds.length) {
+      return false;
+    }
+    return option.loopIds.every((loopId, index) => loopId === loopIds[index]);
+  });
+  if (match) {
+    return match.id;
+  }
+  flash("That front/back route is not available yet.");
+  return "";
 }
 
 function formatLoopName(value) {
@@ -1093,7 +1192,7 @@ function renderScoreCardOverlay() {
         <header class="score-card-head">
           <div>
             <p class="eyebrow">Score Entry</p>
-            <h2>${escapeHtml(course.name)}</h2>
+            <h2>${escapeHtml(courseDisplayName(course))}</h2>
             <p>Hole ${hole.number} - Par ${hole.par} - SI ${hole.strokeIndex}</p>
           </div>
           <button class="icon-action" type="button" data-action="close-score-card" aria-label="Close score card">X</button>
@@ -1143,7 +1242,7 @@ function renderRoundScorecardOverlay() {
         <header class="round-scorecard-head">
           <div>
             <p class="eyebrow">Round Card</p>
-            <h2>${escapeHtml(course.name)}</h2>
+            <h2>${escapeHtml(courseDisplayName(course))}</h2>
           </div>
           <button class="secondary-action" type="button" data-action="close-round-scorecard">Back to Play</button>
         </header>
@@ -3487,7 +3586,7 @@ function renderVerificationPanel(course) {
     <section class="verification-panel">
       <div>
         <p class="eyebrow">Verified Pack</p>
-        <h3>${escapeHtml(course.name)}</h3>
+        <h3>${escapeHtml(courseDisplayName(course))}</h3>
         <p>${escapeHtml(course.verification.confidence)}</p>
       </div>
     </section>
@@ -3688,7 +3787,7 @@ function statHoleRows(summary) {
     const par = Number(hole.par || 0);
     return {
       courseId: summary.course.id,
-      courseName: summary.course.name,
+      courseName: courseDisplayName(summary.course),
       holeNumber: hole.number,
       par,
       score,
@@ -3733,7 +3832,8 @@ function parSplits(holes) {
 function coursePerformance(rounds) {
   const groups = new Map();
   rounds.forEach((item) => {
-    const current = groups.get(item.course.id) || {
+    const key = item.course.venueId || item.course.id;
+    const current = groups.get(key) || {
       course: item.course,
       rounds: 0,
       score: 0,
@@ -3746,7 +3846,7 @@ function coursePerformance(rounds) {
     if (item.totals.toPar < current.best.toPar) {
       current.best = item.totals;
     }
-    groups.set(item.course.id, current);
+    groups.set(key, current);
   });
   return Array.from(groups.values())
     .map((item) => ({
@@ -3983,7 +4083,7 @@ function renderCoursePerformance(summary) {
         ${summary.coursePerformance.map((item) => `
           <article>
             <div>
-              <h3>${escapeHtml(item.course.name)}</h3>
+              <h3>${escapeHtml(courseDisplayName(item.course))}</h3>
               <p>${item.rounds} ${item.rounds === 1 ? "round" : "rounds"} - best ${item.best.score} (${formatToPar(item.best.toPar)})</p>
             </div>
             <strong>${item.averageScore.toFixed(1)}</strong>
@@ -4051,7 +4151,7 @@ function renderRoundRow(round) {
   return `
     <article class="round-row">
       <div>
-        <h3>${escapeHtml(course.name)}</h3>
+        <h3>${escapeHtml(courseDisplayName(course))}</h3>
         <p>${date} - ${players.map((player) => {
           const totals = roundTotals(round, course, player.id);
           return `${escapeHtml(player.name)} ${totals.score} (${formatToPar(totals.toPar)})`;
@@ -4376,7 +4476,10 @@ function handleSubmit(event) {
   }
 
   if (form.dataset.form === "start-round") {
-    const courseId = String(data.get("courseId") || state.selectedCourseId);
+    const courseId = resolveRoundCourseId(data, String(data.get("courseId") || state.selectedCourseId));
+    if (!courseId) {
+      return;
+    }
     const players = [0, 1, 2, 3]
       .map((index) => ({
         id: `player-${index + 1}`,
@@ -5556,6 +5659,11 @@ function eventToPanelPercent(panel, event) {
 }
 
 function startRound(courseId, teeId = "") {
+  const activeRound = getActiveRound(state);
+  if (activeRound) {
+    resumeActiveRound(activeRound, "Round already in progress.");
+    return;
+  }
   const course = getCourse(state, courseId);
   if (!course) {
     flash("Select a course first.");
@@ -5578,7 +5686,28 @@ function startRound(courseId, teeId = "") {
   persist("Round started.");
 }
 
+function resumeActiveRound(round = getActiveRound(state), message = "Continuing round.") {
+  if (!round) {
+    return false;
+  }
+  const course = getCourse(state, round.courseId);
+  state.activeRoundId = round.id;
+  if (course) {
+    state.selectedCourseId = course.id;
+    queueCourseSatellitePreload(course, round.currentHole || 1);
+  }
+  roundSetupPlayerCount = 1;
+  view = "play";
+  window.location.hash = "play";
+  scrollToTop();
+  persist(message);
+  return true;
+}
+
 function openRoundSetup(courseId) {
+  if (resumeActiveRound(getActiveRound(state))) {
+    return;
+  }
   const course = getCourse(state, courseId);
   if (!course) {
     flash("Course not found.");
