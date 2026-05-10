@@ -1996,12 +1996,6 @@ select option {
   filter: drop-shadow(0 0.6px 0.8px rgba(9, 30, 27, 0.3));
 }
 
-.real-green {
-  fill: #cfe988;
-  stroke: rgba(255, 253, 247, 0.8);
-  stroke-width: 0.5;
-}
-
 .real-bunker {
   fill: #e4cf95;
   stroke: rgba(255, 245, 207, 0.8);
@@ -2059,11 +2053,6 @@ select option {
 .fairway-stripe {
   stroke: rgba(216, 236, 152, 0.14);
   stroke-width: 2.8;
-}
-
-.green-stripe {
-  stroke: rgba(255, 253, 247, 0.18);
-  stroke-width: 1.5;
 }
 
 .tree-shadow {
@@ -3601,29 +3590,4 @@ select option {
   .course-actions {
     grid-template-columns: 1fr;
   }
-}
-
-/* OSM green shapes: replaces the old circular green marker when a real
-   OpenStreetMap green polygon is available for the hole. */
-.photo-osm-green-shape {
-  fill: rgba(135, 245, 123, 0.08);
-  stroke: rgba(248, 255, 243, 0.52);
-  stroke-width: 0.72;
-  vector-effect: non-scaling-stroke;
-  filter: drop-shadow(0 0 0.9px rgba(5, 18, 8, 0.42));
-}
-
-.photo-green-center-dot {
-  position: absolute;
-  z-index: 4;
-  display: block;
-  width: 8px;
-  height: 8px;
-  border: 0;
-  border-radius: 999px;
-  background: #aff17e;
-  transform: translate(-50%, -50%) scale(var(--photo-marker-scale, 1));
-  transform-origin: center center;
-  filter: drop-shadow(0 0 2px rgba(7, 16, 12, 0.75));
-  pointer-events: none;
 }

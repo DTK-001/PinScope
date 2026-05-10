@@ -25,6 +25,11 @@ const INGREBOURNE_COURSE_ID = "verified-ingrebourne-links";
 const PRINCES_PARK_COURSE_ID = "verified-princes-park";
 const GRAVESEND_COURSE_ID = "verified-gravesend-golf-centre";
 const LANGDON_HILLS_COURSE_ID = "verified-langdon-hills";
+const LANGDON_HILLS_LANGDON_COURSE_ID = "verified-langdon-hills-langdon";
+const LANGDON_HILLS_BULPHAN_COURSE_ID = "verified-langdon-hills-bulphan";
+const LANGDON_HILLS_HORNDON_COURSE_ID = "verified-langdon-hills-horndon";
+const LANGDON_HILLS_BULPHAN_HORNDON_COURSE_ID = "verified-langdon-hills-bulphan-horndon";
+const LANGDON_HILLS_HORNDON_LANGDON_COURSE_ID = "verified-langdon-hills-horndon-langdon";
 const DARTFORD_COURSE_ID = "verified-dartford";
 const FAWKHAM_COURSE_ID = "verified-corinthian-fawkham-valley";
 const BARNEHURST_COURSE_ID = "verified-barnehurst";
@@ -123,7 +128,23 @@ const LANGDON_HILLS_SCORECARD = {
   strokeIndex: [16, 4, 14, 8, 18, 12, 2, 10, 6, 13, 3, 9, 17, 7, 1, 11, 15, 5],
   blue: [369, 417, 340, 407, 194, 562, 380, 182, 361, 511, 472, 553, 317, 162, 445, 504, 194, 454],
   white: [369, 417, 340, 407, 173, 482, 380, 182, 350, 511, 404, 553, 317, 162, 412, 504, 165, 454],
-  yellow: [349, 393, 333, 375, 173, 469, 359, 174, 325, 491, 400, 495, 310, 144, 394, 495, 141, 396]
+  yellow: [349, 393, 333, 375, 173, 469, 359, 174, 325, 491, 400, 495, 310, 144, 394, 495, 141, 396],
+  red: [342, 398, 319, 339, 136, 431, 353, 152, 297, 475, 387, 475, 292, 120, 341, 480, 140, 396]
+};
+
+const LANGDON_HILLS_HORNDON_SCORECARD = {
+  par: [4, 4, 3, 5, 4, 4, 5, 3, 4],
+  strokeIndex: [9, 17, 15, 7, 3, 13, 1, 5, 11],
+  blue: [355, 357, 234, 468, 405, 339, 533, 195, 340],
+  white: [336, 325, 159, 468, 358, 339, 494, 195, 318],
+  yellow: [307, 309, 140, 455, 340, 324, 478, 177, 305],
+  red: [300, 290, 124, 416, 317, 296, 417, 156, 274]
+};
+
+const LANGDON_HILLS_LOOP_SCORECARDS = {
+  langdon: sliceScorecard(LANGDON_HILLS_SCORECARD, 0, 9),
+  bulphan: sliceScorecard(LANGDON_HILLS_SCORECARD, 9, 18),
+  horndon: LANGDON_HILLS_HORNDON_SCORECARD
 };
 
 const DARTFORD_SCORECARD = {
@@ -161,6 +182,11 @@ const SCORECARD_COURSE_LABELS = {
   [PRINCES_PARK_COURSE_ID]: "Princes Park",
   [GRAVESEND_COURSE_ID]: "Gravesend Golf Centre",
   [LANGDON_HILLS_COURSE_ID]: "Langdon Hills",
+  [LANGDON_HILLS_LANGDON_COURSE_ID]: "Langdon Hills",
+  [LANGDON_HILLS_BULPHAN_COURSE_ID]: "Langdon Hills",
+  [LANGDON_HILLS_HORNDON_COURSE_ID]: "Langdon Hills",
+  [LANGDON_HILLS_BULPHAN_HORNDON_COURSE_ID]: "Langdon Hills",
+  [LANGDON_HILLS_HORNDON_LANGDON_COURSE_ID]: "Langdon Hills",
   [DARTFORD_COURSE_ID]: "Dartford",
   [FAWKHAM_COURSE_ID]: "Corinthian Fawkham Valley",
   [BARNEHURST_COURSE_ID]: "Barnehurst"
@@ -668,39 +694,42 @@ export const verifiedCourses = [
     ],
     holes: Array.from({ length: 9 }, (_, index) => makeScorecardOnlyHole(index, GRAVESEND_SCORECARD, GRAVESEND_COURSE_ID))
   },
-  {
+  makeLangdonHillsLayoutCourse({
+    id: LANGDON_HILLS_LANGDON_COURSE_ID,
+    layoutName: "Langdon",
+    loopIds: ["langdon"],
+    sourceUrl: "https://course.bluegolf.com/bluegolf/course/course/langdonhillslangdon/detailedscorecard.htm"
+  }),
+  makeLangdonHillsLayoutCourse({
+    id: LANGDON_HILLS_BULPHAN_COURSE_ID,
+    layoutName: "Bulphan",
+    loopIds: ["bulphan"],
+    sourceUrl: "https://course.bluegolf.com/bluegolf/course/course/langdonhillslangdon/detailedscorecard.htm"
+  }),
+  makeLangdonHillsLayoutCourse({
+    id: LANGDON_HILLS_HORNDON_COURSE_ID,
+    layoutName: "Horndon",
+    loopIds: ["horndon"],
+    sourceUrl: "https://www.golfpass.com/travel-advisor/courses/33453-langdon-hills-golf-country-club-horndon-course"
+  }),
+  makeLangdonHillsLayoutCourse({
     id: LANGDON_HILLS_COURSE_ID,
-    source: "verified",
-    homeAreaId: homeArea.id,
-    name: "Langdon Hills Golf & Country Club",
-    town: "Bulphan",
-    postcode: "RM14 3TY",
-    country: "England",
-    holesCount: 18,
-    par: "72",
-    distanceMiles: 5.7,
-    website: "https://www.golflangdon.co.uk/",
-    phone: "+44 1375 361011",
-    location: { lat: 51.531174, lng: 0.365153 },
-    attribution: "Langdon/Bulphan scorecard from BlueGolf, cross-checked against GolfPass and Golfshake. Green GPS alignment pending map/OSM sync.",
-    verification: {
-      status: "verified",
-      updated: "2026-05-10",
-      confidence: "BlueGolf provides the complete Langdon/Bulphan 18-hole card. GolfPass agrees on the separate Langdon and Bulphan nines, while Golfshake agrees on the combined blue, white, and yellow totals.",
-      sources: [
-        { label: "BlueGolf detailed scorecard", url: "https://course.bluegolf.com/bluegolf/course/course/langdonhillslangdon/detailedscorecard.htm" },
-        { label: "GolfPass Langdon course", url: "https://www.golfpass.com/travel-advisor/courses/33451-langdon-hills-golf-country-club-langdon-course" },
-        { label: "GolfPass Bulphan course", url: "https://www.golfpass.com/travel-advisor/courses/33452-langdon-hills-golf-country-club-bulphan-course" },
-        { label: "Golfshake course page", url: "https://www.golfshake.com/course/view/15252/Langdon_Hills_Golf_and_Country_Club.html" }
-      ]
-    },
-    tees: [
-      { id: "blue", name: "Blue", color: "#4f8fd9", rating: "", slope: "", totalYards: 6824 },
-      { id: "white", name: "White", color: "#f8f7f1", rating: "", slope: "", totalYards: 6582 },
-      { id: "yellow", name: "Yellow", color: "#d7a44d", rating: "", slope: "", totalYards: 6216 }
-    ],
-    holes: Array.from({ length: 18 }, (_, index) => makeScorecardOnlyHole(index, LANGDON_HILLS_SCORECARD, LANGDON_HILLS_COURSE_ID))
-  },
+    layoutName: "Langdon/Bulphan",
+    loopIds: ["langdon", "bulphan"],
+    sourceUrl: "https://course.bluegolf.com/bluegolf/course/course/langdonhillslangdon/detailedscorecard.htm"
+  }),
+  makeLangdonHillsLayoutCourse({
+    id: LANGDON_HILLS_BULPHAN_HORNDON_COURSE_ID,
+    layoutName: "Bulphan/Horndon",
+    loopIds: ["bulphan", "horndon"],
+    sourceUrl: "https://course.bluegolf.com/bluegolf/course/course/langdonhillsbulphan/detailedscorecard.htm"
+  }),
+  makeLangdonHillsLayoutCourse({
+    id: LANGDON_HILLS_HORNDON_LANGDON_COURSE_ID,
+    layoutName: "Horndon/Langdon",
+    loopIds: ["horndon", "langdon"],
+    sourceUrl: "https://www.golfpass.com/travel-advisor/courses/33453-langdon-hills-golf-country-club-horndon-course"
+  }),
   {
     id: DARTFORD_COURSE_ID,
     source: "verified",
@@ -793,6 +822,14 @@ export const verifiedCourses = [
     holes: Array.from({ length: 9 }, (_, index) => makeScorecardOnlyHole(index, BARNEHURST_SCORECARD, BARNEHURST_COURSE_ID))
   }
 ];
+
+function sliceScorecard(scorecard, start, end) {
+  return Object.fromEntries(
+    Object.entries(scorecard)
+      .filter(([, value]) => Array.isArray(value))
+      .map(([key, value]) => [key, value.slice(start, end)])
+  );
+}
 
 function makeCranhamHole(index) {
   const number = index + 1;
@@ -915,6 +952,79 @@ function makeScorecardOnlyHole(index, scorecard, courseId) {
       ? "Satellite alignment seeded from OpenStreetMap hole geometry; use Adjust to fine-tune."
       : `Scorecard verified; ${SCORECARD_COURSE_LABELS[courseId] || "course"} tee/green geometry pending.`
   };
+}
+
+function makeLangdonHillsLayoutCourse({ id, layoutName, loopIds, sourceUrl }) {
+  const scorecard = composeLoopScorecard(loopIds);
+  const parTotal = sumValues(scorecard.par);
+  const loopNames = loopIds.map((loopId) => loopId[0].toUpperCase() + loopId.slice(1));
+  const holesCount = scorecard.par.length;
+  return {
+    id,
+    source: "verified",
+    homeAreaId: homeArea.id,
+    venueId: "venue-langdon-hills",
+    venueName: "Langdon Hills Golf & Country Club",
+    layoutName,
+    loopIds,
+    name: `Langdon Hills Golf & Country Club - ${layoutName}`,
+    town: "Bulphan",
+    postcode: "RM14 3TY",
+    country: "England",
+    holesCount,
+    par: String(parTotal),
+    distanceMiles: 5.7,
+    website: "https://www.golflangdon.co.uk/",
+    phone: "+44 1268 548444",
+    location: { lat: 51.531174, lng: 0.365153 },
+    attribution: "Langdon Hills loop scorecards from BlueGolf and GolfPass. Green GPS alignment pending map/OSM sync.",
+    verification: {
+      status: "verified",
+      updated: "2026-05-10",
+      confidence: `Langdon Hills is a 27-hole venue made from Langdon, Bulphan, and Horndon 9-hole loops. This layout uses ${loopNames.join(" + ")} as a ${holesCount}-hole playable routing, generated from shared loop scorecards so loop corrections update every combination.`,
+      sources: [
+        { label: "Layout scorecard", url: sourceUrl },
+        { label: "GolfPass Langdon course", url: "https://www.golfpass.com/travel-advisor/courses/33451-langdon-hills-golf-country-club-langdon-course" },
+        { label: "GolfPass Bulphan course", url: "https://www.golfpass.com/travel-advisor/courses/33452-langdon-hills-golf-country-club-bulphan-course" },
+        { label: "GolfPass Horndon course", url: "https://www.golfpass.com/travel-advisor/courses/33453-langdon-hills-golf-country-club-horndon-course" },
+        { label: "Golfshake venue page", url: "https://www.golfshake.com/course/view/15252/Langdon_Hills_Golf_and_Country_Club.html" }
+      ]
+    },
+    tees: makeTeesFromScorecard(scorecard),
+    holes: Array.from({ length: holesCount }, (_, index) => makeScorecardOnlyHole(index, scorecard, id))
+  };
+}
+
+function composeLoopScorecard(loopIds) {
+  const keys = ["par", "strokeIndex", "blue", "white", "yellow", "red"];
+  return Object.fromEntries(
+    keys.map((key) => [
+      key,
+      loopIds.flatMap((loopId) => LANGDON_HILLS_LOOP_SCORECARDS[loopId]?.[key] || [])
+    ])
+  );
+}
+
+function makeTeesFromScorecard(scorecard) {
+  const teeMeta = {
+    blue: { name: "Blue", color: "#4f8fd9" },
+    white: { name: "White", color: "#f8f7f1" },
+    yellow: { name: "Yellow", color: "#d7a44d" },
+    red: { name: "Red", color: "#e85d3f" }
+  };
+  return Object.entries(teeMeta)
+    .filter(([teeId]) => Array.isArray(scorecard[teeId]) && scorecard[teeId].length)
+    .map(([teeId, meta]) => ({
+      id: teeId,
+      ...meta,
+      rating: "",
+      slope: "",
+      totalYards: sumValues(scorecard[teeId])
+    }));
+}
+
+function sumValues(values = []) {
+  return values.reduce((sum, value) => sum + Number(value || 0), 0);
 }
 
 function geoFromCoords(coords) {

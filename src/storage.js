@@ -4,7 +4,7 @@ import { verifiedGreenDefaults } from "./verified-green-defaults.js";
 import { sharedCourseDefaults } from "./shared-course-defaults.js";
 
 const STORAGE_KEY = "local-loop-golf:v1";
-const REMOVED_BUILT_IN_COURSE_IDS = new Set(["demo-starter-nine"]);
+const REMOVED_BUILT_IN_COURSE_IDS = new Set(["demo-starter-nine", "osm-way-262444890"]);
 const GPS_FIELDS = ["tee", "greenFront", "greenCenter", "greenBack"];
 
 const builtInCourses = applyVerifiedGreenDefaults(buildBuiltInCourses());

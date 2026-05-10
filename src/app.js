@@ -468,6 +468,9 @@ function filteredCourseList() {
   }
   return state.courses.filter((course) => [
     course.name,
+    course.venueName,
+    course.layoutName,
+    ...(Array.isArray(course.loopIds) ? course.loopIds : []),
     course.town,
     course.postcode,
     course.country,
@@ -646,6 +649,7 @@ function renderCourseCard(course) {
       </div>
       <div class="course-meta">
         ${course.verification ? `<span class="verified-chip">Scorecard checked</span>` : ""}
+        ${course.venueId ? `<span>${escapeHtml(course.layoutName || "Venue layout")}</span>` : ""}
         ${course.website ? `<a href="${escapeAttribute(course.website)}" target="_blank" rel="noreferrer">Website</a>` : "<span>Website pending</span>"}
         ${course.phone ? `<a href="tel:${escapeAttribute(course.phone)}">Call</a>` : "<span>Phone pending</span>"}
       </div>
@@ -932,6 +936,9 @@ function savedHomeCourseCount() {
 function courseLocationLine(course) {
   const bits = [];
   bits.push(escapeHtml(course.town || course.postcode || "Area pending"));
+  if (course.layoutName) {
+    bits.push(escapeHtml(course.layoutName));
+  }
   bits.push(`${course.holesCount || course.holes.length} holes`);
   if (course.par) {
     bits.push(`Par ${escapeHtml(course.par)}`);
@@ -1333,7 +1340,6 @@ function renderSnapshotHoleVisual(hole, course) {
 
   const tee = { x: marker.tee[0], y: marker.tee[1] };
   const green = { x: marker.green[0], y: marker.green[1] };
-  const greenShapeSvg = renderSnapshotGreenShapeSvg(hole, snapshot, transform);
   const gpsPoint = gps.status === "ready" && gps.position ? snapshotGeoToTargetPoint(snapshot, gps.position, transform) : null;
   const start = gpsPoint || tee;
   const shotPlan = resolveSnapshotShotPlan(courseId, hole, anchors, snapshot, transform);
@@ -1363,7 +1369,6 @@ function renderSnapshotHoleVisual(hole, course) {
                 <stop offset="1" stop-color="#8d5cff"></stop>
               </linearGradient>
             </defs>
-            ${greenShapeSvg}
             ${guide}
             ${trackedShotOverlay}
             ${shotPlan ? `<polyline class="photo-plan-route" points="${routePoints}" stroke="url(#snapshot-shot-gradient-${hole.number})"></polyline>` : ""}
@@ -1372,7 +1377,7 @@ function renderSnapshotHoleVisual(hole, course) {
               <path class="photo-plan-cross" data-photo-plan-cross="${index}" d="M ${point.x - 1.4} ${point.y} L ${point.x + 1.4} ${point.y} M ${point.x} ${point.y - 1.4} L ${point.x} ${point.y + 1.4}"></path>
             `).join("") || ""}
           </svg>
-          ${greenShapeSvg ? renderPhotoGreenCenterDot(green) : renderPhotoGreenMarkerElement(green, hole.par)}
+          ${renderPhotoGreenMarkerElement(green, hole.par)}
           ${renderPhotoTeeMarkerElement(tee, Boolean(gpsPoint))}
           ${renderPhotoGpsMarker(gpsPoint)}
         </div>
@@ -1406,7 +1411,6 @@ function renderAzureHoleVisual(hole, course) {
   }
   const tee = { x: marker.tee[0], y: marker.tee[1] };
   const green = { x: marker.green[0], y: marker.green[1] };
-  const greenShapeSvg = renderAzureGreenShapeSvg(hole, anchors, marker, panelRatio);
   const gpsPoint = gps.status === "ready" && gps.position ? azureGeoToTargetPoint(anchors, gps.position, marker, panelRatio) : null;
   const start = gpsPoint || tee;
   const shotPlan = resolveAzureShotPlan(courseId, hole, anchors, marker, panelRatio);
@@ -1435,7 +1439,6 @@ function renderAzureHoleVisual(hole, course) {
                 <stop offset="1" stop-color="#8d5cff"></stop>
               </linearGradient>
             </defs>
-            ${greenShapeSvg}
             ${guide}
             ${trackedShotOverlay}
             ${shotPlan ? `<polyline class="photo-plan-route" points="${routePoints}" stroke="url(#azure-shot-gradient-${hole.number})"></polyline>` : ""}
@@ -1444,7 +1447,7 @@ function renderAzureHoleVisual(hole, course) {
               <path class="photo-plan-cross" data-photo-plan-cross="${index}" d="M ${point.x - 1.4} ${point.y} L ${point.x + 1.4} ${point.y} M ${point.x} ${point.y - 1.4} L ${point.x} ${point.y + 1.4}"></path>
             `).join("") || ""}
           </svg>
-          ${greenShapeSvg ? renderPhotoGreenCenterDot(green) : renderPhotoGreenMarkerElement(green, hole.par)}
+          ${renderPhotoGreenMarkerElement(green, hole.par)}
           ${renderPhotoTeeMarkerElement(tee, Boolean(gpsPoint))}
           ${renderPhotoGpsMarker(gpsPoint)}
           ${photoEditMode ? `
@@ -1768,20 +1771,6 @@ function renderPhotoGpsMarker(marker) {
   `;
 }
 
-function renderSnapshotGreenShapeSvg(hole, snapshot, transform) {
-  const polygon = Array.isArray(hole?.geometry?.greenPolygon) ? hole.geometry.greenPolygon : [];
-  const points = polygon
-    .map((point) => snapshotGeoToTargetPoint(snapshot, point, transform))
-    .filter(Boolean);
-  if (!points.length) {
-    return "";
-  }
-  const path = points.map((point) => `${point.x},${point.y}`).join(" ");
-  return `
-    <polygon class="photo-osm-green-shape" points="${path}"></polygon>
-  `;
-}
-
 function renderSnapshotTrackedShotOverlay(hole, snapshot, transform) {
   const round = getActiveRound(state);
   const entry = round ? trackedRoundEntry(round, hole.number) : null;
@@ -1819,37 +1808,6 @@ function renderPhotoGreenMarkerElement(marker, par) {
       <span class="photo-green-core"></span>
     </span>
   `;
-}
-
-function renderPhotoGreenCenterDot(marker) {
-  if (!marker) {
-    return "";
-  }
-  return `
-    <span class="photo-green-center-dot" style="left:${marker.x}%; top:${marker.y}%;"></span>
-  `;
-}
-
-function renderAzureGreenShapeSvg(hole, anchors, marker, panelRatio = satellitePanelRatio()) {
-  const polygon = holeGreenPolygon(hole);
-  if (!polygon.length) {
-    return "";
-  }
-  const points = polygon
-    .map((point) => azureGeoToTargetPoint(anchors, point, marker, panelRatio))
-    .filter(Boolean);
-  if (points.length < 3) {
-    return "";
-  }
-  const path = points.map((point) => `${point.x},${point.y}`).join(" ");
-  return `
-    <polygon class="photo-osm-green-shape" points="${path}"></polygon>
-  `;
-}
-
-function holeGreenPolygon(hole) {
-  const polygon = hole?.geometry?.greenPolygon || hole?.greenPolygon || hole?.green?.polygon || [];
-  return Array.isArray(polygon) ? polygon.filter(validGeoPoint) : [];
 }
 
 function renderPhotoTeeMarkerElement(marker, reference = false) {
@@ -3365,8 +3323,6 @@ function renderRealisticHoleVisual(hole) {
         ${renderPolylines(features.paths, "real-path")}
         ${renderPolygons(features.tees, "real-tee-box")}
         ${renderPolygons(features.bunkers, "real-bunker")}
-        ${renderPolygons(features.greens, "real-green")}
-        ${renderGreenStripes(features.greens)}
         <circle class="real-tee-pin" cx="${tee[0]}" cy="${tee[1]}" r="2.2"></circle>
         <circle class="real-flag" cx="${green[0]}" cy="${green[1]}" r="2.4"></circle>
         <text class="map-hole-number" x="7" y="14">H${hole.number}</text>
@@ -3398,22 +3354,6 @@ function renderFairwayStripes(polygons = []) {
       const stripes = [];
       for (let x = box.minX; x <= box.maxX; x += 7) {
         stripes.push(`<line class="fairway-stripe" x1="${x.toFixed(1)}" y1="${box.minY.toFixed(1)}" x2="${(x + 13).toFixed(1)}" y2="${box.maxY.toFixed(1)}"></line>`);
-      }
-      return stripes.join("");
-    })
-    .join("");
-}
-
-function renderGreenStripes(polygons = []) {
-  return polygons
-    .map((polygon) => {
-      const box = boundsOf(polygon);
-      if (!box) {
-        return "";
-      }
-      const stripes = [];
-      for (let x = box.minX; x <= box.maxX; x += 4) {
-        stripes.push(`<line class="green-stripe" x1="${x.toFixed(1)}" y1="${box.minY.toFixed(1)}" x2="${(x + 8).toFixed(1)}" y2="${box.maxY.toFixed(1)}"></line>`);
       }
       return stripes.join("");
     })
@@ -4220,7 +4160,6 @@ function handleClick(event) {
 
   if (action === "select-course") {
     state.selectedCourseId = button.dataset.courseId;
-    scrollToTop();
     persist("Course selected.");
   }
 
