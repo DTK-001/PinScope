@@ -1,0 +1,298 @@
+[
+  {
+    "id": "verified-mid-kent",
+    "source": "shared",
+    "geometrySource": "OpenStreetMap golf=hole ways fetched 2026-05-10",
+    "attribution": "Hole geometry from OpenStreetMap contributors under ODbL. Imagery: Azure Maps.",
+    "holes": [
+      {
+        "number": 1,
+        "tee": {
+          "lat": 51.425873,
+          "lng": 0.367502
+        },
+        "greenCenter": {
+          "lat": 51.424718,
+          "lng": 0.36758
+        },
+        "mapping": {
+          "source": "OpenStreetMap golf=hole way",
+          "osm": "way/980173580",
+          "yards": 141
+        }
+      },
+      {
+        "number": 2,
+        "tee": {
+          "lat": 51.424369,
+          "lng": 0.367648
+        },
+        "greenCenter": {
+          "lat": 51.421809,
+          "lng": 0.3655
+        },
+        "mapping": {
+          "source": "OpenStreetMap golf=hole way",
+          "osm": "way/980173591",
+          "yards": 351
+        }
+      },
+      {
+        "number": 3,
+        "tee": {
+          "lat": 51.422569,
+          "lng": 0.366039
+        },
+        "greenCenter": {
+          "lat": 51.418817,
+          "lng": 0.366941
+        },
+        "mapping": {
+          "source": "OpenStreetMap golf=hole way",
+          "osm": "way/980512872",
+          "yards": 461
+        }
+      },
+      {
+        "number": 4,
+        "tee": {
+          "lat": 51.41851,
+          "lng": 0.366595
+        },
+        "greenCenter": {
+          "lat": 51.418081,
+          "lng": 0.364498
+        },
+        "mapping": {
+          "source": "OpenStreetMap golf=hole way",
+          "osm": "way/980512885",
+          "yards": 167
+        }
+      },
+      {
+        "number": 5,
+        "tee": {
+          "lat": 51.417738,
+          "lng": 0.364103
+        },
+        "greenCenter": {
+          "lat": 51.421547,
+          "lng": 0.363336
+        },
+        "mapping": {
+          "source": "OpenStreetMap golf=hole way",
+          "osm": "way/980512914",
+          "yards": 467
+        }
+      },
+      {
+        "number": 6,
+        "tee": {
+          "lat": 51.422235,
+          "lng": 0.363445
+        },
+        "greenCenter": {
+          "lat": 51.418945,
+          "lng": 0.365424
+        },
+        "mapping": {
+          "source": "OpenStreetMap golf=hole way",
+          "osm": "way/980559663",
+          "yards": 427
+        }
+      },
+      {
+        "number": 7,
+        "tee": {
+          "lat": 51.418657,
+          "lng": 0.366361
+        },
+        "greenCenter": {
+          "lat": 51.419759,
+          "lng": 0.365767
+        },
+        "mapping": {
+          "source": "OpenStreetMap golf=hole way",
+          "osm": "way/980559675",
+          "yards": 141
+        }
+      },
+      {
+        "number": 8,
+        "tee": {
+          "lat": 51.420273,
+          "lng": 0.365269
+        },
+        "greenCenter": {
+          "lat": 51.424633,
+          "lng": 0.364171
+        },
+        "mapping": {
+          "source": "OpenStreetMap golf=hole way",
+          "osm": "way/980559691",
+          "yards": 537
+        }
+      },
+      {
+        "number": 9,
+        "tee": {
+          "lat": 51.425058,
+          "lng": 0.365152
+        },
+        "greenCenter": {
+          "lat": 51.423574,
+          "lng": 0.364764
+        },
+        "mapping": {
+          "source": "OpenStreetMap golf=hole way",
+          "osm": "way/980559705",
+          "yards": 183
+        }
+      },
+      {
+        "number": 10,
+        "tee": {
+          "lat": 51.422832,
+          "lng": 0.364791
+        },
+        "greenCenter": {
+          "lat": 51.426068,
+          "lng": 0.365901
+        },
+        "mapping": {
+          "source": "OpenStreetMap golf=hole way",
+          "osm": "way/980559718",
+          "yards": 402
+        }
+      },
+      {
+        "number": 11,
+        "tee": {
+          "lat": 51.426662,
+          "lng": 0.364075
+        },
+        "greenCenter": {
+          "lat": 51.424705,
+          "lng": 0.363697
+        },
+        "mapping": {
+          "source": "OpenStreetMap golf=hole way",
+          "osm": "way/980559732",
+          "yards": 240
+        }
+      },
+      {
+        "number": 12,
+        "tee": {
+          "lat": 51.425318,
+          "lng": 0.363254
+        },
+        "greenCenter": {
+          "lat": 51.421708,
+          "lng": 0.362588
+        },
+        "mapping": {
+          "source": "OpenStreetMap golf=hole way",
+          "osm": "way/980559744",
+          "yards": 442
+        }
+      },
+      {
+        "number": 13,
+        "tee": {
+          "lat": 51.421843,
+          "lng": 0.361728
+        },
+        "greenCenter": {
+          "lat": 51.420406,
+          "lng": 0.361664
+        },
+        "mapping": {
+          "source": "OpenStreetMap golf=hole way",
+          "osm": "way/980605975",
+          "yards": 175
+        }
+      },
+      {
+        "number": 14,
+        "tee": {
+          "lat": 51.420426,
+          "lng": 0.362643
+        },
+        "greenCenter": {
+          "lat": 51.417724,
+          "lng": 0.363494
+        },
+        "mapping": {
+          "source": "OpenStreetMap golf=hole way",
+          "osm": "way/980605987",
+          "yards": 335
+        }
+      },
+      {
+        "number": 15,
+        "tee": {
+          "lat": 51.417777,
+          "lng": 0.364502
+        },
+        "greenCenter": {
+          "lat": 51.417923,
+          "lng": 0.368671
+        },
+        "mapping": {
+          "source": "OpenStreetMap golf=hole way",
+          "osm": "way/980606012",
+          "yards": 317
+        }
+      },
+      {
+        "number": 16,
+        "tee": {
+          "lat": 51.41779,
+          "lng": 0.36919
+        },
+        "greenCenter": {
+          "lat": 51.419037,
+          "lng": 0.36759
+        },
+        "mapping": {
+          "source": "OpenStreetMap golf=hole way",
+          "osm": "way/980606011",
+          "yards": 194
+        }
+      },
+      {
+        "number": 17,
+        "tee": {
+          "lat": 51.418972,
+          "lng": 0.368663
+        },
+        "greenCenter": {
+          "lat": 51.42275,
+          "lng": 0.366568
+        },
+        "mapping": {
+          "source": "OpenStreetMap golf=hole way",
+          "osm": "way/980606021",
+          "yards": 486
+        }
+      },
+      {
+        "number": 18,
+        "tee": {
+          "lat": 51.422347,
+          "lng": 0.367034
+        },
+        "greenCenter": {
+          "lat": 51.425922,
+          "lng": 0.36676
+        },
+        "mapping": {
+          "source": "OpenStreetMap golf=hole way",
+          "osm": "way/980606029",
+          "yards": 435
+        }
+      }
+    ]
+  }
+]

@@ -1,9 +1,321 @@
 [
   {
-    "id": "osm-way-23454278",
-    "name": "Cranham Golf Course",
-    "lat": 51.555764,
-    "lng": 0.282267,
+    "id": "verified-mid-kent",
+    "name": "Mid Kent Golf Club",
+    "lat": 51.422099,
+    "lng": 0.365254,
+    "holes": [
+      {
+        "number": 1,
+        "osm": "way/980173580",
+        "name": "",
+        "tee": {
+          "lat": 51.425873,
+          "lng": 0.367502
+        },
+        "green": {
+          "lat": 51.424718,
+          "lng": 0.36758
+        },
+        "yards": 141
+      },
+      {
+        "number": 2,
+        "osm": "way/980173591",
+        "name": "",
+        "tee": {
+          "lat": 51.424369,
+          "lng": 0.367648
+        },
+        "green": {
+          "lat": 51.421809,
+          "lng": 0.3655
+        },
+        "yards": 351
+      },
+      {
+        "number": 3,
+        "osm": "way/980512872",
+        "name": "",
+        "tee": {
+          "lat": 51.422569,
+          "lng": 0.366039
+        },
+        "green": {
+          "lat": 51.418817,
+          "lng": 0.366941
+        },
+        "yards": 461
+      },
+      {
+        "number": 4,
+        "osm": "way/980512885",
+        "name": "",
+        "tee": {
+          "lat": 51.41851,
+          "lng": 0.366595
+        },
+        "green": {
+          "lat": 51.418081,
+          "lng": 0.364498
+        },
+        "yards": 167
+      },
+      {
+        "number": 5,
+        "osm": "way/980512914",
+        "name": "",
+        "tee": {
+          "lat": 51.417738,
+          "lng": 0.364103
+        },
+        "green": {
+          "lat": 51.421547,
+          "lng": 0.363336
+        },
+        "yards": 467
+      },
+      {
+        "number": 6,
+        "osm": "way/980559663",
+        "name": "",
+        "tee": {
+          "lat": 51.422235,
+          "lng": 0.363445
+        },
+        "green": {
+          "lat": 51.418945,
+          "lng": 0.365424
+        },
+        "yards": 427
+      },
+      {
+        "number": 7,
+        "osm": "way/980559675",
+        "name": "",
+        "tee": {
+          "lat": 51.418657,
+          "lng": 0.366361
+        },
+        "green": {
+          "lat": 51.419759,
+          "lng": 0.365767
+        },
+        "yards": 141
+      },
+      {
+        "number": 8,
+        "osm": "way/980559691",
+        "name": "",
+        "tee": {
+          "lat": 51.420273,
+          "lng": 0.365269
+        },
+        "green": {
+          "lat": 51.424633,
+          "lng": 0.364171
+        },
+        "yards": 537
+      },
+      {
+        "number": 9,
+        "osm": "way/980559705",
+        "name": "",
+        "tee": {
+          "lat": 51.425058,
+          "lng": 0.365152
+        },
+        "green": {
+          "lat": 51.423574,
+          "lng": 0.364764
+        },
+        "yards": 183
+      },
+      {
+        "number": 10,
+        "osm": "way/980559718",
+        "name": "",
+        "tee": {
+          "lat": 51.422832,
+          "lng": 0.364791
+        },
+        "green": {
+          "lat": 51.426068,
+          "lng": 0.365901
+        },
+        "yards": 402
+      },
+      {
+        "number": 11,
+        "osm": "way/980559732",
+        "name": "",
+        "tee": {
+          "lat": 51.426662,
+          "lng": 0.364075
+        },
+        "green": {
+          "lat": 51.424705,
+          "lng": 0.363697
+        },
+        "yards": 240
+      },
+      {
+        "number": 12,
+        "osm": "way/980559744",
+        "name": "",
+        "tee": {
+          "lat": 51.425318,
+          "lng": 0.363254
+        },
+        "green": {
+          "lat": 51.421708,
+          "lng": 0.362588
+        },
+        "yards": 442
+      },
+      {
+        "number": 13,
+        "osm": "way/980605975",
+        "name": "",
+        "tee": {
+          "lat": 51.421843,
+          "lng": 0.361728
+        },
+        "green": {
+          "lat": 51.420406,
+          "lng": 0.361664
+        },
+        "yards": 175
+      },
+      {
+        "number": 14,
+        "osm": "way/980605987",
+        "name": "",
+        "tee": {
+          "lat": 51.420426,
+          "lng": 0.362643
+        },
+        "green": {
+          "lat": 51.417724,
+          "lng": 0.363494
+        },
+        "yards": 335
+      },
+      {
+        "number": 15,
+        "osm": "way/980606012",
+        "name": "",
+        "tee": {
+          "lat": 51.417777,
+          "lng": 0.364502
+        },
+        "green": {
+          "lat": 51.417923,
+          "lng": 0.368671
+        },
+        "yards": 317
+      },
+      {
+        "number": 16,
+        "osm": "way/980606011",
+        "name": "",
+        "tee": {
+          "lat": 51.41779,
+          "lng": 0.36919
+        },
+        "green": {
+          "lat": 51.419037,
+          "lng": 0.36759
+        },
+        "yards": 194
+      },
+      {
+        "number": 17,
+        "osm": "way/980606021",
+        "name": "",
+        "tee": {
+          "lat": 51.418972,
+          "lng": 0.368663
+        },
+        "green": {
+          "lat": 51.42275,
+          "lng": 0.366568
+        },
+        "yards": 486
+      },
+      {
+        "number": 18,
+        "osm": "way/980606029",
+        "name": "",
+        "tee": {
+          "lat": 51.422347,
+          "lng": 0.367034
+        },
+        "green": {
+          "lat": 51.425922,
+          "lng": 0.36676
+        },
+        "yards": 435
+      }
+    ]
+  },
+  {
+    "id": "verified-st-cleres-hall",
+    "name": "St Cleres Hall Golf Club",
+    "lat": 51.50759,
+    "lng": 0.410656,
+    "holes": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      {
+        "number": 17,
+        "osm": "way/1039321862",
+        "name": "",
+        "tee": {
+          "lat": 51.497194,
+          "lng": 0.399752
+        },
+        "green": {
+          "lat": 51.50006,
+          "lng": 0.396629
+        },
+        "yards": 421
+      },
+      {
+        "number": 18,
+        "osm": "way/1039321863",
+        "name": "",
+        "tee": {
+          "lat": 51.500435,
+          "lng": 0.396867
+        },
+        "green": {
+          "lat": 51.501436,
+          "lng": 0.391931
+        },
+        "yards": 393
+      }
+    ]
+  },
+  {
+    "id": "verified-top-meadow",
+    "name": "Top Meadow Golf Club",
+    "lat": 51.541154,
+    "lng": 0.312411,
     "holes": [
       null,
       null,
@@ -26,10 +338,154 @@
     ]
   },
   {
-    "id": "verified-belhus-park",
-    "name": "Belhus Park Golf Club",
-    "lat": 51.507331,
-    "lng": 0.263364,
+    "id": "verified-ingrebourne-links",
+    "name": "Ingrebourne Links Golf & Country Club",
+    "lat": 51.513613,
+    "lng": 0.230958,
+    "holes": [
+      {
+        "number": 1,
+        "osm": "way/904333426",
+        "name": "",
+        "tee": {
+          "lat": 51.513673,
+          "lng": 0.222965
+        },
+        "green": {
+          "lat": 51.516744,
+          "lng": 0.225138
+        },
+        "yards": 408
+      },
+      {
+        "number": 2,
+        "osm": "way/904333431",
+        "name": "",
+        "tee": {
+          "lat": 51.516418,
+          "lng": 0.225695
+        },
+        "green": {
+          "lat": 51.51778,
+          "lng": 0.230428
+        },
+        "yards": 395
+      },
+      {
+        "number": 3,
+        "osm": "way/904333432",
+        "name": "",
+        "tee": {
+          "lat": 51.517117,
+          "lng": 0.230518
+        },
+        "green": {
+          "lat": 51.519793,
+          "lng": 0.235499
+        },
+        "yards": 498
+      },
+      {
+        "number": 4,
+        "osm": "way/904333446",
+        "name": "",
+        "tee": {
+          "lat": 51.520446,
+          "lng": 0.236171
+        },
+        "green": {
+          "lat": 51.51712,
+          "lng": 0.237719
+        },
+        "yards": 421
+      },
+      {
+        "number": 5,
+        "osm": "way/904333434",
+        "name": "",
+        "tee": {
+          "lat": 51.516777,
+          "lng": 0.238352
+        },
+        "green": {
+          "lat": 51.515839,
+          "lng": 0.232494
+        },
+        "yards": 458
+      },
+      {
+        "number": 6,
+        "osm": "way/904333449",
+        "name": "",
+        "tee": {
+          "lat": 51.513305,
+          "lng": 0.239421
+        },
+        "green": {
+          "lat": 51.51419,
+          "lng": 0.231374
+        },
+        "yards": 618
+      },
+      {
+        "number": 7,
+        "osm": "way/904333450",
+        "name": "",
+        "tee": {
+          "lat": 51.513512,
+          "lng": 0.230634
+        },
+        "green": {
+          "lat": 51.513228,
+          "lng": 0.23634
+        },
+        "yards": 433
+      },
+      {
+        "number": 8,
+        "osm": "way/904333444",
+        "name": "",
+        "tee": {
+          "lat": 51.516122,
+          "lng": 0.231303
+        },
+        "green": {
+          "lat": 51.516362,
+          "lng": 0.229337
+        },
+        "yards": 152
+      },
+      {
+        "number": 9,
+        "osm": "way/904333428",
+        "name": "",
+        "tee": {
+          "lat": 51.513101,
+          "lng": 0.232973
+        },
+        "green": {
+          "lat": 51.512162,
+          "lng": 0.225535
+        },
+        "yards": 574
+      },
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ]
+  },
+  {
+    "id": "verified-princes-park",
+    "name": "Princes Park Golf Course",
+    "lat": 51.449228,
+    "lng": 0.234188,
+    "error": "Princes Park Golf Course: Overpass 504\n<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\"\n    \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">\n<html xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"en\" lang=\"en\">\n<head>\n  <meta http-equiv=\"content-type\" content=\"text/html; charset=utf-8\" lang=\"en\"/>\n  <title>OSM3S Response</title>\n</head>\n<body>\n\n<p>The data included in this document is from www.openstreetmap.org. The data is made available under ODbL.</p>\n<p><strong style=\"color:#FF0000\">Error</strong>: runtime error: open64: 0 Success /osm3s_osm_base Dispatcher_Client::request_read_and_idx::timeout. The server is probably too busy to handle your request. </p>\n\n</body>\n</html>\n",
     "holes": [
       null,
       null,
@@ -52,10 +508,270 @@
     ]
   },
   {
-    "id": "verified-basildon",
-    "name": "Basildon Golf Course",
-    "lat": 51.5746,
-    "lng": 0.4372,
+    "id": "verified-gravesend-golf-centre",
+    "name": "Gravesend Golf Centre",
+    "lat": 51.422422,
+    "lng": 0.405488,
+    "holes": [
+      {
+        "number": 1,
+        "osm": "way/990460369",
+        "name": "",
+        "tee": {
+          "lat": 51.419124,
+          "lng": 0.403577
+        },
+        "green": {
+          "lat": 51.416484,
+          "lng": 0.402753
+        },
+        "yards": 327
+      },
+      {
+        "number": 2,
+        "osm": "way/990487546",
+        "name": "",
+        "tee": {
+          "lat": 51.4153,
+          "lng": 0.402861
+        },
+        "green": {
+          "lat": 51.416405,
+          "lng": 0.409609
+        },
+        "yards": 529
+      },
+      {
+        "number": 3,
+        "osm": "way/990487548",
+        "name": "",
+        "tee": {
+          "lat": 51.415727,
+          "lng": 0.408642
+        },
+        "green": {
+          "lat": 51.416013,
+          "lng": 0.410516
+        },
+        "yards": 146
+      },
+      {
+        "number": 4,
+        "osm": "way/990487549",
+        "name": "",
+        "tee": {
+          "lat": 51.415831,
+          "lng": 0.411317
+        },
+        "green": {
+          "lat": 51.418765,
+          "lng": 0.409181
+        },
+        "yards": 392
+      },
+      {
+        "number": 5,
+        "osm": "way/990487550",
+        "name": "",
+        "tee": {
+          "lat": 51.419189,
+          "lng": 0.408779
+        },
+        "green": {
+          "lat": 51.420274,
+          "lng": 0.41045
+        },
+        "yards": 183
+      },
+      {
+        "number": 6,
+        "osm": "way/990487553",
+        "name": "",
+        "tee": {
+          "lat": 51.420737,
+          "lng": 0.410313
+        },
+        "green": {
+          "lat": 51.418872,
+          "lng": 0.406418
+        },
+        "yards": 372
+      },
+      {
+        "number": 7,
+        "osm": "way/990487555",
+        "name": "",
+        "tee": {
+          "lat": 51.419084,
+          "lng": 0.404831
+        },
+        "green": {
+          "lat": 51.418128,
+          "lng": 0.406306
+        },
+        "yards": 161
+      },
+      {
+        "number": 8,
+        "osm": "way/990487558",
+        "name": "",
+        "tee": {
+          "lat": 51.418635,
+          "lng": 0.40828
+        },
+        "green": {
+          "lat": 51.415884,
+          "lng": 0.403282
+        },
+        "yards": 506
+      },
+      {
+        "number": 9,
+        "osm": "way/990487559",
+        "name": "",
+        "tee": {
+          "lat": 51.416382,
+          "lng": 0.403351
+        },
+        "green": {
+          "lat": 51.418805,
+          "lng": 0.404264
+        },
+        "yards": 303
+      },
+      {
+        "number": 10,
+        "osm": "way/990487560",
+        "name": "",
+        "tee": {
+          "lat": 51.419748,
+          "lng": 0.404251
+        },
+        "green": {
+          "lat": 51.421084,
+          "lng": 0.407983
+        },
+        "yards": 326
+      },
+      {
+        "number": 11,
+        "osm": "way/990487561",
+        "name": "",
+        "tee": {
+          "lat": 51.421284,
+          "lng": 0.407562
+        },
+        "green": {
+          "lat": 51.421179,
+          "lng": 0.412485
+        },
+        "yards": 374
+      },
+      {
+        "number": 12,
+        "osm": "way/990487562",
+        "name": "",
+        "tee": {
+          "lat": 51.421832,
+          "lng": 0.414523
+        },
+        "green": {
+          "lat": 51.420561,
+          "lng": 0.415765
+        },
+        "yards": 181
+      },
+      {
+        "number": 13,
+        "osm": "way/990487563",
+        "name": "",
+        "tee": {
+          "lat": 51.42032,
+          "lng": 0.416474
+        },
+        "green": {
+          "lat": 51.41867,
+          "lng": 0.41089
+        },
+        "yards": 469
+      },
+      {
+        "number": 14,
+        "osm": "way/990487568",
+        "name": "",
+        "tee": {
+          "lat": 51.418483,
+          "lng": 0.411923
+        },
+        "green": {
+          "lat": 51.417161,
+          "lng": 0.411349
+        },
+        "yards": 166
+      },
+      {
+        "number": 15,
+        "osm": "way/990487569",
+        "name": "",
+        "tee": {
+          "lat": 51.415831,
+          "lng": 0.411544
+        },
+        "green": {
+          "lat": 51.418952,
+          "lng": 0.409781
+        },
+        "yards": 402
+      },
+      {
+        "number": 16,
+        "osm": "way/990487571",
+        "name": "",
+        "tee": {
+          "lat": 51.419171,
+          "lng": 0.409321
+        },
+        "green": {
+          "lat": 51.42125,
+          "lng": 0.414192
+        },
+        "yards": 448
+      },
+      {
+        "number": 17,
+        "osm": "way/990487576",
+        "name": "",
+        "tee": {
+          "lat": 51.420811,
+          "lng": 0.41223
+        },
+        "green": {
+          "lat": 51.42121,
+          "lng": 0.410293
+        },
+        "yards": 155
+      },
+      {
+        "number": 18,
+        "osm": "way/990487579",
+        "name": "",
+        "tee": {
+          "lat": 51.421323,
+          "lng": 0.409871
+        },
+        "green": {
+          "lat": 51.419347,
+          "lng": 0.405086
+        },
+        "yards": 435
+      }
+    ]
+  },
+  {
+    "id": "verified-langdon-hills",
+    "name": "Langdon Hills Golf & Country Club",
+    "lat": 51.531174,
+    "lng": 0.365153,
     "holes": [
       null,
       null,
@@ -78,10 +794,62 @@
     ]
   },
   {
-    "id": "verified-castle-point-canvey",
-    "name": "Canvey Island Golf Course",
-    "lat": 51.5354,
-    "lng": 0.5844,
+    "id": "verified-dartford",
+    "name": "Dartford Golf Club",
+    "lat": 51.435069,
+    "lng": 0.20045,
+    "holes": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ]
+  },
+  {
+    "id": "verified-corinthian-fawkham-valley",
+    "name": "Corinthian Sports Club",
+    "lat": 51.385299,
+    "lng": 0.294437,
+    "holes": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ]
+  },
+  {
+    "id": "verified-barnehurst",
+    "name": "Barnehurst Golf Course",
+    "lat": 51.460138,
+    "lng": 0.172763,
     "holes": [
       null,
       null,
