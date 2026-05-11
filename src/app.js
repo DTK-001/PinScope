@@ -1415,7 +1415,7 @@ function renderRoundScorecardPlayerRow(round, course, player, front, back) {
   const net = gross ? gross - totalShots : "";
 
   return `
-    <tr>
+    <tr class="scorecard-player-row">
       <th>${escapeHtml(player.name)}${handicap !== null ? `<small>HCP ${formatHandicapIndex(handicap)}</small>` : ""}</th>
 
       ${frontScores.map((item, index) =>
@@ -1507,11 +1507,6 @@ function scorecardMarkLabel(scoreDiff) {
   }
 
   return `${scoreDiff} over par`;
-}
-
-function renderPlayerScoreCell(score, shots) {
-  const dots = shots > 0 ? `<span class="stroke-dots" aria-label="${shots} handicap shot${shots === 1 ? "" : "s"}">${Array.from({ length: shots }, () => "&bull;").join("")}</span>` : "";
-  return `<td class="${shots > 0 ? "stroke-hole" : ""}">${score || ""}${dots}</td>`;
 }
 
 function playerHandicap(player) {
