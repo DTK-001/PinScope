@@ -377,6 +377,8 @@ p {
   color: #f8fffb;
   background: #050609;
   overscroll-behavior: none;
+  --hole-swipe-drag: 0px;
+  --hole-swipe-intent: 0;
 }
 
 .play-round-screen > .hole-visual {
@@ -388,6 +390,34 @@ p {
   border-radius: 0;
   aspect-ratio: auto;
   box-shadow: none;
+}
+
+.play-round-screen.is-swiping-hole > .hole-visual {
+  transform: translateX(var(--hole-swipe-drag)) scale(calc(1 - (var(--hole-swipe-intent) * 0.012)));
+  transition: transform 90ms ease-out;
+}
+
+.play-round-screen.is-swiping-hole::before,
+.play-round-screen.is-swiping-hole::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 8;
+  width: 22%;
+  pointer-events: none;
+  opacity: calc(var(--hole-swipe-intent) * 0.55);
+  transition: opacity 90ms ease-out;
+}
+
+.play-round-screen.is-swiping-hole::before {
+  left: 0;
+  background: linear-gradient(90deg, rgba(53, 240, 193, 0.24), transparent);
+}
+
+.play-round-screen.is-swiping-hole::after {
+  right: 0;
+  background: linear-gradient(270deg, rgba(255, 79, 216, 0.22), transparent);
 }
 
 .play-round-screen > .photo-hole::after {
@@ -954,6 +984,186 @@ p {
 .setup-panel,
 .hole-card {
   padding: 14px;
+}
+
+.previous-round-card {
+  overflow: hidden;
+  padding: 0;
+  background:
+    linear-gradient(135deg, rgba(255, 79, 216, 0.1), transparent 34%),
+    linear-gradient(225deg, rgba(53, 240, 193, 0.09), transparent 38%),
+    var(--panel);
+}
+
+.previous-round-card details {
+  min-width: 0;
+}
+
+.previous-round-card summary {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 12px;
+  align-items: center;
+  min-height: 72px;
+  padding: 14px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.previous-round-card summary::-webkit-details-marker {
+  display: none;
+}
+
+.previous-round-card summary::after {
+  content: "+";
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  border-radius: 999px;
+  color: #071414;
+  background: var(--accent-3);
+  font-weight: 950;
+}
+
+.previous-round-card details[open] summary::after {
+  content: "-";
+}
+
+.previous-round-card summary span {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.previous-round-card summary strong {
+  overflow: hidden;
+  color: #f8fffb;
+  font-size: 1rem;
+  line-height: 1.15;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.previous-round-card summary small {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 750;
+}
+
+.previous-round-card summary em {
+  justify-self: end;
+  border: 1px solid rgba(255, 79, 216, 0.32);
+  border-radius: var(--radius);
+  padding: 8px 10px;
+  color: #fff;
+  background: rgba(255, 79, 216, 0.12);
+  font-style: normal;
+  font-weight: 900;
+}
+
+.previous-round-detail {
+  display: grid;
+  gap: 12px;
+  padding: 0 12px 12px;
+}
+
+.previous-round-scoreline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.previous-round-scoreline span {
+  border: 1px solid rgba(53, 240, 193, 0.2);
+  border-radius: 999px;
+  padding: 6px 10px;
+  color: rgba(248, 255, 251, 0.86);
+  background: rgba(53, 240, 193, 0.08);
+  font-size: 0.8rem;
+  font-weight: 850;
+}
+
+.previous-round-scoreline strong,
+.previous-round-scoreline em {
+  color: #fff;
+  font-style: normal;
+}
+
+.previous-scorecard-scroll {
+  overflow: auto;
+  border: 1px solid rgba(53, 240, 193, 0.28);
+  border-radius: var(--radius);
+  background:
+    linear-gradient(180deg, rgba(53, 240, 193, 0.07), transparent 120px),
+    rgba(255, 255, 255, 0.04);
+  overscroll-behavior: contain;
+}
+
+.previous-scorecard-table {
+  width: max(920px, 100%);
+  font-size: 0.72rem;
+}
+
+.round-shot-gallery {
+  display: grid;
+  gap: 10px;
+}
+
+.round-shot-gallery details {
+  border: 1px solid rgba(53, 240, 193, 0.2);
+  border-radius: var(--radius);
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.round-shot-gallery summary {
+  cursor: pointer;
+  color: #f8f3ff;
+  font-size: 0.84rem;
+  font-weight: 900;
+}
+
+.previous-shot-map {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 9 / 13;
+  max-height: 420px;
+  margin-top: 10px;
+  border: 1px solid rgba(53, 240, 193, 0.24);
+  border-radius: var(--radius);
+  background:
+    linear-gradient(180deg, rgba(6, 42, 38, 0.72), rgba(8, 9, 16, 0.96)),
+    radial-gradient(circle at 50% 18%, rgba(134, 191, 98, 0.26), transparent 28%);
+}
+
+.previous-shot-map.has-image {
+  background: #07100f;
+}
+
+.previous-shot-map svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.previous-shot-map .snapshot-map-image {
+  opacity: 0.9;
+}
+
+.previous-shot-tee,
+.previous-shot-green {
+  vector-effect: non-scaling-stroke;
+  stroke: rgba(7, 7, 13, 0.9);
+  stroke-width: 0.8;
+}
+
+.previous-shot-tee {
+  fill: var(--accent-3);
+}
+
+.previous-shot-green {
+  fill: var(--accent);
 }
 
 .setup-panel {
@@ -2500,11 +2710,11 @@ select option {
   inset: 0;
   z-index: 60;
   display: grid;
-  place-items: center;
+  place-items: stretch;
   overflow: hidden;
   background:
-    radial-gradient(circle at 16% 18%, rgba(255, 79, 216, 0.14), transparent 30%),
-    radial-gradient(circle at 82% 76%, rgba(53, 240, 193, 0.12), transparent 34%),
+    linear-gradient(180deg, rgba(255, 79, 216, 0.13), transparent 34%),
+    linear-gradient(135deg, rgba(53, 240, 193, 0.11), transparent 42%),
     #050609;
   color: #f8fffb;
 }
@@ -2512,89 +2722,138 @@ select option {
 .round-scorecard-shell {
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto;
-  gap: 10px;
-  width: min(100vw, 1180px);
-  height: min(100dvh, 680px);
-  padding: 12px;
+  gap: 8px;
+  width: 100%;
+  height: 100dvh;
+  min-height: 0;
+  padding: calc(10px + env(safe-area-inset-top)) 10px calc(10px + env(safe-area-inset-bottom));
   background:
-    linear-gradient(135deg, rgba(255, 79, 216, 0.12), transparent 32%),
-    linear-gradient(225deg, rgba(53, 240, 193, 0.1), transparent 38%),
-    rgba(7, 7, 13, 0.96);
+    linear-gradient(135deg, rgba(255, 79, 216, 0.12), transparent 30%),
+    linear-gradient(225deg, rgba(53, 240, 193, 0.11), transparent 42%),
+    rgba(7, 8, 14, 0.96);
 }
 
 .round-scorecard-head {
-  position: sticky;
-  top: 0;
   z-index: 4;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 14px;
-  padding: 8px;
-  border: 1px solid rgba(53, 240, 193, 0.22);
+  gap: 10px;
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid rgba(53, 240, 193, 0.28);
   border-radius: var(--radius);
-  background: rgba(7, 7, 13, 0.84);
+  background:
+    linear-gradient(135deg, rgba(255, 79, 216, 0.14), transparent 42%),
+    rgba(12, 13, 22, 0.78);
+  box-shadow: 0 14px 38px rgba(0, 0, 0, 0.28);
   backdrop-filter: blur(14px);
 }
 
+.round-scorecard-head > div {
+  min-width: 0;
+}
+
 .round-scorecard-head h2 {
-  font-size: 1.05rem;
+  overflow: hidden;
+  font-size: 1.08rem;
   line-height: 1.1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.round-scorecard-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 7px;
+}
+
+.round-scorecard-meta span {
+  border: 1px solid rgba(248, 255, 251, 0.12);
+  border-radius: 999px;
+  padding: 4px 8px;
+  color: rgba(248, 255, 251, 0.78);
+  background: rgba(255, 255, 255, 0.07);
+  font-size: 0.68rem;
+  font-weight: 850;
 }
 
 .round-scorecard-head .secondary-action {
-  min-height: 34px;
-  padding-inline: 12px;
+  flex: 0 0 auto;
+  min-height: 38px;
+  padding-inline: 10px;
   white-space: nowrap;
   border: 1px solid rgba(53, 240, 193, 0.46);
   background: rgba(53, 240, 193, 0.12);
+  font-size: 0.8rem;
 }
 
 .round-scorecard-scroll {
   min-height: 0;
   overflow: auto;
-  border: 1px solid rgba(53, 240, 193, 0.28);
+  border: 1px solid rgba(53, 240, 193, 0.3);
   border-radius: var(--radius);
   background:
-    linear-gradient(180deg, rgba(53, 240, 193, 0.06), transparent 180px),
+    linear-gradient(180deg, rgba(53, 240, 193, 0.08), transparent 150px),
+    linear-gradient(90deg, rgba(255, 79, 216, 0.08), transparent 220px),
     rgba(255, 255, 255, 0.04);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.035),
+    0 18px 46px rgba(0, 0, 0, 0.22);
+  overscroll-behavior: contain;
 }
 
 .round-scorecard-table {
-  width: max(980px, 100%);
+  width: max(920px, 100%);
   border-collapse: collapse;
   table-layout: fixed;
   color: #f8fffb;
-  font-size: clamp(0.58rem, 1.45vw, 0.82rem);
+  font-size: clamp(0.64rem, 2.2vw, 0.82rem);
   font-weight: 850;
 }
 
 .round-scorecard-table th,
 .round-scorecard-table td {
   min-width: 38px;
-  height: 34px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  height: 36px;
+  border: 1px solid rgba(255, 255, 255, 0.105);
   padding: 4px;
   text-align: center;
 }
 
 .round-scorecard-table th:first-child,
 .round-scorecard-table td:first-child {
-  width: 126px;
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  width: 120px;
   text-align: left;
 }
 
 .round-scorecard-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 3;
   color: #f8fffb;
-  background: rgba(8, 9, 16, 0.92);
+  background: rgba(9, 10, 18, 0.96);
   box-shadow: inset 0 -1px 0 rgba(53, 240, 193, 0.28);
+}
+
+.round-scorecard-table thead th:first-child {
+  z-index: 4;
 }
 
 .tee-yard-row {
   color: var(--tee-row-text);
   background:
     linear-gradient(90deg, rgba(5, 6, 9, 0.16), rgba(5, 6, 9, 0.34)),
+    var(--tee-row-color);
+}
+
+.tee-yard-row th {
+  background:
+    linear-gradient(90deg, rgba(5, 6, 9, 0.22), rgba(5, 6, 9, 0.42)),
     var(--tee-row-color);
 }
 
@@ -2614,9 +2873,17 @@ select option {
   background: rgba(255, 255, 255, 0.08);
 }
 
-.scorecard-info-row.hcp-row {
+.scorecard-info-row th {
+  background: rgba(18, 20, 32, 0.96);
+}
+
+.scorecard-info-row.si-row {
   color: #f8fffb;
   background: linear-gradient(90deg, rgba(53, 240, 193, 0.42), rgba(53, 240, 193, 0.18));
+}
+
+.scorecard-info-row.si-row th {
+  background: linear-gradient(90deg, rgba(27, 116, 101, 0.98), rgba(22, 56, 55, 0.98));
 }
 
 .scorecard-player-row {
@@ -2626,7 +2893,9 @@ select option {
 
 .scorecard-player-row th {
   color: #f8fffb;
-  background: linear-gradient(90deg, rgba(255, 79, 216, 0.26), rgba(141, 92, 255, 0.16));
+  background:
+    linear-gradient(90deg, rgba(255, 79, 216, 0.34), rgba(141, 92, 255, 0.22)),
+    rgba(13, 14, 24, 0.98);
 }
 
 .scorecard-player-row th small {
@@ -2667,7 +2936,7 @@ select option {
 
 .round-scorecard-sign {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr);
   gap: 1px;
   border: 1px solid rgba(53, 240, 193, 0.22);
   background: rgba(53, 240, 193, 0.22);
@@ -3439,32 +3708,21 @@ select option {
   }
 }
 
-@media (orientation: portrait) {
-  .round-scorecard-backdrop {
-    display: block;
-  }
-
+@media (orientation: landscape) {
   .round-scorecard-shell {
-    position: absolute;
-    top: 0;
-    left: 100%;
-    width: 100dvh;
-    height: 100dvw;
-    max-width: none;
-    max-height: none;
-    transform: rotate(90deg);
-    transform-origin: top left;
+    width: min(100vw, 1180px);
+    height: min(100dvh, 680px);
+    margin: auto;
+    padding: 12px;
   }
 
-  .round-scorecard-head {
-    position: fixed;
-    top: 12px;
-    right: 12px;
-    left: 12px;
+  .round-scorecard-table {
+    width: max(980px, 100%);
+    font-size: clamp(0.58rem, 1.45vw, 0.82rem);
   }
 
-  .round-scorecard-scroll {
-    margin-top: 66px;
+  .round-scorecard-sign {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
@@ -3658,5 +3916,12 @@ select option {
 
   .course-actions {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .play-round-screen.is-swiping-hole > .hole-visual {
+    transition: none;
+    transform: none;
   }
 }

@@ -33,6 +33,7 @@ const PINSCOPE_COMPLETE_LOGO_SRC = "./assets/pinscope-complete-logo.png";
 const PINSCOPE_NAME_LOGO_SRC = "./assets/pinscope-name-logo.png";
 const HOLE_SWIPE_MIN_DISTANCE = 68;
 const HOLE_SWIPE_VERTICAL_RATIO = 1.25;
+const HOLE_SWIPE_PREVIEW_LIMIT = 58;
 const GPS_TEST_QUERY_KEY = "gpsTest";
 const AZURE_MAPS_KEY_STORAGE = "pinscope:azure-maps-key:v1";
 const AZURE_MAPS_ENABLED_STORAGE = "pinscope:azure-maps-enabled:v1";
@@ -1293,6 +1294,7 @@ function renderRoundScorecardOverlay() {
   const holes = course.holes || [];
   const front = holes.slice(0, 9);
   const back = holes.slice(9, 18);
+  const par = holes.reduce((sum, hole) => sum + Number(hole.par || 0), 0);
   return `
     <section class="round-scorecard-backdrop" role="dialog" aria-modal="true" aria-label="Round scorecard">
       <div class="round-scorecard-shell">
@@ -1300,6 +1302,11 @@ function renderRoundScorecardOverlay() {
           <div>
             <p class="eyebrow">Round Card</p>
             <h2>${escapeHtml(courseDisplayName(course))}</h2>
+            <div class="round-scorecard-meta" aria-label="Round summary">
+              <span>${holes.length || 18} holes</span>
+              <span>Par ${par || "-"}</span>
+              <span>${players.length} player${players.length === 1 ? "" : "s"}</span>
+            </div>
           </div>
           <button class="secondary-action" type="button" data-action="close-round-scorecard">Back to Play</button>
         </header>
@@ -1320,7 +1327,7 @@ function renderRoundScorecardOverlay() {
             </thead>
             <tbody>
               ${usedTees.map((tee) => renderRoundScorecardTeeRow(tee, front, back)).join("")}
-              ${renderRoundScorecardInfoRow("HCP", front, back, (hole) => hole.strokeIndex || "-")}
+              ${renderRoundScorecardInfoRow("SI", front, back, (hole) => hole.strokeIndex || "-")}
               ${renderRoundScorecardInfoRow("PAR", front, back, (hole) => hole.par || "-", true)}
               ${players.map((player) => renderRoundScorecardPlayerRow(round, course, player, front, back)).join("")}
             </tbody>
@@ -3742,8 +3749,13 @@ function renderStats() {
     ${renderHardestHoles(summary)}
 
     <section class="round-list">
-      <h2>Rounds</h2>
-      ${filteredRounds.length ? filteredRounds.map(({ round }) => renderRoundRow(round)).join("") : `<p class="empty-copy">Finished rounds will appear here.</p>`}
+      <div class="panel-heading">
+        <div>
+          <p class="eyebrow">History</p>
+          <h2>Rounds played</h2>
+        </div>
+      </div>
+      ${filteredRounds.length ? filteredRounds.map(({ round, course }) => renderRoundRow(round, course)).join("") : `<p class="empty-copy">Finished rounds will appear here.</p>`}
     </section>
   `;
 }
@@ -4198,62 +4210,190 @@ function statTile(label, value) {
   `;
 }
 
-function renderRoundRow(round) {
-  const course = getCourse(state, round.courseId);
+function renderRoundRow(round, providedCourse = null) {
+  const course = providedCourse || getCourse(state, round.courseId);
   if (!course) {
     return "";
   }
   const players = getRoundPlayers(round);
   const date = new Date(round.completedAt || round.startedAt).toLocaleDateString();
+  const leadTotals = roundTotals(round, course, players[0]?.id);
+  const shotHoleCount = roundTrackedShotHoles(round, course).length;
   return `
-    <article class="round-row">
-      <div>
-        <h3>${escapeHtml(courseDisplayName(course))}</h3>
-        <p>${date} - ${players.map((player) => {
-          const totals = roundTotals(round, course, player.id);
-          return `${escapeHtml(player.name)} ${totals.score} (${formatToPar(totals.toPar)})`;
-        }).join(" - ")}</p>
-      </div>
-      ${renderRoundShotLog(round)}
+    <article class="round-row previous-round-card">
+      <details>
+        <summary>
+          <span>
+            <strong>${escapeHtml(courseDisplayName(course))}</strong>
+            <small>${date} - ${players.length} player${players.length === 1 ? "" : "s"}${shotHoleCount ? ` - tracked shots on ${shotHoleCount} hole${shotHoleCount === 1 ? "" : "s"}` : ""}</small>
+          </span>
+          <em>${leadTotals.score} (${formatToPar(leadTotals.toPar)})</em>
+        </summary>
+        <div class="previous-round-detail">
+          <div class="previous-round-scoreline">
+            ${players.map((player) => {
+              const totals = roundTotals(round, course, player.id);
+              return `<span>${escapeHtml(player.name)} <strong>${totals.score}</strong> <em>${formatToPar(totals.toPar)}</em></span>`;
+            }).join("")}
+          </div>
+          ${renderPreviousRoundScorecard(round, course)}
+          ${renderRoundShotMaps(round, course)}
+        </div>
+      </details>
     </article>
   `;
 }
 
-function renderRoundShotLog(round) {
+function renderPreviousRoundScorecard(round, course) {
+  const holes = course.holes || [];
+  const front = holes.slice(0, 9);
+  const back = holes.slice(9, 18);
+  const players = getRoundPlayers(round);
+  const usedTeeIds = Array.from(new Set(players.map((player) => player.teeId || round.teeId || course.tees?.[0]?.id).filter(Boolean)));
+  const usedTees = usedTeeIds
+    .map((teeId) => (course.tees || []).find((tee) => tee.id === teeId) || { id: teeId, name: teeId, color: "#f8f7f1" })
+    .filter(Boolean);
+  return `
+    <div class="previous-scorecard-scroll" aria-label="Previous round scorecard">
+      <table class="round-scorecard-table previous-scorecard-table">
+        <thead>
+          <tr>
+            <th>TEES</th>
+            ${front.map((hole) => `<th>${hole.number}</th>`).join("")}
+            <th>OUT</th>
+            <th class="initials-cell">INITIALS</th>
+            ${back.map((hole) => `<th>${hole.number}</th>`).join("")}
+            <th>IN</th>
+            <th>TOTAL</th>
+            <th>HCP</th>
+            <th>NET</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${usedTees.map((tee) => renderRoundScorecardTeeRow(tee, front, back)).join("")}
+          ${renderRoundScorecardInfoRow("SI", front, back, (hole) => hole.strokeIndex || "-")}
+          ${renderRoundScorecardInfoRow("PAR", front, back, (hole) => hole.par || "-", true)}
+          ${players.map((player) => renderRoundScorecardPlayerRow(round, course, player, front, back)).join("")}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+function roundTrackedShotHoles(round, course) {
   const holes = (round.entries || [])
     .map((entry) => ({
       holeNumber: entry.holeNumber,
-      shots: trackedShots(entry)
+      hole: (course?.holes || []).find((hole) => Number(hole.number) === Number(entry.holeNumber)),
+      shots: trackedShots(entry).filter((shot) => validGeoPointLike(shot.start) && validGeoPointLike(shot.end))
     }))
-    .filter((entry) => entry.shots.length);
+    .filter((entry) => entry.hole && entry.shots.length);
+  return holes;
+}
+
+function renderRoundShotMaps(round, course) {
+  const holes = roundTrackedShotHoles(round, course);
   if (!holes.length) {
-    return "";
+    return `<p class="empty-copy">No tracked shots saved for this round.</p>`;
   }
   return `
-    <div class="round-shot-log">
+    <div class="round-shot-gallery">
       ${holes.map((entry) => `
         <details>
-          <summary>Hole ${entry.holeNumber} - ${entry.shots.length} shot${entry.shots.length === 1 ? "" : "s"}</summary>
-          <div class="round-shot-list">
-            ${entry.shots.map((shot) => `
-              <div>
-                <strong>Shot ${shot.number}</strong>
-                <span>${Number.isFinite(Number(shot.yards)) ? Number(shot.yards) : "-"} yd</span>
-                ${shot.end ? `<small>${formatShotLanding(shot.end)}</small>` : ""}
-              </div>
-            `).join("")}
-          </div>
+          <summary>Hole ${entry.holeNumber} - ${entry.shots.length} tracked shot${entry.shots.length === 1 ? "" : "s"}</summary>
+          ${renderRoundShotMap(course, entry.hole, entry.shots)}
+          ${renderRoundShotList(entry.shots)}
         </details>
       `).join("")}
     </div>
   `;
 }
 
+function renderRoundShotList(shots) {
+  return `
+    <div class="round-shot-list">
+      ${shots.map((shot) => `
+        <div>
+          <strong>Shot ${shot.number}</strong>
+          <span>${Number.isFinite(Number(shot.yards)) ? Number(shot.yards) : "-"} yd</span>
+          ${shot.end ? `<small>${formatShotLanding(shot.end)}</small>` : ""}
+        </div>
+      `).join("")}
+    </div>
+  `;
+}
+
+function renderRoundShotMap(course, hole, shots) {
+  const snapshot = normalizeHoleSnapshot(hole?.snapshot);
+  const anchors = azureHoleAnchors(hole, course);
+  const marker = photoTargetMarkers(hole.par);
+  const panelRatio = satellitePanelRatio();
+  const transform = snapshot && anchors
+    ? snapshotDisplayTransform(snapshot, anchors, marker, panelRatio)
+    : null;
+  const mapped = shots
+    .map((shot) => {
+      const start = transform
+        ? snapshotGeoToTargetPoint(snapshot, shot.start, transform)
+        : anchors
+          ? azureGeoToTargetPoint(anchors, shot.start, marker, panelRatio)
+          : null;
+      const end = transform
+        ? snapshotGeoToTargetPoint(snapshot, shot.end, transform)
+        : anchors
+          ? azureGeoToTargetPoint(anchors, shot.end, marker, panelRatio)
+          : null;
+      return start && end ? { shot, start, end } : null;
+    })
+    .filter(Boolean);
+
+  if (!mapped.length) {
+    return `<p class="empty-copy">Tracked shots were saved, but this hole does not have enough map data to draw them.</p>`;
+  }
+
+  const tee = transform && anchors ? snapshotGeoToTargetPoint(snapshot, anchors.tee, transform) : anchors ? azureGeoToTargetPoint(anchors, anchors.tee, marker, panelRatio) : null;
+  const green = transform && anchors ? snapshotGeoToTargetPoint(snapshot, anchors.green, transform) : anchors ? azureGeoToTargetPoint(anchors, anchors.green, marker, panelRatio) : null;
+  const image = transform && snapshot
+    ? `<image class="snapshot-map-image" href="${escapeAttribute(snapshot.imageUrl)}" x="0" y="0" width="100" height="100" preserveAspectRatio="none" transform="${snapshotImageTransform(transform)}"></image>`
+    : "";
+  const gradientId = `previous-shot-gradient-${course.id}-${hole.number}`.replace(/[^a-zA-Z0-9_-]/g, "-");
+  return `
+    <div class="previous-shot-map ${image ? "has-image" : ""}" style="--satellite-panel-ratio:${panelRatio};">
+      <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-label="Tracked shot map for hole ${hole.number}">
+        <defs>
+          <linearGradient id="${gradientId}" x1="0" y1="1" x2="0" y2="0">
+            <stop offset="0%" stop-color="#35f0c1"></stop>
+            <stop offset="100%" stop-color="#ff4fd8"></stop>
+          </linearGradient>
+        </defs>
+        ${image}
+        ${tee ? `<circle class="previous-shot-tee" cx="${tee.x}" cy="${tee.y}" r="1.7"></circle>` : ""}
+        ${green ? `<circle class="previous-shot-green" cx="${green.x}" cy="${green.y}" r="2.2"></circle>` : ""}
+        ${mapped.map(({ shot, start, end }) => `
+          <line class="tracked-shot-route" x1="${start.x}" y1="${start.y}" x2="${end.x}" y2="${end.y}" stroke="url(#${gradientId})"></line>
+          <circle class="tracked-shot-landing" cx="${end.x}" cy="${end.y}" r="1.7"></circle>
+          <text class="tracked-shot-label" x="${clamp(end.x + 2, 4, 94)}" y="${clamp(end.y - 2, 6, 96)}">${shot.number}</text>
+        `).join("")}
+      </svg>
+    </div>
+  `;
+}
+
+function validGeoPointLike(point) {
+  return Boolean(
+    point &&
+      Number.isFinite(Number(point.lat)) &&
+      Number.isFinite(Number(point.lng)) &&
+      Math.abs(Number(point.lat)) <= 90 &&
+      Math.abs(Number(point.lng)) <= 180
+  );
+}
+
 function formatShotLanding(point) {
-  if (!point || typeof point.lat !== "number" || typeof point.lng !== "number") {
+  if (!validGeoPointLike(point)) {
     return "";
   }
-  return `${point.lat.toFixed(6)}, ${point.lng.toFixed(6)}`;
+  return `${Number(point.lat).toFixed(6)}, ${Number(point.lng).toFixed(6)}`;
 }
 
 function renderBag() {
@@ -5284,6 +5424,7 @@ function handleHoleSwipePointerDown(event) {
     latestX: event.clientX,
     latestY: event.clientY
   };
+  resetHoleSwipePreview();
 }
 
 function handleHoleSwipePointerMove(event) {
@@ -5296,6 +5437,7 @@ function handleHoleSwipePointerMove(event) {
   const dy = event.clientY - holeSwipe.startY;
   if (Math.abs(dx) > 20 && Math.abs(dx) > Math.abs(dy) * 1.1) {
     event.preventDefault();
+    updateHoleSwipePreview(dx);
   }
 }
 
@@ -5315,6 +5457,7 @@ function handleHoleSwipePointerEnd(event) {
   const dx = endX - swipe.startX;
   const dy = endY - swipe.startY;
   if (Math.abs(dx) < HOLE_SWIPE_MIN_DISTANCE || Math.abs(dx) < Math.abs(dy) * HOLE_SWIPE_VERTICAL_RATIO) {
+    resetHoleSwipePreview();
     return;
   }
 
@@ -5329,7 +5472,30 @@ function handleHoleSwipePointerEnd(event) {
 function cancelHoleSwipe(event) {
   if (!holeSwipe || !event || event.pointerId === holeSwipe.pointerId) {
     holeSwipe = null;
+    resetHoleSwipePreview();
   }
+}
+
+function updateHoleSwipePreview(dx) {
+  const screen = document.querySelector("[data-play-round]");
+  if (!screen) {
+    return;
+  }
+  const limited = clamp(dx * 0.22, -HOLE_SWIPE_PREVIEW_LIMIT, HOLE_SWIPE_PREVIEW_LIMIT);
+  const intent = clamp(Math.abs(dx) / HOLE_SWIPE_MIN_DISTANCE, 0, 1);
+  screen.classList.add("is-swiping-hole");
+  screen.style.setProperty("--hole-swipe-drag", `${limited.toFixed(1)}px`);
+  screen.style.setProperty("--hole-swipe-intent", intent.toFixed(2));
+}
+
+function resetHoleSwipePreview() {
+  const screen = document.querySelector("[data-play-round]");
+  if (!screen) {
+    return;
+  }
+  screen.classList.remove("is-swiping-hole");
+  screen.style.removeProperty("--hole-swipe-drag");
+  screen.style.removeProperty("--hole-swipe-intent");
 }
 
 function handlePlayHorizontalWheel(event) {
@@ -5880,6 +6046,10 @@ function moveHole(delta) {
   }
   const previousHole = round.currentHole;
   round.currentHole = clamp(round.currentHole + delta, 1, course.holes.length);
+  if (round.currentHole === previousHole) {
+    resetHoleSwipePreview();
+    return;
+  }
   if (delta > 0 && previousHole === course.holes.length) {
     scoreCardOpen = false;
   }
