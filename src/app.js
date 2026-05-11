@@ -1384,29 +1384,129 @@ function renderRoundScorecardInfoRow(label, front, back, valueForHole, includeTo
 }
 
 function renderRoundScorecardPlayerRow(round, course, player, front, back) {
-  const frontScores = front.map((hole) => playerScorecardValue(round, hole.number, player.id));
-  const backScores = back.map((hole) => playerScorecardValue(round, hole.number, player.id));
-  const out = scorecardScoreTotal(frontScores);
-  const inn = scorecardScoreTotal(backScores);
+  const frontScores = front.map((hole) => ({
+    score: playerScorecardValue(round, hole.number, player.id),
+    par: Number(hole.par || 0)
+  }));
+
+  const backScores = back.map((hole) => ({
+    score: playerScorecardValue(round, hole.number, player.id),
+    par: Number(hole.par || 0)
+  }));
+
+  const out = scorecardScoreTotal(frontScores.map((item) => item.score));
+  const inn = scorecardScoreTotal(backScores.map((item) => item.score));
   const gross = out + inn;
   const handicap = playerHandicap(player);
-  const frontShots = front.map((hole) => handicapShotsForHole(handicap, hole.strokeIndex, course.holes.length));
-  const backShots = back.map((hole) => handicapShotsForHole(handicap, hole.strokeIndex, course.holes.length));
-  const totalShots = [...frontShots, ...backShots].reduce((sum, shots) => sum + Math.max(0, shots), 0);
+
+  const frontShots = front.map((hole) =>
+    handicapShotsForHole(handicap, hole.strokeIndex, course.holes.length)
+  );
+
+  const backShots = back.map((hole) =>
+    handicapShotsForHole(handicap, hole.strokeIndex, course.holes.length)
+  );
+
+  const totalShots = [...frontShots, ...backShots].reduce(
+    (sum, shots) => sum + Math.max(0, shots),
+    0
+  );
+
   const net = gross ? gross - totalShots : "";
+
   return `
-    <tr class="scorecard-player-row">
+    <tr>
       <th>${escapeHtml(player.name)}${handicap !== null ? `<small>HCP ${formatHandicapIndex(handicap)}</small>` : ""}</th>
-      ${frontScores.map((score, index) => renderPlayerScoreCell(score, frontShots[index])).join("")}
-      <td>${out || ""}</td>
-      <td class="initials-cell"></td>
-      ${backScores.map((score, index) => renderPlayerScoreCell(score, backShots[index])).join("")}
-      <td>${inn || ""}</td>
-      <td>${gross || ""}</td>
+
+      ${frontScores.map((item, index) =>
+        renderPlayerScoreCell(item.score, item.par, frontShots[index])
+      ).join("")}
+
+      <td class="scorecard-total">${out || ""}</td>
+
+      ${backScores.map((item, index) =>
+        renderPlayerScoreCell(item.score, item.par, backShots[index])
+      ).join("")}
+
+      <td class="scorecard-total">${inn || ""}</td>
+      <td class="scorecard-total">${gross || ""}</td>
       <td>${handicap !== null ? formatHandicapIndex(handicap) : ""}</td>
-      <td>${net || ""}</td>
+      <td class="scorecard-total">${net || ""}</td>
     </tr>
   `;
+}
+
+function renderPlayerScoreCell(score, par, shots) {
+  const numericScore = Number(score || 0);
+  const numericPar = Number(par || 0);
+  const dots = shots > 0
+    ? `<span class="scorecard-shots">${Array.from({ length: shots }, () => "•").join("")}</span>`
+    : "";
+
+  if (!numericScore || !numericPar) {
+    return `<td></td>`;
+  }
+
+  const scoreDiff = numericScore - numericPar;
+  const markClass = scorecardMarkClass(scoreDiff);
+  const label = scorecardMarkLabel(scoreDiff);
+
+  return `
+    <td>
+      <span class="scorecard-mark ${markClass}" title="${label}" aria-label="${label}">
+        ${numericScore}
+      </span>
+      ${dots}
+    </td>
+  `;
+}
+
+function scorecardMarkClass(scoreDiff) {
+  if (scoreDiff <= -2) {
+    return "scorecard-eagle";
+  }
+
+  if (scoreDiff === -1) {
+    return "scorecard-birdie";
+  }
+
+  if (scoreDiff === 1) {
+    return "scorecard-bogey";
+  }
+
+  if (scoreDiff >= 2) {
+    return "scorecard-double-bogey";
+  }
+
+  return "scorecard-par";
+}
+
+function scorecardMarkLabel(scoreDiff) {
+  if (scoreDiff <= -3) {
+    return "Albatross or better";
+  }
+
+  if (scoreDiff === -2) {
+    return "Eagle";
+  }
+
+  if (scoreDiff === -1) {
+    return "Birdie";
+  }
+
+  if (scoreDiff === 0) {
+    return "Par";
+  }
+
+  if (scoreDiff === 1) {
+    return "Bogey";
+  }
+
+  if (scoreDiff === 2) {
+    return "Double bogey";
+  }
+
+  return `${scoreDiff} over par`;
 }
 
 function renderPlayerScoreCell(score, shots) {

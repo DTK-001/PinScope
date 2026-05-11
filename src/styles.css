@@ -3925,3 +3925,58 @@ select option {
     transform: none;
   }
 }
+
+ .scorecard-mark {
+    position: relative;
+    display: inline-grid;
+    place-items: center;
+    min-width: 1.9em;
+    min-height: 1.9em;
+    line-height: 1;
+    font-weight: 800;
+    z-index: 0;
+  }
+
+  .scorecard-par {
+    color: inherit;
+  }
+
+  .scorecard-birdie::before,
+  .scorecard-eagle::before,
+  .scorecard-bogey::before,
+  .scorecard-double-bogey::before,
+  .scorecard-eagle::after,
+  .scorecard-double-bogey::after {
+    content: "";
+    position: absolute;
+    inset: 0.18em;
+    border: 2px solid currentColor;
+    z-index: -1;
+  }
+
+  .scorecard-birdie::before,
+  .scorecard-eagle::before,
+  .scorecard-eagle::after {
+    border-radius: 999px;
+  }
+
+  .scorecard-eagle::after {
+    inset: -0.05em;
+  }
+
+  .scorecard-bogey::before,
+  .scorecard-double-bogey::before,
+  .scorecard-double-bogey::after {
+    border-radius: 0.15em;
+  }
+
+  .scorecard-double-bogey::after {
+    inset: -0.05em;
+  }
+
+  .scorecard-shots {
+    display: block;
+    margin-top: 0.1rem;
+    font-size: 0.7em;
+    letter-spacing: -0.05em;
+  }
