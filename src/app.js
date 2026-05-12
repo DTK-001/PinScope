@@ -832,9 +832,9 @@ function renderPlay() {
 }
 
 function renderPlayGpsButton() {
-  const connected = gps.status === "ready";
+  const connected = gps.status === "ready" || gps.status === "watching";
   return `
-    <button class="play-gps-button ${connected ? "connected" : ""}" type="button" data-action="gps" aria-label="${connected ? "GPS connected" : "Start GPS"}">
+    <button class="play-gps-button ${connected ? "connected" : ""}" type="button" data-action="gps" aria-label="${connected ? "Stop GPS" : "Start GPS"}">
       <img src="${connected ? GPS_PINK_IMAGE_SRC : GPS_GREY_IMAGE_SRC}" alt="" aria-hidden="true" />
     </button>
   `;
@@ -3944,11 +3944,14 @@ function buildGameStats(rounds) {
 function statHoleRows(summary) {
   return summary.course.holes.map((hole) => {
     const entry = getPlayerEntry(summary.round, hole.number, summary.playerId);
-    if (!entry) {
+    if (!entry || entry.scoreEntered !== true) {
       return null;
     }
     const score = Number(entry.score || 0);
     const par = Number(hole.par || 0);
+    if (!Number.isFinite(score) || score <= 0 || !Number.isFinite(par) || par <= 0) {
+      return null;
+    }
     return {
       courseId: summary.course.id,
       courseName: courseDisplayName(summary.course),
@@ -4058,47 +4061,109 @@ function gameInsights(rounds, holes) {
   const insights = [];
   const fairways = holes.filter((item) => item.par > 3 && item.fairway !== "unset");
   const fairwayPct = fairways.length ? (fairways.filter((item) => item.fairway === "hit").length / fairways.length) * 100 : null;
-  const girPct = holes.length ? (holes.filter((item) => item.gir).length / holes.length) * 100 : null;
+  const girPct = holes.length ? pct(holes.filter((item) => item.gir).length, holes.length) : null;
   const puttsPerHole = holes.length ? holes.reduce((sum, item) => sum + item.putts, 0) / holes.length : null;
   const penaltiesPerRound = rounds.length ? holes.reduce((sum, item) => sum + item.penalties, 0) / rounds.length : null;
+  const doubleRate = holes.length ? pct(holes.filter((item) => item.toPar >= 2).length, holes.length) : null;
+  const threePuttRate = holes.length ? pct(holes.filter((item) => item.putts >= 3).length, holes.length) : null;
+  const parOrBetterRate = holes.length ? pct(holes.filter((item) => item.toPar <= 0).length, holes.length) : null;
+  const parSplitMinimum = Math.min(4, Math.max(2, Math.ceil(holes.length * 0.2)));
+  const parSplitLeak = parSplits(holes)
+    .filter((item) => item.holes >= parSplitMinimum)
+    .sort((a, b) => b.averageToPar - a.averageToPar)[0] || null;
+  const missSide = fairwayMissSide(fairways);
+  const trend = roundTrend(rounds);
 
-  if (penaltiesPerRound !== null && penaltiesPerRound >= 1) {
+  if (trend) {
+    insights.push(trend);
+  }
+  if (doubleRate !== null && doubleRate >= 18) {
     insights.push({
       label: "Leak",
-      title: "Penalties are costing shots",
-      value: `${penaltiesPerRound.toFixed(1)} / round`,
-      copy: "Clean up the big misses first. This is usually the fastest score drop."
+      title: "Big numbers are the main damage",
+      value: `${Math.round(doubleRate)}% double+`,
+      copy: `${holes.filter((item) => item.toPar >= 2).length} of ${holes.length} holes are double bogey or worse. Play for the boring miss until that drops.`,
+      score: 95 + doubleRate
     });
   }
-  if (puttsPerHole !== null && puttsPerHole >= 2) {
+  if (penaltiesPerRound !== null && penaltiesPerRound >= 0.8) {
+    insights.push({
+      label: "Penalty",
+      title: "Penalty shots are leaking score",
+      value: `${penaltiesPerRound.toFixed(1)} / round`,
+      copy: `That is about ${penaltiesPerRound.toFixed(1)} strokes before putting starts. Pick the safer target when trouble is in play.`,
+      score: 90 + penaltiesPerRound * 10
+    });
+  }
+  if (threePuttRate !== null && threePuttRate >= 18) {
     insights.push({
       label: "Putting",
-      title: "Putts are heavy",
-      value: `${puttsPerHole.toFixed(1)} / hole`,
-      copy: "Track first-putt distance next if you want to separate lag putting from approach quality."
+      title: "Three-putts are showing up",
+      value: `${Math.round(threePuttRate)}% 3-putt`,
+      copy: `${holes.filter((item) => item.putts >= 3).length} holes needed three or more putts. Lag speed is the quickest practice win here.`,
+      score: 82 + threePuttRate
     });
   }
-  if (girPct !== null && girPct < 35) {
+  if (puttsPerHole !== null && puttsPerHole >= 2.05) {
+    insights.push({
+      label: "Putting",
+      title: "Putting volume is high",
+      value: `${puttsPerHole.toFixed(1)} / hole`,
+      copy: "If first putts are long, this is approach distance. If they are short, it is make-rate practice.",
+      score: 72 + puttsPerHole * 10
+    });
+  }
+  if (girPct !== null && girPct < 35 && holes.length >= 9) {
     insights.push({
       label: "Approach",
-      title: "Greens in regulation need work",
+      title: "Approaches are not finding enough greens",
       value: `${Math.round(girPct)}% GIR`,
-      copy: "The approach game is where the round is asking for attention."
+      copy: `${holes.filter((item) => item.gir).length} greens in regulation from ${holes.length} holes. Club for the middle more often than the pin.`,
+      score: 70 + (35 - girPct)
     });
   }
-  if (fairwayPct !== null && fairwayPct < 45) {
+  if (fairwayPct !== null && fairwayPct < 45 && fairways.length >= 5) {
     insights.push({
-      label: "Tee",
+      label: missSide ? "Tee bias" : "Tee",
       title: "Fairways are under pressure",
       value: `${Math.round(fairwayPct)}% hit`,
-      copy: "A safer tee club may be worth testing on tighter holes."
+      copy: missSide
+        ? `${missSide.label} is the common miss (${missSide.count} of ${missSide.total} recorded misses). Aim and club choice should protect that side.`
+        : "A safer tee club may be worth testing on tighter holes.",
+      score: 68 + (45 - fairwayPct)
     });
   }
-  const trend = roundTrend(rounds);
-  if (trend) {
-    insights.unshift(trend);
+  if (parSplitLeak && parSplitLeak.averageToPar >= 1) {
+    insights.push({
+      label: `Par ${parSplitLeak.par}`,
+      title: `Par ${parSplitLeak.par}s are costing the most`,
+      value: `${formatSignedDecimal(parSplitLeak.averageToPar)} / hole`,
+      copy: `${parSplitLeak.holes} played in this sample. Build the strategy around leaving your next shot in a comfortable yardage.`,
+      score: 66 + parSplitLeak.averageToPar * 12
+    });
   }
-  return insights.slice(0, 3);
+  if (parOrBetterRate !== null && parOrBetterRate >= 45) {
+    insights.push({
+      label: "Strength",
+      title: "You are giving yourself enough chances",
+      value: `${Math.round(parOrBetterRate)}% par+`,
+      copy: "Keep protecting the blow-up holes; the scoring base is already there.",
+      score: 50 + parOrBetterRate / 2
+    });
+  }
+  if (!insights.length && holes.length) {
+    insights.push({
+      label: "Baseline",
+      title: "The sample is building",
+      value: `${holes.length} holes`,
+      copy: "No single leak dominates yet. A few more rounds will make the pattern sharper.",
+      score: 1
+    });
+  }
+  return insights
+    .sort((a, b) => (b.score || 0) - (a.score || 0))
+    .slice(0, 3)
+    .map(({ score, ...item }) => item);
 }
 
 function roundTrend(rounds) {
@@ -4110,15 +4175,50 @@ function roundTrend(rounds) {
   if (!previous.length) {
     return null;
   }
-  const recentAverage = recent.reduce((sum, item) => sum + item.totals.toPar, 0) / recent.length;
-  const previousAverage = previous.reduce((sum, item) => sum + item.totals.toPar, 0) / previous.length;
+  const recentAverage = average(recent.map(normalizedRoundToPar));
+  const previousAverage = average(previous.map(normalizedRoundToPar));
   const change = recentAverage - previousAverage;
   return {
     label: change <= 0 ? "Trend" : "Watch",
     title: change <= 0 ? "Recent form is improving" : "Recent form has drifted",
-    value: `${formatSignedDecimal(change)} vs prior`,
-    copy: change <= 0 ? "Your last three are beating the previous sample." : "Worth checking whether penalties or putting caused it."
+    value: `${formatSignedDecimal(change)} / 18`,
+    copy: change <= 0
+      ? `Last ${recent.length} rounds are better than the prior ${previous.length} after normalizing for round length.`
+      : `Last ${recent.length} rounds are higher than the prior ${previous.length}; check penalties, doubles, and three-putts first.`,
+    score: 88 + Math.abs(change)
   };
+}
+
+function normalizedRoundToPar(summary) {
+  const holes = Math.max(1, Number(summary.totals.completedHoles || summary.course.holes?.length || 18));
+  return (summary.totals.toPar / holes) * 18;
+}
+
+function fairwayMissSide(fairways) {
+  const misses = fairways.filter((item) => item.fairway === "left" || item.fairway === "right");
+  if (misses.length < 3) {
+    return null;
+  }
+  const left = misses.filter((item) => item.fairway === "left").length;
+  const right = misses.length - left;
+  const count = Math.max(left, right);
+  if (count / misses.length < 0.6) {
+    return null;
+  }
+  return {
+    label: left > right ? "Left miss" : "Right miss",
+    count,
+    total: misses.length
+  };
+}
+
+function average(values) {
+  const finite = values.filter((value) => Number.isFinite(value));
+  return finite.length ? finite.reduce((sum, value) => sum + value, 0) / finite.length : 0;
+}
+
+function pct(value, total) {
+  return total ? (value / total) * 100 : 0;
 }
 
 function renderRecentForm(summary) {
@@ -4570,7 +4670,7 @@ function handleClick(event) {
   const action = button.dataset.action;
 
   if (action === "gps") {
-    startGps();
+    toggleGps();
   }
 
   if (action === "track-shot") {
@@ -6057,38 +6157,74 @@ function openRoundSetup(courseId) {
 
 function updateEntryStep(button) {
   const round = getActiveRound(state);
-  if (!round) {
+  const course = round ? getCourse(state, round.courseId) : null;
+  if (!round || !course) {
     return;
   }
-  const entry = getRoundEntry(round, Number(button.dataset.hole));
+  const holeNumber = Number(button.dataset.hole);
+  const entry = getRoundEntry(round, holeNumber);
   const playerEntry = button.dataset.playerId
-    ? getPlayerEntry(round, Number(button.dataset.hole), button.dataset.playerId)
+    ? getPlayerEntry(round, holeNumber, button.dataset.playerId)
     : entry;
   const field = button.dataset.field;
   const delta = Number(button.dataset.delta);
   const min = Number(button.dataset.min);
   const max = Number(button.dataset.max);
   playerEntry[field] = clamp(Number(playerEntry[field] || 0) + delta, min, max);
-  if (field === "score") {
+  if (field === "score" || field === "putts") {
     playerEntry.scoreEntered = true;
+    syncEntryGirFromScore(course, holeNumber, playerEntry);
   }
   persistScoreEntry();
 }
 
 function updateEntryValue(button) {
   const round = getActiveRound(state);
-  if (!round) {
+  const course = round ? getCourse(state, round.courseId) : null;
+  if (!round || !course) {
     return;
   }
-  const entry = getRoundEntry(round, Number(button.dataset.hole));
+  const holeNumber = Number(button.dataset.hole);
+  const entry = getRoundEntry(round, holeNumber);
   const playerEntry = button.dataset.playerId
-    ? getPlayerEntry(round, Number(button.dataset.hole), button.dataset.playerId)
+    ? getPlayerEntry(round, holeNumber, button.dataset.playerId)
     : entry;
   playerEntry[button.dataset.field] = button.dataset.value;
-  if (button.dataset.field === "score") {
+  if (button.dataset.field === "score" || button.dataset.field === "putts") {
     playerEntry.scoreEntered = true;
+    syncEntryGirFromScore(course, holeNumber, playerEntry);
   }
   persistScoreEntry();
+}
+
+function markCurrentScorecardHoleEntered(round, course) {
+  const hole = course.holes.find((item) => item.number === round.currentHole) || course.holes[0];
+  if (!hole) {
+    return;
+  }
+  getRoundPlayers(round).forEach((player) => {
+    const playerEntry = getPlayerEntry(round, hole.number, player.id) || getRoundEntry(round, hole.number);
+    if (!playerEntry) {
+      return;
+    }
+    playerEntry.scoreEntered = true;
+    syncEntryGirFromScore(course, hole.number, playerEntry);
+  });
+  saveState(state);
+}
+
+function syncEntryGirFromScore(course, holeNumber, playerEntry) {
+  const hole = course?.holes?.find((item) => Number(item.number) === Number(holeNumber));
+  if (!hole || !playerEntry?.scoreEntered) {
+    return;
+  }
+  const score = Number(playerEntry.score);
+  const putts = Number(playerEntry.putts);
+  const par = Number(hole.par);
+  if (!Number.isFinite(score) || !Number.isFinite(putts) || !Number.isFinite(par) || score <= 0 || putts < 0 || par <= 0) {
+    return;
+  }
+  playerEntry.gir = score - putts <= par - 2;
 }
 
 function updateEntryCheck(input) {
@@ -6354,6 +6490,7 @@ function handleScoreCardNext() {
   if (!round || !course) {
     return;
   }
+  markCurrentScorecardHoleEntered(round, course);
   if (Number(round.currentHole) >= course.holes.length) {
     requestFinishRound();
     return;
@@ -6850,6 +6987,28 @@ function compareCourses(a, b) {
     return aDistance - bDistance;
   }
   return a.name.localeCompare(b.name);
+}
+
+function toggleGps() {
+  if (gps.status === "ready" || gps.status === "watching") {
+    stopGps();
+    return;
+  }
+  startGps();
+}
+
+function stopGps() {
+  if (gps.watchId !== null && navigator.geolocation) {
+    navigator.geolocation.clearWatch(gps.watchId);
+  }
+  gps = {
+    status: "off",
+    position: null,
+    error: "",
+    watchId: null
+  };
+  gpsTestMoveMode = false;
+  render();
 }
 
 function startGps() {

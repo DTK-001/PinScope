@@ -3709,6 +3709,32 @@ select option {
 }
 
 @media (orientation: landscape) {
+  .score-card-backdrop {
+    align-items: center;
+    padding:
+      max(10px, env(safe-area-inset-top))
+      max(14px, env(safe-area-inset-right))
+      max(10px, env(safe-area-inset-bottom))
+      max(14px, env(safe-area-inset-left));
+  }
+
+  .score-card-sheet {
+    width: min(1040px, calc(100vw - 28px));
+    max-height: min(680px, calc(100dvh - 20px));
+  }
+
+  .score-card-players {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(330px, 100%), 1fr));
+    gap: 10px;
+    align-content: start;
+    padding-right: 0;
+  }
+
+  .score-card-players .player-score-card {
+    min-width: 0;
+  }
+
   .round-scorecard-shell {
     width: min(100vw, 1180px);
     height: min(100dvh, 680px);
