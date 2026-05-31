@@ -1779,8 +1779,6 @@ function renderArcgisHoleVisual(hole, course) {
       ${photoEditMode ? "" : renderGpsTestControls(hole, courseId)}
       ${photoEditMode ? "" : renderPhotoZoomControls(courseId, hole.number, zoom)}
       <div class="photo-align-toolbar">
-        ${photoEditMode ? "" : `<button class="photo-tool-button" type="button" data-action="cycle-arcgis-quality" title="Change ArcGIS tile zoom quality">Quality: ${escapeHtml(arcgisQualityLabel())}</button>`}
-        <button class="photo-tool-button" type="button" data-action="toggle-photo-edit">${photoEditMode ? "Done" : "Adjust"}</button>
         ${photoEditMode && anchors.edited ? `<button class="photo-tool-button" type="button" data-action="reset-satellite-anchor" data-course-id="${courseId}" data-hole="${hole.number}">Reset</button>` : ""}
       </div>
       <div class="satellite-attribution">${escapeHtml(map.attribution || arcgisImageryAttribution())}</div>
@@ -2018,7 +2016,6 @@ function renderPhotoHoleVisual(hole) {
       ${photoEditMode ? "" : renderPhotoZoomControls(courseId, hole.number, zoom)}
       <div class="photo-align-toolbar">
         ${!photoEditMode && satelliteAvailableForHole(hole, course) ? `<button class="photo-tool-button" type="button" data-action="toggle-arcgis-maps">Satellite</button>` : ""}
-        <button class="photo-tool-button" type="button" data-action="toggle-photo-edit">${photoEditMode ? "Done" : "Adjust"}</button>
         ${photoEditMode && (edited || generated) ? `<button class="photo-tool-button" type="button" data-action="reset-hole-photo-alignment" data-course-id="${courseId}" data-hole="${hole.number}">Reset Hole</button>` : ""}
         ${photoEditMode && courseAligned ? `<button class="photo-tool-button" type="button" data-action="reset-course-photo-calibration" data-course-id="${courseId}">Reset Course</button>` : ""}
         <label class="photo-tool-button" aria-label="Replace course top-down image">
