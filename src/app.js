@@ -2479,6 +2479,26 @@ function arcgisShotPlanKey(courseId, holeNumber) {
   return `${courseId || "course"}:${String(holeNumber || "")}`;
 }
 
+function sortArcGISPlanPoints(points = []) {
+  if (!Array.isArray(points)) return [];
+
+  return [...points].sort((a, b) => {
+    const aOrder = Number.isFinite(a?.order)
+      ? a.order
+      : Number.isFinite(a?.index)
+        ? a.index
+        : 0;
+
+    const bOrder = Number.isFinite(b?.order)
+      ? b.order
+      : Number.isFinite(b?.index)
+        ? b.index
+        : 0;
+
+    return aOrder - bOrder;
+  });
+}
+
 function resolveArcgisShotPlan(courseId, hole, anchors, marker, panelRatio = satellitePanelRatio()) {
   const saved = arcgisShotPlans[arcgisShotPlanKey(courseId, hole.number)];
   const points = sortArcGISPlanPoints(anchors, saved?.points || []);

@@ -1,4 +1,8 @@
-const SESSION_ENDPOINT = "./api/arcgis/session";
+const TEMP_FRONTEND_ARCGIS_API_KEY = "AAPTaL65zGJBCcGliaz22f3lI7w..jrLzRb-aFvdTScUEocynWzKQB3p1SDpAle9rRMj8zybXpdvVK-ksU38Wn2nrGsWUyDigJMIdXLnr39P-LM7-Q2Sxj4cc-s-YDFuBCTAJ4shk2DFNO_ygd5HnZmsT2Y1EC3zlnK1pe6ov3p2MEP9Ez2YBErsu3VQL4Jh-mdFFF4xVqhAHJZgf7MFyroH9mXK0tPLJ-bbk_yryg1CUEhqFiE351teaWwRdPp413z2yPwzFo8o.AT1_0aUFy9y6";
+
+const ARCGIS_SESSION_START_URL =
+  "https://basemapstyles-api.arcgis.com/arcgis/rest/services/styles/v2/sessions/start";
+
 const STYLE_ENDPOINTS = [
   "https://basemapstyles-api.arcgis.com/arcgis/rest/services/styles/v2/styles/arcgis/imagery/standard",
   "https://basemapstyles-api.arcgis.com/arcgis/rest/services/styles/v2/styles/arcgis/imagery"
