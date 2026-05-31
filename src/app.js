@@ -48,6 +48,7 @@ const SATELLITE_ANCHOR_EDITS_STORAGE = "pinscope:satellite-anchor-edits:v1";
 const ARCGIS_IMAGERY_QUERY_ENABLED = "arcgisMaps";
 const ARCGIS_IMAGERY_QUERY_QUALITY = "arcgisQuality";
 const ARCGIS_TILE_SIZE = 256;
+const ARCGIS_DEFAULT_SOURCE_MAX_ZOOM = 19;
 const ARCGIS_IMAGERY_QUALITIES = {
   balanced: { key: "balanced", label: "Balanced", minZoom: 17, maxZoom: 18, maxTiles: 144 },
   high: { key: "high", label: "High", minZoom: 18, maxZoom: 19, maxTiles: 256 },
@@ -2231,7 +2232,17 @@ function saveArcgisImageryQuality() {
 }
 
 function activeArcgisQualityConfig() {
-  return ARCGIS_IMAGERY_QUALITIES[normalizeArcgisImageryQuality(arcgisImageryQuality)] || ARCGIS_IMAGERY_QUALITIES[ARCGIS_DEFAULT_IMAGERY_QUALITY];
+  const base = ARCGIS_IMAGERY_QUALITIES[normalizeArcgisImageryQuality(arcgisImageryQuality)] || ARCGIS_IMAGERY_QUALITIES[ARCGIS_DEFAULT_IMAGERY_QUALITY];
+  const layer = getArcgisImageryLayer();
+  const sourceMaxZoom = Number.isFinite(Number(layer?.maxZoom))
+    ? Number(layer.maxZoom)
+    : ARCGIS_DEFAULT_SOURCE_MAX_ZOOM;
+  const sourceMinZoom = Number.isFinite(Number(layer?.minZoom))
+    ? Number(layer.minZoom)
+    : base.minZoom;
+  const maxZoom = Math.max(0, Math.min(base.maxZoom, Math.floor(sourceMaxZoom)));
+  const minZoom = Math.max(0, Math.min(maxZoom, Math.max(base.minZoom, Math.floor(sourceMinZoom))));
+  return { ...base, minZoom, maxZoom, sourceMaxZoom };
 }
 
 function arcgisQualityLabel() {
@@ -4789,11 +4800,23 @@ function updateArcgisTileStatus(layer) {
   const failed = tiles.filter((tile) => tile.dataset.error === "1").length;
   const complete = tiles.length > 0 && loaded === tiles.length;
   const allFinished = tiles.length > 0 && loaded + failed === tiles.length;
+  const hasUsableImagery = loaded > 0 && (complete || allFinished);
   const status = layer.querySelector("[data-arcgis-map-status]");
-  layer.classList.toggle("loaded", complete);
-  layer.classList.toggle("failed", allFinished && failed > 0);
+
+  // Some ArcGIS imagery sources do not have every tile at the highest zoom for
+  // every course. Do not cover a usable hole image with the "incomplete" panel
+  // just because one edge/corner tile failed. If at least one tile loaded and
+  // the rest have finished, show the usable imagery and keep the user moving.
+  layer.classList.toggle("loaded", complete || hasUsableImagery);
+  layer.classList.toggle("failed", allFinished && failed > 0 && loaded === 0);
   if (status) {
-    status.textContent = complete ? "ArcGIS imagery ready" : allFinished && failed > 0 ? "ArcGIS imagery incomplete" : "Loading ArcGIS imagery";
+    status.textContent = complete
+      ? "ArcGIS imagery ready"
+      : allFinished && loaded > 0
+        ? "ArcGIS imagery loaded with some unavailable edge tiles"
+        : allFinished && failed > 0
+          ? "ArcGIS imagery unavailable at this zoom"
+          : "Loading ArcGIS imagery";
   }
 }
 

@@ -79,6 +79,8 @@ async function loadArcgisImageryLayer(session) {
     startTime: session.startTime,
     endTime: session.endTime,
     tileTemplate: ensureTokenPlaceholder(tileTemplate),
+    minZoom: normalizeZoom(source.minzoom ?? source.minZoom ?? style?.metadata?.["arcgis:minZoom"]),
+    maxZoom: normalizeZoom(source.maxzoom ?? source.maxZoom ?? style?.metadata?.["arcgis:maxZoom"]),
     attribution: source.attribution || style?.metadata?.["arcgis:attribution"] || ARCGIS_ATTRIBUTION
   };
 }
@@ -144,6 +146,11 @@ function normalizeTileTemplate(value) {
     return "";
   }
   return template;
+}
+
+function normalizeZoom(value) {
+  const zoom = Number(value);
+  return Number.isFinite(zoom) ? Math.floor(zoom) : null;
 }
 
 function ensureTokenPlaceholder(template) {

@@ -1,102 +1,37 @@
-# PinScope
+# PinScope Course Sync Worker
 
-Phone-first golf app foundation for local courses, GPS yardages, scoring, stats, and future watch support.
+This is the small backend that lets you publish mapped course geometry once and have every device load it automatically.
 
-For future Codex conversations, start with [`PROJECT_CONTEXT.md`](PROJECT_CONTEXT.md). It records the current app state, known issues, local commands, and the next recommended build step.
+## What it does
 
-## What is in place
+- `GET /` returns the published course library.
+- `POST /` saves/replaces published course data, protected by an admin token.
+- Public users do not need the admin token. They only read the data.
 
-- Installable PWA shell with manifest and service worker.
-- Mobile layout with bottom navigation.
-- Local course library with manual course creation.
-- Home area configured for Grays Thurrock with a 20 mile OpenStreetMap course lookup.
-- OpenStreetMap nearby course import using the public Overpass API for small personal lookups.
-- Verified local course packs for Cranham and Belhus Park.
-- Top-down hole views with editable tee/green alignment.
-- Shot planning with multiple draggable markers and per-segment yardages.
-- Zoom and pan on hole images for phone testing.
-- Club recommendations from the saved bag distances.
-- Active round scoring with score, putts, penalties, fairways, GIR, and tee club.
-- GPS hooks for front, middle, back, and hazard yardages when a course has coordinates.
-- Local device storage for rounds and club distances.
-- Build-time course packs for mapped OSM/JSON hole geometry, with satellite imagery loaded at runtime from ArcGIS Location Platform Basemap Styles.
-- A neutral course schema that can later accept richer OSM tee, fairway, green, bunker, and water data.
+## Setup summary
 
-## Run it locally
+1. Install Wrangler if you do not have it already.
+2. Copy `wrangler.example.toml` to `wrangler.toml`.
+3. Create a KV namespace:
 
-Use the included static server from this folder. The PWA service worker needs HTTP rather than opening `index.html` directly.
-
-```powershell
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\dev-server.ps1 -Port 5173
+```bash
+wrangler kv namespace create PINSCOPE_COURSES
 ```
 
-Then open:
+4. Paste the returned KV namespace id into `wrangler.toml`.
+5. Set a private admin token:
 
-```text
-http://localhost:5173
+```bash
+wrangler secret put PINSCOPE_ADMIN_TOKEN
 ```
 
-Optional local-only API keys can be placed in `.env.local`; that file is ignored by git and is loaded only by the dev server.
+6. Deploy the worker:
 
-```text
-GOLFCOURSEAPI_KEY=your_key_here
-ARCGIS_API_KEY=your_arcgis_location_platform_api_key_here
+```bash
+wrangler deploy
 ```
 
-The browser should call the local proxy path `/api/golfcourseapi/v1/...` rather than calling GolfCourseAPI directly.
-ArcGIS imagery uses the local/serverless endpoint `/api/arcgis/session`. The real ArcGIS API key must live only in the backend or serverless environment as `ARCGIS_API_KEY`; the frontend receives only the short-lived basemap `sessionToken`.
+7. In PinScope, open **Cloud course sync**, paste the worker URL as the Sync endpoint, and save it.
+8. On your admin device only, enter the admin token as well. Then when you run **OSM holes** or **Import mapper JSON**, the mapped course is automatically published.
 
-For phone testing on the same Wi-Fi, run the server with LAN binding:
-
-```powershell
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\dev-server.ps1 -Port 5173 -Bind 0.0.0.0
-```
-
-Then open `http://<your-computer-ip>:5173` on the phone.
-
-## Data stance
-
-OpenStreetMap data is open under ODbL and needs attribution. Baked course geometry should keep source attribution visible and be treated as a derived course database.
-
-## Next step
-
-Build out the course pack inputs in `data/course-pack/`, run the course-pack builder, then publish or package the app with a backend/serverless `/api/arcgis/session` route configured.
-
-## Geometry import / OSM hole mapping
-
-The app includes a selected-course geometry workflow for creating course-pack source JSON:
-
-1. Select a course from the course list.
-2. Click **OSM holes** to pull `golf=hole`, `golf=green`, and `golf=tee` geometry from OpenStreetMap around the course centre.
-3. Or click **Import mapper JSON** and choose an export from the standalone PinScope Green Mapper.
-4. Click **Export course pack** to download `pinscope-course-pack.json`.
-5. Put that JSON file in `data/course-pack/`.
-6. Run `node tools\build-course-pack.cjs` to rewrite `src/shared-course-defaults.js`.
-
-Imported geometry is saved locally in the browser until you export it. The app deliberately keeps real GPS coordinates in `hole.tee`, `hole.greenCenter`, `hole.greenFront`, and `hole.greenBack`; it does not treat `visual.tee` or `visual.green` as GPS coordinates because those are screen/image percentage positions.
-
-## ArcGIS Imagery
-
-PinScope uses ArcGIS Location Platform Basemap Styles imagery during play. The app starts one basemap session per active app/round session, reuses the returned `sessionToken` while valid, and does not commit or redistribute imagery as static assets.
-
-```powershell
-node tools\build-course-pack.cjs
-```
-
-Place mapper/OSM course JSON files in `data/course-pack/`. The builder writes geometry defaults to `src/shared-course-defaults.js`; satellite backgrounds are requested from ArcGIS at runtime through `/api/arcgis/session`.
-
-The intended workflow is:
-
-1. Run **OSM holes** or **Import mapper JSON** for each course in the app.
-2. Export the course pack JSON.
-3. Put the exported JSON in `data/course-pack/`.
-4. Run `node tools\build-course-pack.cjs`.
-5. Commit/deploy the updated `src/shared-course-defaults.js`.
-6. Configure `ARCGIS_API_KEY` in the server or serverless environment that serves `/api/arcgis/session`.
-
-
-## ArcGIS troubleshooting
-
-If the hole screen shows `ArcGIS session route was not found`, the app is being served as a static site without the backend API route. ArcGIS imagery needs `/api/arcgis/session` to be available because the real API key must stay server-side. For local testing, run `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\dev-server.ps1 -Port 5173` or `node tools/dev-server.cjs 5173` from the project folder with `ARCGIS_API_KEY` set in `.env.local`. For deployment, use a host that supports serverless API routes, such as Vercel, Netlify, or a Cloudflare Worker in front of the static app.
-
-If the endpoint returns a 401 or 403, regenerate/check the ArcGIS key and make sure it has the Location Services → Basemaps → Basemap styles service privilege.
+For public builds, keep `src/sync-config.js` with the endpoint only and no admin token. Users will load the published holes automatically without importing files.
