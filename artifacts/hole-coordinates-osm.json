@@ -1,9 +1,61 @@
 [
   {
-    "id": "osm-way-23454278",
-    "name": "Cranham Golf Course",
-    "lat": 51.555764,
-    "lng": 0.282267,
+    "id": "verified-st-cleres-hall",
+    "name": "St Cleres Hall Golf Club",
+    "lat": 51.50759,
+    "lng": 0.410656,
+    "holes": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      {
+        "number": 17,
+        "osm": "way/1039321862",
+        "name": "",
+        "tee": {
+          "lat": 51.497194,
+          "lng": 0.399752
+        },
+        "green": {
+          "lat": 51.50006,
+          "lng": 0.396629
+        },
+        "yards": 421
+      },
+      {
+        "number": 18,
+        "osm": "way/1039321863",
+        "name": "",
+        "tee": {
+          "lat": 51.500435,
+          "lng": 0.396867
+        },
+        "green": {
+          "lat": 51.501436,
+          "lng": 0.391931
+        },
+        "yards": 393
+      }
+    ]
+  },
+  {
+    "id": "verified-top-meadow",
+    "name": "Top Meadow Golf Club",
+    "lat": 51.541154,
+    "lng": 0.312411,
     "holes": [
       null,
       null,
@@ -26,10 +78,153 @@
     ]
   },
   {
-    "id": "verified-belhus-park",
-    "name": "Belhus Park Golf Club",
-    "lat": 51.507331,
-    "lng": 0.263364,
+    "id": "verified-ingrebourne-links",
+    "name": "Ingrebourne Links Golf & Country Club",
+    "lat": 51.513613,
+    "lng": 0.230958,
+    "holes": [
+      {
+        "number": 1,
+        "osm": "way/904333426",
+        "name": "",
+        "tee": {
+          "lat": 51.513673,
+          "lng": 0.222965
+        },
+        "green": {
+          "lat": 51.516744,
+          "lng": 0.225138
+        },
+        "yards": 408
+      },
+      {
+        "number": 2,
+        "osm": "way/904333431",
+        "name": "",
+        "tee": {
+          "lat": 51.516418,
+          "lng": 0.225695
+        },
+        "green": {
+          "lat": 51.51778,
+          "lng": 0.230428
+        },
+        "yards": 395
+      },
+      {
+        "number": 3,
+        "osm": "way/904333432",
+        "name": "",
+        "tee": {
+          "lat": 51.517117,
+          "lng": 0.230518
+        },
+        "green": {
+          "lat": 51.519793,
+          "lng": 0.235499
+        },
+        "yards": 498
+      },
+      {
+        "number": 4,
+        "osm": "way/904333446",
+        "name": "",
+        "tee": {
+          "lat": 51.520446,
+          "lng": 0.236171
+        },
+        "green": {
+          "lat": 51.51712,
+          "lng": 0.237719
+        },
+        "yards": 421
+      },
+      {
+        "number": 5,
+        "osm": "way/904333434",
+        "name": "",
+        "tee": {
+          "lat": 51.516777,
+          "lng": 0.238352
+        },
+        "green": {
+          "lat": 51.515839,
+          "lng": 0.232494
+        },
+        "yards": 458
+      },
+      {
+        "number": 6,
+        "osm": "way/904333449",
+        "name": "",
+        "tee": {
+          "lat": 51.513305,
+          "lng": 0.239421
+        },
+        "green": {
+          "lat": 51.51419,
+          "lng": 0.231374
+        },
+        "yards": 618
+      },
+      {
+        "number": 7,
+        "osm": "way/904333450",
+        "name": "",
+        "tee": {
+          "lat": 51.513512,
+          "lng": 0.230634
+        },
+        "green": {
+          "lat": 51.513228,
+          "lng": 0.23634
+        },
+        "yards": 433
+      },
+      {
+        "number": 8,
+        "osm": "way/904333444",
+        "name": "",
+        "tee": {
+          "lat": 51.516122,
+          "lng": 0.231303
+        },
+        "green": {
+          "lat": 51.516362,
+          "lng": 0.229337
+        },
+        "yards": 152
+      },
+      {
+        "number": 9,
+        "osm": "way/904333428",
+        "name": "",
+        "tee": {
+          "lat": 51.513101,
+          "lng": 0.232973
+        },
+        "green": {
+          "lat": 51.512162,
+          "lng": 0.225535
+        },
+        "yards": 574
+      },
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ]
+  },
+  {
+    "id": "verified-princes-park",
+    "name": "Princes Park Golf Course",
+    "lat": 51.449228,
+    "lng": 0.234188,
     "holes": [
       null,
       null,
@@ -52,10 +247,11 @@
     ]
   },
   {
-    "id": "verified-basildon",
-    "name": "Basildon Golf Course",
-    "lat": 51.5746,
-    "lng": 0.4372,
+    "id": "verified-gravesend-golf-centre",
+    "name": "Gravesend Golf Centre",
+    "lat": 51.422422,
+    "lng": 0.405488,
+    "error": "Gravesend Golf Centre: Overpass 429\n<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\"\n    \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">\n<html xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"en\" lang=\"en\">\n<head>\n  <meta http-equiv=\"content-type\" content=\"text/html; charset=utf-8\" lang=\"en\"/>\n  <title>OSM3S Response</title>\n</head>\n<body>\n\n<p>The data included in this document is from www.openstreetmap.org. The data is made available under ODbL.</p>\n<p><strong style=\"color:#FF0000\">Error</strong>: runtime error: open64: 0 Success /osm3s_osm_base Dispatcher_Client::request_read_and_idx::rate_limited. Please check /api/status for the quota of your IP address. </p>\n\n</body>\n</html>\n",
     "holes": [
       null,
       null,
@@ -78,10 +274,88 @@
     ]
   },
   {
-    "id": "verified-castle-point-canvey",
-    "name": "Canvey Island Golf Course",
-    "lat": 51.5354,
-    "lng": 0.5844,
+    "id": "verified-langdon-hills",
+    "name": "Langdon Hills Golf & Country Club",
+    "lat": 51.531174,
+    "lng": 0.365153,
+    "holes": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ]
+  },
+  {
+    "id": "verified-dartford",
+    "name": "Dartford Golf Club",
+    "lat": 51.435069,
+    "lng": 0.20045,
+    "holes": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ]
+  },
+  {
+    "id": "verified-corinthian-fawkham-valley",
+    "name": "Corinthian Sports Club",
+    "lat": 51.385299,
+    "lng": 0.294437,
+    "holes": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ]
+  },
+  {
+    "id": "verified-barnehurst",
+    "name": "Barnehurst Golf Course",
+    "lat": 51.460138,
+    "lng": 0.172763,
     "holes": [
       null,
       null,

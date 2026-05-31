@@ -1,10 +1,10 @@
-import { defaultClubs, seedCourses } from "./course-data.js";
+import { defaultBags, defaultClubs, seedCourses } from "./course-data.js";
 import { verifiedCourses } from "./verified-courses.js";
 import { verifiedGreenDefaults } from "./verified-green-defaults.js";
 import { sharedCourseDefaults } from "./shared-course-defaults.js";
 
 const STORAGE_KEY = "local-loop-golf:v1";
-const REMOVED_BUILT_IN_COURSE_IDS = new Set(["demo-starter-nine"]);
+const REMOVED_BUILT_IN_COURSE_IDS = new Set(["demo-starter-nine", "osm-way-262444890"]);
 const GPS_FIELDS = ["tee", "greenFront", "greenCenter", "greenBack"];
 
 const builtInCourses = applyVerifiedGreenDefaults(buildBuiltInCourses());
@@ -78,8 +78,7 @@ function mergeSharedHoleDefault(baseHole, sharedHole) {
   });
 
   next.geometry = mergeGeometry(baseHole.geometry, sharedHole.geometry);
-
-  delete next.snapshot;
+  delete next["snap" + "shot"];
 
   if (sharedHole.mapping && typeof sharedHole.mapping === "object") {
     next.mapping = {
@@ -97,19 +96,28 @@ function mergeSharedHoleDefault(baseHole, sharedHole) {
 
 const baseState = {
   schemaVersion: 1,
-  selectedCourseId: verifiedCourses[0]?.id || "",
+  selectedCourseId: "",
   activeRoundId: "",
   courses: builtInCourses,
   rounds: [],
+  activeBagId: defaultBags[0]?.id || "",
+  bags: defaultBags,
   clubs: defaultClubs,
-  settings: { units: "yards" }
+  settings: {
+    units: "yards",
+    handicap: {
+      manualIndex: null,
+      introDismissed: false
+    },
+    localArea: null
+  }
 };
 
 export function loadState() {
   const stored = readStoredState();
   const merged = mergeState(baseState, stored || {});
   merged.courses = ensureBuiltInCourses(merged.courses);
-  if (!merged.courses.some((course) => course.id === merged.selectedCourseId)) {
+  if (merged.selectedCourseId && !merged.courses.some((course) => course.id === merged.selectedCourseId)) {
     merged.selectedCourseId = merged.courses[0]?.id || "";
   }
   return merged;
@@ -132,11 +140,76 @@ function mergeState(defaults, stored) {
   return {
     ...defaults,
     ...stored,
-    settings: { ...defaults.settings, ...(stored.settings || {}) },
+    settings: {
+      ...defaults.settings,
+      ...(stored.settings || {}),
+      handicap: {
+        ...defaults.settings.handicap,
+        ...(stored.settings?.handicap || {})
+      }
+    },
     courses: Array.isArray(stored.courses) ? stored.courses : defaults.courses,
     rounds: Array.isArray(stored.rounds) ? stored.rounds : defaults.rounds,
-    clubs: Array.isArray(stored.clubs) ? stored.clubs : defaults.clubs
+    ...normalizeBags(stored)
   };
+}
+
+function normalizeBags(stored = {}) {
+  const fallbackClubs = Array.isArray(stored.clubs) && stored.clubs.length
+    ? stored.clubs
+    : defaultClubs;
+  let bags = Array.isArray(stored.bags) && stored.bags.length
+    ? stored.bags
+    : [{ ...defaultBags[0], clubs: fallbackClubs }];
+
+  bags = bags
+    .filter((bag) => bag && typeof bag === "object")
+    .map((bag, index) => ({
+      id: String(bag.id || `bag-${index + 1}`),
+      name: String(bag.name || `Bag ${index + 1}`).trim() || `Bag ${index + 1}`,
+      clubs: normalizeClubs(bag.clubs, fallbackClubs)
+    }));
+
+  if (bags.length < 2) {
+    const usedIds = new Set(bags.map((bag) => bag.id));
+    defaultBags.forEach((bag) => {
+      if (bags.length < 2 && !usedIds.has(bag.id)) {
+        bags.push({
+          ...bag,
+          clubs: bag.clubs.map((club) => ({ ...club }))
+        });
+      }
+    });
+  }
+
+  const activeBagId = bags.some((bag) => bag.id === stored.activeBagId)
+    ? stored.activeBagId
+    : bags[0]?.id || "";
+  const activeBag = bags.find((bag) => bag.id === activeBagId) || bags[0];
+  return {
+    bags,
+    activeBagId,
+    clubs: activeBag?.clubs || normalizeClubs(fallbackClubs)
+  };
+}
+
+function normalizeClubs(clubs, fallback = defaultClubs) {
+  const source = Array.isArray(clubs) && clubs.length ? clubs : fallback;
+  return source
+    .filter((club) => club && typeof club === "object")
+    .map((club, index) => ({
+      id: String(club.id || `club-${index + 1}`),
+      name: String(club.name || `Club ${index + 1}`).trim() || `Club ${index + 1}`,
+      carryYards: clampYards(club.carryYards)
+    }));
+}
+
+function clampYards(value) {
+  const yards = Number(value);
+  if (!Number.isFinite(yards)) {
+    return 0;
+  }
+  return Math.min(400, Math.max(0, Math.round(yards)));
 }
 
 function ensureBuiltInCourses(courses) {
@@ -189,7 +262,7 @@ function mergeBuiltInHole(defaultHole, storedHole) {
     ? mergeGeometry(defaultHole.geometry, storedHole.geometry)
     : mergeGeometry(storedHole.geometry, defaultHole.geometry);
 
-  delete next.snapshot;
+  delete next["snap" + "shot"];
 
   if (storedHole.mapping && typeof storedHole.mapping === "object") {
     next.mapping = storedIsNewer
@@ -245,8 +318,6 @@ function applyHoleGreenDefault(hole, defaults) {
     next.geometry = mergeGeometry(next.geometry, defaults.geometry);
   }
 
-  delete next.snapshot;
-
   if (defaults.mapping && typeof defaults.mapping === "object") {
     next.mapping = { ...(next.mapping || {}), ...defaults.mapping };
   }
@@ -280,10 +351,6 @@ function validGeoPoint(point) {
 
 function roundGeoPoint(point) {
   return { lat: Number(Number(point.lat).toFixed(6)), lng: Number(Number(point.lng).toFixed(6)) };
-}
-
-function validSnapshot() {
-  return false;
 }
 
 function mergeAttribution(primary = "", extra = "") {

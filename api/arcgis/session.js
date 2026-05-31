@@ -1,52 +1,38 @@
 const ARCGIS_SESSION_URL = "https://basemapstyles-api.arcgis.com/arcgis/rest/services/styles/v2/sessions/start";
 
-module.exports = async function handler(req, res) {
-  if (req.method && req.method !== "GET") {
-    res.setHeader("Allow", "GET");
-    return sendJson(res, 405, { error: "Method not allowed" });
+module.exports = async function handler(request, response) {
+  if (request.method && request.method !== "GET") {
+    return response.status(405).json({ error: "Method not allowed." });
   }
 
   const apiKey = process.env.ARCGIS_API_KEY;
   if (!apiKey) {
-    return sendJson(res, 500, {
-      error: "ARCGIS_API_KEY is not configured on the server. Add it as a deployment secret/environment variable."
-    });
+    return response.status(503).json({ error: "ArcGIS API key is not configured on the server." });
   }
 
   try {
-    const url = new URL(ARCGIS_SESSION_URL);
-    url.searchParams.set("f", "json");
-    url.searchParams.set("styleFamily", "arcgis");
-    url.searchParams.set("token", apiKey);
-
-    const response = await fetch(url.toString(), {
+    const upstream = await fetch(`${ARCGIS_SESSION_URL}?styleFamily=arcgis&f=json`, {
       method: "GET",
-      headers: { Accept: "application/json" }
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        Accept: "application/json"
+      }
     });
-    const data = await response.json().catch(() => null);
+    const body = await upstream.json().catch(() => ({}));
 
-    if (!response.ok || data?.error) {
-      return sendJson(res, response.status || 502, {
-        error: data?.error?.message || data?.message || "ArcGIS basemap session could not be created."
+    if (!upstream.ok || body.error) {
+      return response.status(upstream.status || 502).json({
+        error: body?.error?.message || "ArcGIS basemap session could not be started."
       });
     }
 
-    return sendJson(res, 200, {
-      sessionToken: data.sessionToken,
-      startTime: data.startTime,
-      endTime: data.endTime,
-      styleFamily: data.styleFamily
+    return response.status(200).json({
+      sessionToken: body.sessionToken,
+      startTime: body.startTime,
+      endTime: body.endTime,
+      styleFamily: body.styleFamily
     });
-  } catch (error) {
-    return sendJson(res, 502, {
-      error: error?.message || "ArcGIS basemap session request failed."
-    });
+  } catch {
+    return response.status(502).json({ error: "ArcGIS basemap session request failed." });
   }
 };
-
-function sendJson(res, status, body) {
-  res.statusCode = status;
-  res.setHeader("Content-Type", "application/json; charset=utf-8");
-  res.setHeader("Cache-Control", "no-store");
-  res.end(JSON.stringify(body));
-}
