@@ -5,11 +5,11 @@
 // it to rebuild the same plan with that marker moved.
 
 const MARKER_SELECTOR = [
-  ".arcgis-hole [data-photo-plan-point]",
-  ".arcgis-hole [data-arcgis-plan-point]",
-  ".arcgis-hole .photo-plan-point",
-  ".arcgis-hole .shot-plan-point",
-  ".arcgis-hole .shot-plan-marker"
+  ".azure-hole [data-photo-plan-point]",
+  ".azure-hole [data-azure-plan-point]",
+  ".azure-hole .photo-plan-point",
+  ".azure-hole .shot-plan-point",
+  ".azure-hole .shot-plan-marker"
 ].join(", ");
 
 let drag = null;
@@ -27,7 +27,7 @@ function handlePointerDown(event) {
   }
 
   const marker = event.target.closest(MARKER_SELECTOR);
-  const panel = marker?.closest(".arcgis-hole");
+  const panel = marker?.closest(".azure-hole");
   if (!marker || !panel) {
     return;
   }
@@ -53,8 +53,8 @@ function handlePointerDown(event) {
     panel,
     marker,
     markerIndex,
-    courseId: panel.dataset.arcgisCourseId || "",
-    holeNumber: String(panel.dataset.arcgisHole || ""),
+    courseId: panel.dataset.azureCourseId || "",
+    holeNumber: String(panel.dataset.azureHole || ""),
     points: markers.map((item) => item.point),
     latestPoint: currentPoint,
     moved: false
@@ -101,7 +101,7 @@ function handlePointerEnd(event) {
 
   const nextPoints = finished.points.slice();
   nextPoints[finished.markerIndex] = finished.latestPoint;
-  rebuildArcGISPlan(finished.courseId, finished.holeNumber, nextPoints);
+  rebuildAzurePlan(finished.courseId, finished.holeNumber, nextPoints);
 }
 
 function handleClickCapture(event) {
@@ -130,7 +130,7 @@ function collectMarkers(panel) {
 function markerIndex(element, fallbackIndex) {
   const value =
     element.dataset.photoPlanPoint ??
-    element.dataset.arcgisPlanPoint ??
+    element.dataset.azurePlanPoint ??
     element.dataset.planPoint ??
     element.getAttribute("data-index");
   const index = Number(value);
@@ -190,7 +190,7 @@ function moveRoutePoint(panel, index, point) {
     route.points[index + 1].y = point.y;
   }
 
-  const cross = panel.querySelector(`[data-photo-plan-cross="${index}"], [data-arcgis-plan-cross="${index}"]`);
+  const cross = panel.querySelector(`[data-photo-plan-cross="${index}"], [data-azure-plan-cross="${index}"]`);
   if (cross) {
     cross.setAttribute(
       "d",
@@ -199,13 +199,13 @@ function moveRoutePoint(panel, index, point) {
   }
 }
 
-async function rebuildArcGISPlan(courseId, holeNumber, points) {
-  let panel = findArcGISPanel(courseId, holeNumber);
+async function rebuildAzurePlan(courseId, holeNumber, points) {
+  let panel = findAzurePanel(courseId, holeNumber);
   if (!panel) {
     return;
   }
 
-  const clearButton = panel.querySelector('[data-action="clear-arcgis-shot-plan"]');
+  const clearButton = panel.querySelector('[data-action="clear-azure-shot-plan"]');
   if (!clearButton) {
     // Fallback: add a new point where the marker was dropped. This is less
     // perfect, but keeps the UI usable if the markup changes.
@@ -217,7 +217,7 @@ async function rebuildArcGISPlan(courseId, holeNumber, points) {
   await nextFrame();
 
   for (const point of points) {
-    panel = findArcGISPanel(courseId, holeNumber);
+    panel = findAzurePanel(courseId, holeNumber);
     if (!panel) {
       return;
     }
@@ -226,10 +226,10 @@ async function rebuildArcGISPlan(courseId, holeNumber, points) {
   }
 }
 
-function findArcGISPanel(courseId, holeNumber) {
+function findAzurePanel(courseId, holeNumber) {
   const escapedCourseId = cssEscape(courseId);
   const escapedHoleNumber = cssEscape(String(holeNumber));
-  return document.querySelector(`.arcgis-hole[data-arcgis-course-id="${escapedCourseId}"][data-arcgis-hole="${escapedHoleNumber}"]`);
+  return document.querySelector(`.azure-hole[data-azure-course-id="${escapedCourseId}"][data-azure-hole="${escapedHoleNumber}"]`);
 }
 
 function clickPanelAtPoint(panel, point) {

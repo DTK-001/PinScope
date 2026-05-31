@@ -2,6 +2,8 @@
 .env
 .env.*
 !.env.example
+*API KEY*.txt
+*api key*.txt
 exports/
 node_modules/
 .DS_Store

@@ -1,0 +1,9 @@
+{
+  "name": "pinscope",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "node dev-server.mjs",
+    "check": "node --check src/app.js && node --check src/arcgis-session.js && node --check api/arcgis/session.js"
+  }
+}

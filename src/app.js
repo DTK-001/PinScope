@@ -2,7 +2,6 @@ import {
   clamp,
   createPlaceholderCourse,
   createRound,
-  defaultClubs,
   formatToPar,
   getActiveRound,
   getCourse,
@@ -10,18 +9,13 @@ import {
   getRoundEntry,
   getRoundPlayers,
   roundTotals,
+  statSummary,
   yardsBetween
 } from "./course-data.js";
 import { homeArea } from "./local-area.js";
 import { fetchOsmCourseLayout, findNearbyOsmCourses } from "./osm.js";
 import { loadState, saveState } from "./storage.js";
-import {
-  arcgisImageryAttribution,
-  arcgisTileUrl,
-  ensureArcgisImageryLayer,
-  getArcgisImageryError,
-  getArcgisImageryLayer
-} from "./arcgisImageryLayer.js";
+import { arcgisBasemapStatus, arcgisTileSize, arcgisTileUrl, ensureArcgisBasemap } from "./arcgis-session.js";
 
 const CRANHAM_COURSE_ID = "osm-way-23454278";
 const BELHUS_COURSE_ID = "verified-belhus-park";
@@ -35,34 +29,16 @@ const PHOTO_MAX_ZOOM = 2.6;
 const SCORE_BUTTON_IMAGE_SRC = "./assets/enter-score.png";
 const GPS_PINK_IMAGE_SRC = "./assets/gps-pink.png";
 const GPS_GREY_IMAGE_SRC = "./assets/gps-grey.png";
-const HOME_IMAGE_SRC = "./assets/home.png";
-const PINSCOPE_COMPLETE_LOGO_SRC = "./assets/pinscope-complete-logo.png";
-const PINSCOPE_NAME_LOGO_SRC = "./assets/pinscope-name-logo.png";
 const HOLE_SWIPE_MIN_DISTANCE = 68;
 const HOLE_SWIPE_VERTICAL_RATIO = 1.25;
-const HOLE_SWIPE_PREVIEW_LIMIT = 58;
 const GPS_TEST_QUERY_KEY = "gpsTest";
-const ARCGIS_IMAGERY_ENABLED_STORAGE = "pinscope:arcgis-maps-enabled:v1";
+const ARCGIS_MAPS_ENABLED_STORAGE = "pinscope:arcgis-maps-enabled:v1";
 const SATELLITE_ANCHOR_EDITS_STORAGE = "pinscope:satellite-anchor-edits:v1";
-const ARCGIS_IMAGERY_QUERY_ENABLED = "arcgisMaps";
-const ARCGIS_TILE_SIZE = 256;
-const ARCGIS_ZOOM = 17;
+const ARCGIS_MAPS_QUERY_ENABLED = "arcgisMaps";
+const ARCGIS_MAPS_ZOOM = 17;
 const SATELLITE_PRELOAD_CONCURRENCY = 2;
 const SATELLITE_PANEL_RATIO = 13 / 9;
-const HANDICAP_MIN_HOLES = 54;
-const HANDICAP_SCORE_TABLE = [
-  { min: 3, max: 3, count: 1, adjustment: -2 },
-  { min: 4, max: 4, count: 1, adjustment: -1 },
-  { min: 5, max: 5, count: 1, adjustment: 0 },
-  { min: 6, max: 6, count: 2, adjustment: -1 },
-  { min: 7, max: 8, count: 2, adjustment: 0 },
-  { min: 9, max: 11, count: 3, adjustment: 0 },
-  { min: 12, max: 14, count: 4, adjustment: 0 },
-  { min: 15, max: 16, count: 5, adjustment: 0 },
-  { min: 17, max: 18, count: 6, adjustment: 0 },
-  { min: 19, max: 19, count: 7, adjustment: 0 },
-  { min: 20, max: Infinity, count: 8, adjustment: 0 }
-];
+const SATELLITE_ATTRIBUTION = "Imagery: Esri, Maxar, Earthstar Geographics, and the GIS User Community";
 const BELHUS_PHOTO_GEO_BOUNDS = {
   north: 51.515,
   south: 51.5046,
@@ -81,16 +57,15 @@ let photoDrag = null;
 let suppressPhotoPlanningClick = false;
 let photoPointers = new Map();
 let photoShotPlans = {};
-let arcgisShotPlans = {};
+let azureShotPlans = {};
 let photoZoomLevels = {};
 let photoPanOffsets = {};
 let satelliteAnchorEdits = loadSatelliteAnchorEdits();
 let holeSwipe = null;
 let wheelHoleNavigationAt = 0;
 let courseSearchQuery = "";
-let statsFilter = "all";
 let gpsTestMoveMode = false;
-let arcgisImageryEnabled = initArcgisImageryEnabled();
+let azureMapsEnabled = initArcgisMapsEnabled();
 let view = getViewFromHash();
 let gps = {
   status: "off",
@@ -103,13 +78,8 @@ let satellitePreloadActive = 0;
 let satellitePreloadCourseId = "";
 let satellitePreloadedUrls = new Set();
 let satellitePreloadingUrls = new Set();
-let arcgisImageryRetryAt = 0;
 let notice = "";
 let scoreCardOpen = false;
-let roundScorecardOpen = false;
-let finishRoundPrompt = null;
-let roundSetupPlayerCount = 1;
-let previousRoundOpenIds = new Set();
 
 render();
 registerServiceWorker();
@@ -117,7 +87,6 @@ registerServiceWorker();
 window.addEventListener("hashchange", () => {
   view = getViewFromHash();
   render();
-  scrollToTop();
 });
 
 function handleWindowResize() {
@@ -130,8 +99,8 @@ function handleWindowResize() {
 
 window.addEventListener("resize", handleWindowResize);
 window.addEventListener("orientationchange", () => window.setTimeout(render, 120));
-app.addEventListener("load", handleArcgisTileLoad, true);
-app.addEventListener("error", handleArcgisTileError, true);
+app.addEventListener("load", handleAzureTileLoad, true);
+app.addEventListener("error", handleAzureTileError, true);
 window.addEventListener("pointermove", handlePhotoPointerMove);
 window.addEventListener("pointerup", handlePhotoPointerEnd);
 window.addEventListener("pointercancel", handlePhotoPointerEnd);
@@ -144,7 +113,7 @@ window.addEventListener("pointerup", handleHoleSwipePointerEnd);
 window.addEventListener("pointercancel", cancelHoleSwipe);
 
 app.addEventListener("click", handleClick);
-app.addEventListener("click", handleArcgisPlanningClick);
+app.addEventListener("click", handleAzurePlanningClick);
 app.addEventListener("click", handlePhotoPlanningClick);
 app.addEventListener("pointerdown", handlePhotoPointerDown);
 app.addEventListener("pointerdown", handleHoleSwipePointerDown);
@@ -152,23 +121,21 @@ app.addEventListener("wheel", handlePhotoWheel, { passive: false });
 app.addEventListener("submit", handleSubmit);
 app.addEventListener("input", handleInput);
 app.addEventListener("change", handleChange);
-app.addEventListener("toggle", handleToggle, true);
 
 function getViewFromHash() {
-  const allowed = ["home", "courses", "play", "stats", "bag"];
+  const allowed = ["courses", "play", "stats", "bag"];
   const value = window.location.hash.replace("#", "");
-  return allowed.includes(value) ? value : "home";
+  return allowed.includes(value) ? value : "courses";
 }
 
 function render() {
-  const scrollPositions = captureScorecardScrollPositions();
   const activeRoundView = isActiveRoundView();
   document.body.classList.toggle("score-card-open", scoreCardOpen);
   document.body.classList.toggle("active-round-view", activeRoundView);
   app.innerHTML = `
     <header class="topbar">
       <div>
-        <img class="topbar-logo" src="${PINSCOPE_NAME_LOGO_SRC}" alt="PinScope" />
+        <p class="eyebrow">PinScope</p>
         <h1>${pageTitle()}</h1>
       </div>
       <button class="gps-pill ${gps.status}" type="button" data-action="gps">
@@ -178,43 +145,15 @@ function render() {
     </header>
     <main class="screen">${renderView()}</main>
     ${scoreCardOpen ? renderScoreCardOverlay() : ""}
-    ${roundScorecardOpen ? renderRoundScorecardOverlay() : ""}
-    ${finishRoundPrompt ? renderFinishRoundOverlay(finishRoundPrompt) : ""}
     ${notice ? `<aside class="toast" role="status">${escapeHtml(notice)}</aside>` : ""}
     <nav class="bottom-nav" aria-label="Primary">
       ${navItem("courses", "Courses", "C")}
       ${navItem("play", "Play", "P")}
-      ${navItem("home", "Home", "H")}
       ${navItem("stats", "Stats", "S")}
       ${navItem("bag", "Bag", "B")}
     </nav>
   `;
-  restoreScorecardScrollPositions(scrollPositions);
   queuePhotoCanvasRender();
-}
-
-function captureScorecardScrollPositions() {
-  return Array.from(document.querySelectorAll("[data-scorecard-scroll-key]"))
-    .map((element) => [
-      element.dataset.scorecardScrollKey,
-      {
-        left: element.scrollLeft,
-        top: element.scrollTop
-      }
-    ])
-    .filter(([key]) => Boolean(key));
-}
-
-function restoreScorecardScrollPositions(positions) {
-  positions.forEach(([key, position]) => {
-    const selector = `[data-scorecard-scroll-key="${cssEscape(key)}"]`;
-    const element = document.querySelector(selector);
-    if (!element) {
-      return;
-    }
-    element.scrollLeft = position.left;
-    element.scrollTop = position.top;
-  });
 }
 
 function isActiveRoundView() {
@@ -222,9 +161,6 @@ function isActiveRoundView() {
 }
 
 function pageTitle() {
-  if (view === "home") {
-    return "Home";
-  }
   if (view === "play") {
     const round = getActiveRound(state);
     return round ? "Active Round" : "Start Round";
@@ -240,21 +176,15 @@ function pageTitle() {
 
 function navItem(target, label, icon) {
   const active = view === target ? "active" : "";
-  const homeIcon = target === "home"
-    ? `<img class="nav-home-img" src="${HOME_IMAGE_SRC}" alt="" />`
-    : icon;
   return `
-    <a class="nav-item ${target === "home" ? "home-nav" : ""} ${active}" href="#${target}" aria-current="${active ? "page" : "false"}">
-      <span class="nav-icon" aria-hidden="true">${homeIcon}</span>
+    <a class="nav-item ${active}" href="#${target}" aria-current="${active ? "page" : "false"}">
+      <span class="nav-icon" aria-hidden="true">${icon}</span>
       <span>${label}</span>
     </a>
   `;
 }
 
 function renderView() {
-  if (view === "home") {
-    return renderHome();
-  }
   if (view === "play") {
     return renderPlay();
   }
@@ -267,210 +197,28 @@ function renderView() {
   return renderCourses();
 }
 
-function scrollToTop() {
-  window.requestAnimationFrame(() => {
-    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
-    document.querySelector(".screen")?.scrollTo?.({ top: 0, left: 0, behavior: "auto" });
-  });
-}
-
-function renderHome() {
-  const activeRound = getActiveRound(state);
-  const selectedCourse = getCourse(state, state.selectedCourseId);
-  const bag = activeBag();
-  const handicap = handicapProfile();
-  return `
-    <section class="home-screen">
-      <div class="home-handicap">
-        <span>Handicap</span>
-        <strong>${escapeHtml(handicap.display)}</strong>
-      </div>
-      <img class="home-logo" src="${PINSCOPE_COMPLETE_LOGO_SRC}" alt="PinScope" />
-      <div class="home-actions">
-        <a class="primary-action" href="#${activeRound ? "play" : "courses"}">${activeRound ? "Continue Round" : "Choose Course"}</a>
-        <a class="secondary-action" href="#bag">Tune Bag</a>
-      </div>
-    </section>
-
-    ${renderHandicapIntro(handicap)}
-    ${renderLocalAreaSection()}
-
-    <section class="home-grid">
-      <article>
-        <span>Course</span>
-        <strong>${escapeHtml(selectedCourse?.name || "Select a course")}</strong>
-      </article>
-      <article>
-        <span>Active Bag</span>
-        <strong>${escapeHtml(bag?.name || "My Bag")}</strong>
-      </article>
-      <article>
-        <span>Rounds</span>
-        <strong>${state.rounds.filter((round) => round.status === "complete").length}</strong>
-      </article>
-      <article>
-        <span>Handicap Status</span>
-        <strong>${escapeHtml(handicap.status)}</strong>
-      </article>
-    </section>
-  `;
-}
-
-function renderHandicapIntro(profile) {
-  if (profile.source !== "none" || state.settings?.handicap?.introDismissed) {
-    return "";
-  }
-  return `
-    <section class="handicap-intro">
-      <div>
-        <p class="eyebrow">Handicap Setup</p>
-        <h2>Build a reliable index</h2>
-        <p>PinScope needs 54 posted holes to calculate an initial handicap, then gets strongest once it has 20 recent 18-hole scores. If you already know yours, add it now.</p>
-      </div>
-      <form data-form="handicap-setup" class="handicap-setup">
-        <label>
-          <span>Current handicap</span>
-          <input name="manualIndex" type="number" min="-10" max="54" step="0.1" inputmode="decimal" placeholder="e.g. 18.4" />
-        </label>
-        <div>
-          <button class="primary-action" type="submit">Save Handicap</button>
-          <button class="secondary-action" type="button" data-action="dismiss-handicap-intro">Later</button>
-        </div>
-      </form>
-    </section>
-  `;
-}
-
-function handicapProfile() {
-  const manual = manualHandicapIndex();
-  const records = handicapRecords();
-  const holes = records.reduce((sum, item) => sum + item.holes, 0);
-  const calculated = calculateHandicapIndex(records);
-  if (calculated) {
-    return {
-      ...calculated,
-      source: "calculated",
-      display: formatHandicapIndex(calculated.index),
-      status: calculated.scoreCount >= 20 ? "Reliable" : `${calculated.scoreCount}/20 scores`,
-      holes,
-      manualIndex: manual
-    };
-  }
-  if (manual !== null) {
-    return {
-      source: "manual",
-      display: formatHandicapIndex(manual),
-      status: holes >= HANDICAP_MIN_HOLES ? "Manual index" : `${Math.max(0, HANDICAP_MIN_HOLES - holes)} holes to calculate`,
-      holes,
-      manualIndex: manual
-    };
-  }
-  return {
-    source: "none",
-    display: "-",
-    status: holes ? `${Math.max(0, HANDICAP_MIN_HOLES - holes)} holes to go` : "Not set",
-    holes,
-    manualIndex: null
-  };
-}
-
-function manualHandicapIndex() {
-  const raw = state.settings?.handicap?.manualIndex;
-  if (raw === null || raw === undefined || raw === "") {
-    return null;
-  }
-  const value = Number(raw);
-  return Number.isFinite(value) ? clamp(value, -10, 54) : null;
-}
-
-function handicapRecords() {
-  return completedRoundSummaries()
-    .map(({ round, course, totals, playerId, playedAt }) => {
-      const players = getRoundPlayers(round);
-      const player = players.find((item) => item.id === playerId) || players[0];
-      const tee = (course.tees || []).find((item) => item.id === (player?.teeId || round.teeId));
-      const rating = Number(tee?.rating);
-      const slope = Number(tee?.slope) || 113;
-      const par = course.holes.reduce((sum, hole) => sum + Number(hole.par || 0), 0);
-      const holes = Math.max(0, course.holes.length || round.entries?.length || 0);
-      const baseline = Number.isFinite(rating) && rating > 0 ? rating : par;
-      if (!Number.isFinite(totals.score) || !Number.isFinite(baseline) || !Number.isFinite(slope) || slope <= 0 || holes <= 0) {
-        return null;
-      }
-      return {
-        playedAt,
-        holes,
-        differential: (((totals.score - baseline) * 113) / slope) * (18 / holes)
-      };
-    })
-    .filter(Boolean)
-    .sort((a, b) => b.playedAt - a.playedAt);
-}
-
-function calculateHandicapIndex(records) {
-  const eligible = records.slice(0, 20);
-  const holes = records.reduce((sum, item) => sum + item.holes, 0);
-  if (holes < HANDICAP_MIN_HOLES || eligible.length < 3) {
-    return null;
-  }
-  const rule = HANDICAP_SCORE_TABLE.find((item) => eligible.length >= item.min && eligible.length <= item.max) || HANDICAP_SCORE_TABLE[HANDICAP_SCORE_TABLE.length - 1];
-  const selected = eligible
-    .map((item) => item.differential)
-    .sort((a, b) => a - b)
-    .slice(0, rule.count);
-  const average = selected.reduce((sum, value) => sum + value, 0) / selected.length;
-  return {
-    index: clamp(average + rule.adjustment, -10, 54),
-    scoreCount: eligible.length,
-    usedCount: selected.length,
-    adjustment: rule.adjustment,
-    holes
-  };
-}
-
-function formatHandicapIndex(value) {
-  if (!Number.isFinite(value)) {
-    return "-";
-  }
-  return value < 0 ? `+${Math.abs(value).toFixed(1)}` : value.toFixed(1);
-}
-
-function renderLocalAreaSection() {
-  const localArea = activeLocalArea();
-  return `
-    <section class="home-area">
-      <div>
-        <p class="eyebrow">Local Area</p>
-        <h2>${escapeHtml(localArea?.label || homeArea.label)}</h2>
-        <p>${escapeHtml(localArea ? `${localArea.subtitle} - ${savedHomeCourseCount()} saved here` : homeArea.subtitle)}</p>
-      </div>
-      <div class="local-area-actions">
-        <form class="local-area-search" data-form="local-area-search">
-          <input name="area" type="search" placeholder="Town, postcode, or area" autocomplete="address-level2" required />
-          <button class="primary-action" type="submit">Search</button>
-        </form>
-        <button class="secondary-action" type="button" data-action="use-current-location-courses">Use GPS</button>
-        ${localArea ? `<button class="secondary-action" type="button" data-action="refresh-local-area">Refresh</button>` : ""}
-      </div>
-    </section>
-  `;
-}
-
 function renderCourses() {
+  const featuredCourse = getCourse(state, CRANHAM_COURSE_ID);
   const filteredCourses = filteredCourseList();
-  const savedCourseCount = groupedVenueCourseList(state.courses).length;
   return `
-    ${renderPlayedCoursesSection()}
+    ${featuredCourse ? renderFeaturedCourse(featuredCourse) : ""}
 
     <section class="action-band">
       <div>
         <h2>Local Course Library</h2>
-        <p>${savedCourseCount} saved ${savedCourseCount === 1 ? "course" : "courses"}</p>
+        <p>${state.courses.length} saved ${state.courses.length === 1 ? "course" : "courses"}</p>
       </div>
       <button class="primary-action" type="button" data-action="find-nearby">Find Near Me</button>
     </section>
 
-    ${renderLocalAreaSection()}
+    <section class="home-area">
+      <div>
+        <p class="eyebrow">Home Area</p>
+        <h2>${homeArea.label}</h2>
+        <p>${homeArea.subtitle} - ${savedHomeCourseCount()} saved here</p>
+      </div>
+      <button class="secondary-action" type="button" data-action="import-home-area">Refresh Local</button>
+    </section>
 
     <label class="course-search">
       <span>Search courses</span>
@@ -502,159 +250,26 @@ function renderCourses() {
     <section class="course-list">
       ${filteredCourses.length ? filteredCourses.map(renderCourseCard).join("") : `<p class="empty-copy">No courses match that search.</p>`}
     </section>
-    <p class="source-note">OpenStreetMap imports require ODbL attribution. Export the mapped course pack, put it in data/course-pack, then run the build script to bake geometry into the downloadable app.</p>
+    <p class="source-note">OpenStreetMap imports require ODbL attribution. Export the mapped course pack and keep it in data/course-pack. Satellite imagery now loads live through ArcGIS sessions.</p>
   `;
 }
 
 function filteredCourseList() {
   const query = courseSearchQuery.trim().toLowerCase();
-  const matches = state.courses.filter((course) => !query || [
+  if (!query) {
+    return state.courses;
+  }
+  return state.courses.filter((course) => [
     course.name,
-    course.venueName,
-    course.layoutName,
-    ...(Array.isArray(course.loopIds) ? course.loopIds : []),
     course.town,
     course.postcode,
     course.country,
     course.source
   ].some((value) => String(value || "").toLowerCase().includes(query)));
-  return groupedVenueCourseList(matches);
-}
-
-function groupedVenueCourseList(courses) {
-  const seenVenueIds = new Set();
-  return courses.reduce((list, course) => {
-    if (!course.venueId) {
-      list.push(course);
-      return list;
-    }
-    if (seenVenueIds.has(course.venueId)) {
-      return list;
-    }
-    seenVenueIds.add(course.venueId);
-    list.push(preferredVenueCourse(course.venueId, courses.filter((item) => item.venueId === course.venueId)) || course);
-    return list;
-  }, []);
-}
-
-function preferredVenueCourse(venueId, candidates = null) {
-  const venueCourses = candidates?.length ? candidates : state.courses.filter((course) => course.venueId === venueId);
-  const selected = venueCourses.find((course) => course.id === state.selectedCourseId);
-  if (selected) {
-    return selected;
-  }
-  return venueCourses.find((course) => Array.isArray(course.loopIds) && course.loopIds.length === 2) || venueCourses[0] || null;
-}
-
-function venueLoopCount(course) {
-  if (!course?.venueId) {
-    return 0;
-  }
-  return new Set(state.courses
-    .filter((item) => item.venueId === course.venueId)
-    .flatMap((item) => item.loopIds || [])).size;
-}
-
-function renderPlayedCoursesSection() {
-  const playedCourses = playedCourseSummaries();
-  return `
-    <section class="played-courses">
-      <header class="section-head">
-        <div>
-          <p class="eyebrow">Recent</p>
-          <h2>Courses you have played at</h2>
-        </div>
-      </header>
-      <div class="played-course-list">
-        ${playedCourses.length ? playedCourses.map(renderPlayedCourseCard).join("") : `<p class="empty-copy">Courses appear here after you start a round.</p>`}
-      </div>
-    </section>
-  `;
-}
-
-function playedCourseSummaries() {
-  const roundCounts = new Map();
-  state.rounds.forEach((round) => {
-    if (round.courseId) {
-      const course = getCourse(state, round.courseId);
-      const key = course?.venueId || round.courseId;
-      roundCounts.set(key, (roundCounts.get(key) || 0) + 1);
-    }
-  });
-
-  const newestRounds = state.rounds
-    .map((round) => ({
-      round,
-      timestamp: Date.parse(round.completedAt || round.startedAt || "")
-    }))
-    .filter(({ round, timestamp }) => round.courseId && Number.isFinite(timestamp))
-    .sort((a, b) => b.timestamp - a.timestamp);
-
-  const seenCourseKeys = new Set();
-  return newestRounds.reduce((summaries, { round, timestamp }) => {
-    const course = getCourse(state, round.courseId);
-    if (!course) {
-      return summaries;
-    }
-    const key = course.venueId || round.courseId;
-    if (seenCourseKeys.has(key)) {
-      return summaries;
-    }
-    seenCourseKeys.add(key);
-    const players = getRoundPlayers(round);
-    const leadTotals = round.status === "complete" ? roundTotals(round, course, players[0]?.id) : null;
-    summaries.push({
-      course,
-      round,
-      timestamp,
-      roundCount: roundCounts.get(key) || 1,
-      leadTotals
-    });
-    return summaries;
-  }, []);
-}
-
-function renderPlayedCourseCard(summary) {
-  const { course, round, roundCount, leadTotals } = summary;
-  const selected = isCourseSelected(course);
-  const activeRound = getActiveRound(state);
-  const playedLabel = round.status === "active"
-    ? "Round in progress"
-    : `Last played ${formatShortDate(round.completedAt || round.startedAt)}`;
-  const scoreLabel = leadTotals
-    ? `${leadTotals.score} (${formatToPar(leadTotals.toPar)})`
-    : "Ready to continue";
-  return `
-    <article class="played-course-card ${selected ? "selected" : ""}">
-      <div>
-        <p class="eyebrow">${playedLabel}</p>
-        <h3>${escapeHtml(courseDisplayName(course))}</h3>
-        <p>${courseLocationLine(course)}</p>
-      </div>
-      <div class="played-course-meta">
-        <span>${roundCount} ${roundCount === 1 ? "round" : "rounds"}</span>
-        <span>${scoreLabel}</span>
-      </div>
-      <div class="played-course-actions">
-        <button class="primary-action" type="button" data-action="quick-start" data-course-id="${course.id}">${activeRound ? "Continue" : "Play"}</button>
-        <button class="secondary-action" type="button" data-action="select-course" data-course-id="${course.id}">${selected ? "Selected" : "Select"}</button>
-      </div>
-    </article>
-  `;
-}
-
-function formatShortDate(value) {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return "recently";
-  }
-  return date.toLocaleDateString(undefined, { day: "numeric", month: "short" });
 }
 
 function renderFeaturedCourse(course) {
-  const selected = isCourseSelected(course);
-  const activeRound = getActiveRound(state);
-  const title = courseDisplayName(course);
+  const selected = state.selectedCourseId === course.id;
   return `
     <section class="course-hero">
       <div class="hero-orbit" aria-hidden="true">
@@ -662,11 +277,11 @@ function renderFeaturedCourse(course) {
       </div>
       <div>
         <p class="eyebrow">Stage 1 Verified Pack</p>
-        <h2>${escapeHtml(title)}</h2>
+        <h2>${escapeHtml(course.name)}</h2>
         <p>${courseLocationLine(course)}</p>
       </div>
       <div class="hero-actions">
-        ${selected ? `<button class="primary-action" type="button" data-action="quick-start" data-course-id="${course.id}">${activeRound ? "Continue Round" : "Setup Round"}</button>` : ""}
+        ${selected ? `<button class="primary-action" type="button" data-action="quick-start" data-course-id="${course.id}">Setup Round</button>` : ""}
         <button class="secondary-action" type="button" data-action="select-course" data-course-id="${course.id}">Select</button>
       </div>
       ${courseHasPhotoVisual(course) ? renderPhotoSourceControl(course, "hero") : ""}
@@ -715,16 +330,15 @@ function renderMiniCourseSignal(course) {
 }
 
 function renderCourseCard(course) {
-  const isSelected = isCourseSelected(course);
+  const isSelected = state.selectedCourseId === course.id;
   const selected = isSelected ? "selected" : "";
   const source = course.source === "verified" ? "Verified" : course.source === "shared" ? "Shared" : course.source === "osm" ? "OSM" : course.source === "manual" ? "Manual" : "Demo";
-  const loopCount = venueLoopCount(course);
   return `
     <article class="course-card ${selected}">
       <div class="course-main">
         <div>
           <p class="eyebrow">${source}</p>
-          <h3>${escapeHtml(courseDisplayName(course))}</h3>
+          <h3>${escapeHtml(course.name)}</h3>
           <p>${courseLocationLine(course)}</p>
         </div>
         <button class="chip-button" type="button" data-action="select-course" data-course-id="${course.id}">
@@ -733,25 +347,14 @@ function renderCourseCard(course) {
       </div>
       <div class="course-meta">
         ${course.verification ? `<span class="verified-chip">Scorecard checked</span>` : ""}
-        ${loopCount ? `<span>${loopCount} nine-hole loops</span>` : ""}
         ${course.website ? `<a href="${escapeAttribute(course.website)}" target="_blank" rel="noreferrer">Website</a>` : "<span>Website pending</span>"}
         ${course.phone ? `<a href="tel:${escapeAttribute(course.phone)}">Call</a>` : "<span>Phone pending</span>"}
       </div>
+      ${renderCourseGeometryStatus(course)}
       ${course.verification ? renderTeeSummary(course) : ""}
       ${isSelected ? renderSelectedCourseActions(course) : ""}
     </article>
   `;
-}
-
-function isCourseSelected(course) {
-  if (!course) {
-    return false;
-  }
-  if (!course.venueId) {
-    return state.selectedCourseId === course.id;
-  }
-  const selected = getCourse(state, state.selectedCourseId);
-  return selected?.venueId === course.venueId;
 }
 
 function renderCourseGeometryStatus(course) {
@@ -765,23 +368,32 @@ function renderCourseGeometryStatus(course) {
   return `
     <div class="course-geometry-status ${mapped ? "mapped" : "pending"}">
       <span>${label}</span>
-      <span>ArcGIS imagery loads during play</span>
+      <span>Satellite imagery: ArcGIS live session</span>
       ${course.geometrySource ? `<em>${escapeHtml(course.geometrySource)}</em>` : ""}
     </div>
   `;
 }
 
 function renderSelectedCourseActions(course) {
-  const activeRound = getActiveRound(state);
   return `
     <div class="course-actions">
-      <button class="secondary-action" type="button" data-action="quick-start" data-course-id="${course.id}">${activeRound ? "Continue Round" : "Start Round"}</button>
+      <button class="secondary-action" type="button" data-action="quick-start" data-course-id="${course.id}">Start Round</button>
+      <button class="secondary-action" type="button" data-action="refresh-course-layout" data-course-id="${course.id}">OSM holes</button>
+      <button class="secondary-action" type="button" data-action="export-course-pack-json">Export course pack</button>
+      <label class="file-action secondary-action">
+        Import mapper JSON
+        <input type="file" accept="application/json,.json" data-action="course-geometry-file" data-course-id="${course.id}" />
+      </label>
     </div>
   `;
 }
 
 function courseMappedHoleCount(course) {
   return (course?.holes || []).filter((hole) => confirmedHoleAnchors(course, hole)).length;
+}
+
+function courseSnapshotHoleCount() {
+  return 0;
 }
 
 function renderTeeSummary(course) {
@@ -808,11 +420,7 @@ function renderPlay() {
   if (!course) {
     return `<section class="empty-state"><h2>Course missing</h2><p>Select a saved course to continue.</p></section>`;
   }
-  const holes = Array.isArray(course.holes) ? course.holes : [];
-  const hole = holes.find((item) => item.number === activeRound.currentHole) || holes[0];
-  if (!hole) {
-    return `<section class="empty-state"><h2>Hole data missing</h2><p>${escapeHtml(courseDisplayName(course))} needs hole data before a round can be played.</p><button class="primary-action" type="button" data-route="courses">Choose another course</button></section>`;
-  }
+  const hole = course.holes.find((item) => item.number === activeRound.currentHole) || course.holes[0];
   queueCourseSatellitePreload(course, hole.number);
   const players = getRoundPlayers(activeRound);
   const leadTotals = roundTotals(activeRound, course, players[0]?.id);
@@ -822,11 +430,8 @@ function renderPlay() {
       ${renderHoleVisual(hole)}
 
       <div class="play-hud play-hole-hud">
-        <p class="eyebrow">${escapeHtml(courseDisplayName(course))}</p>
-        <div class="play-hole-title">
-          <h2>Hole ${hole.number}</h2>
-          <button type="button" data-action="open-round-scorecard">Scorecard</button>
-        </div>
+        <p class="eyebrow">${escapeHtml(course.name)}</p>
+        <h2>Hole ${hole.number}</h2>
         <div class="play-meta-line">
           <span>Par ${hole.par}</span>
           <span>SI ${hole.strokeIndex}</span>
@@ -845,16 +450,18 @@ function renderPlay() {
         <button class="play-finish-button" type="button" data-action="finish-round">Finish Round</button>
       </div>
 
-      <button class="score-fab" type="button" data-action="open-score-card">Scores</button>
+      <button class="score-fab" type="button" data-action="open-score-card" aria-label="Enter scores">
+        <img src="${SCORE_BUTTON_IMAGE_SRC}" alt="" aria-hidden="true" />
+      </button>
       ${renderShotTracker(activeRound, hole)}
     </section>
   `;
 }
 
 function renderPlayGpsButton() {
-  const connected = gps.status === "ready" || gps.status === "watching";
+  const connected = gps.status === "ready";
   return `
-    <button class="play-gps-button ${connected ? "connected" : ""}" type="button" data-action="gps" aria-label="${connected ? "Stop GPS" : "Start GPS"}">
+    <button class="play-gps-button ${connected ? "connected" : ""}" type="button" data-action="gps" aria-label="${connected ? "GPS connected" : "Start GPS"}">
       <img src="${connected ? GPS_PINK_IMAGE_SRC : GPS_GREY_IMAGE_SRC}" alt="" aria-hidden="true" />
     </button>
   `;
@@ -887,9 +494,8 @@ function renderShotTracker(round, hole) {
   return `
     <div class="shot-tracker ${shotState.active ? "tracking" : ""}" aria-live="polite">
       ${shotState.status ? `<p>${escapeHtml(shotState.status)}</p>` : ""}
-      <button class="shot-track-button" type="button" data-action="track-shot" aria-label="${escapeAttribute(label)}">
-        <img src="${SCORE_BUTTON_IMAGE_SRC}" alt="" aria-hidden="true" />
-        <span>${escapeHtml(label)}</span>
+      <button class="shot-track-button" type="button" data-action="track-shot">
+        ${escapeHtml(label)}
       </button>
     </div>
   `;
@@ -970,7 +576,6 @@ function syncTrackedScore(round, holeNumber) {
   const score = trackedShotScore(entry);
   if (playerEntry && score > 0) {
     playerEntry.score = clamp(score, 1, 12);
-    playerEntry.scoreEntered = true;
   }
 }
 
@@ -1017,62 +622,17 @@ function trackShot() {
 }
 
 function savedHomeCourseCount() {
-  const localArea = activeLocalArea();
-  if (!localArea) {
-    return 0;
-  }
-  return groupedVenueCourseList(state.courses).filter((course) => {
-    if (course.homeAreaId === localArea.id) {
+  return state.courses.filter((course) => {
+    if (course.homeAreaId === homeArea.id) {
       return true;
     }
-    return validGeoPoint(course.location)
-      ? yardsBetween(localArea.center, course.location) / 1760 <= localArea.radiusMiles
-      : false;
+    return typeof course.distanceMiles === "number" && course.distanceMiles <= homeArea.radiusMiles;
   }).length;
-}
-
-function activeLocalArea() {
-  const localArea = state.settings?.localArea;
-  const center = normalizeGeoPoint(localArea?.center);
-  if (!center) {
-    return null;
-  }
-  const radiusMiles = Number(localArea.radiusMiles) || homeArea.radiusMiles;
-  const radiusMeters = Number(localArea.radiusMeters) || homeArea.radiusMeters;
-  return {
-    ...homeArea,
-    ...localArea,
-    id: localArea.id || homeArea.id,
-    label: String(localArea.label || homeArea.label).trim() || homeArea.label,
-    subtitle: `${radiusMiles} mile course radius`,
-    center,
-    radiusMiles,
-    radiusMeters
-  };
-}
-
-function setActiveLocalArea(area) {
-  const center = normalizeGeoPoint(area?.center);
-  if (!center) {
-    return null;
-  }
-  state.settings = state.settings || {};
-  state.settings.localArea = {
-    id: area.id || homeArea.id,
-    label: String(area.label || homeArea.label).trim() || homeArea.label,
-    center,
-    radiusMiles: Number(area.radiusMiles) || homeArea.radiusMiles,
-    radiusMeters: Number(area.radiusMeters) || homeArea.radiusMeters
-  };
-  return activeLocalArea();
 }
 
 function courseLocationLine(course) {
   const bits = [];
   bits.push(escapeHtml(course.town || course.postcode || "Area pending"));
-  if (course.layoutName && !course.venueName) {
-    bits.push(escapeHtml(course.layoutName));
-  }
   bits.push(`${course.holesCount || course.holes.length} holes`);
   if (course.par) {
     bits.push(`Par ${escapeHtml(course.par)}`);
@@ -1083,154 +643,48 @@ function courseLocationLine(course) {
   return bits.join(" - ");
 }
 
-function courseDisplayName(course) {
-  return course?.venueName || course?.name || "Choose Course";
-}
-
 function renderStartRound() {
   const selected = getCourse(state, state.selectedCourseId) || state.courses[0];
-  const routingOptions = roundRoutingOptions(selected);
   return `
-    <section class="setup-panel round-setup-panel">
-      <div class="round-setup-hero">
-        <p class="eyebrow">Round Setup</p>
-        <h2>${escapeHtml(courseDisplayName(selected))}</h2>
-        <p>${selected ? courseLocationLine(selected) : "Pick a course and build your group."}</p>
+    <section class="setup-panel">
+      <div>
+        <p class="eyebrow">Group Round</p>
+        <h2>Round Setup</h2>
       </div>
       <form class="stack" data-form="start-round">
-        ${routingOptions.length ? renderRoundRoutingChoices(selected, routingOptions) : `<input type="hidden" name="courseId" value="${escapeAttribute(selected?.id || "")}" />`}
+        <label>
+          <span>Course</span>
+          <select name="courseId" data-action="setup-course">
+            ${state.courses.map((course) => `<option value="${course.id}" ${selected?.id === course.id ? "selected" : ""}>${escapeHtml(course.name)}</option>`).join("")}
+          </select>
+        </label>
         <div class="player-setup-list">
           ${renderPlayerSetupRows(selected)}
         </div>
-        ${roundSetupPlayerCount < 4 ? `<button class="add-player-button" type="button" data-action="add-setup-player"><span>+</span><strong>Add Player</strong></button>` : ""}
-        <button class="primary-action full" type="submit">Start Round</button>
+        <button class="primary-action full" type="submit">Start Group Round</button>
       </form>
     </section>
-  `;
-}
-
-function roundRoutingOptions(course) {
-  if (!course?.venueId) {
-    return [];
-  }
-
-  const venueCourses = state.courses.filter((item) => item.venueId === course.venueId && Array.isArray(item.loopIds) && item.loopIds.length);
-  const loopCount = new Set(venueCourses.flatMap((item) => item.loopIds)).size;
-  const hasLargerVenue = loopCount > 2 || venueCourses.some((item) => Number(item.holesCount || item.holes?.length || 0) > 18);
-  if (!hasLargerVenue) {
-    return [];
-  }
-
-  return venueCourses
-    .filter((item) => [1, 2].includes(item.loopIds.length) && Number(item.holesCount || item.holes?.length || 0) <= 18)
-    .sort((a, b) => {
-      const aHoles = Number(a.holesCount || a.holes?.length || 0);
-      const bHoles = Number(b.holesCount || b.holes?.length || 0);
-      if (aHoles !== bHoles) {
-        return aHoles - bHoles;
-      }
-      return String(a.layoutName || a.name).localeCompare(String(b.layoutName || b.name));
-    });
-}
-
-function renderRoundRoutingChoices(selected, options) {
-  const checkedId = options.some((option) => option.id === selected?.id) ? selected.id : options.find((option) => Number(option.holesCount || option.holes?.length || 0) === 18)?.id || options[0]?.id || "";
-  const checked = options.find((option) => option.id === checkedId) || options[0];
-  const loops = roundRoutingLoops(options);
-  const frontLoop = checked?.loopIds?.[0] || loops[0]?.id || "";
-  const backLoop = checked?.loopIds?.[1] || "";
-  return `
-    <section class="round-routing-choice">
-      <div class="routing-head">
-        <span>Choose holes</span>
-        <strong>${escapeHtml(courseDisplayName(selected))}</strong>
-      </div>
-      <input type="hidden" name="courseId" value="${escapeAttribute(checkedId)}" />
-      <div class="routing-select-grid">
-        <label>
-          <span>Front nine</span>
-          <select name="frontLoopId">
-            ${loops.map((loop) => `<option value="${escapeAttribute(loop.id)}" ${loop.id === frontLoop ? "selected" : ""}>${escapeHtml(loop.name)}</option>`).join("")}
-          </select>
-        </label>
-        <label>
-          <span>Back nine</span>
-          <select name="backLoopId">
-            <option value="" ${backLoop ? "" : "selected"}>None - play 9</option>
-            ${loops.map((loop) => `<option value="${escapeAttribute(loop.id)}" ${loop.id === backLoop ? "selected" : ""}>${escapeHtml(loop.name)}</option>`).join("")}
-          </select>
-        </label>
-      </div>
+    <section class="recent-strip">
+      ${renderCourseCard(selected)}
     </section>
   `;
-}
-
-function roundRoutingLoops(options) {
-  const loopNames = new Map();
-  options.forEach((option) => {
-    if (Array.isArray(option.loopIds) && option.loopIds.length === 1) {
-      loopNames.set(option.loopIds[0], option.layoutName || formatLoopName(option.loopIds[0]));
-      return;
-    }
-    (option.loopIds || []).forEach((loopId) => {
-      if (!loopNames.has(loopId)) {
-        loopNames.set(loopId, formatLoopName(loopId));
-      }
-    });
-  });
-  return [...loopNames].map(([id, name]) => ({ id, name }));
-}
-
-function resolveRoundCourseId(formData, fallbackCourseId) {
-  const selected = getCourse(state, fallbackCourseId);
-  const options = roundRoutingOptions(selected);
-  if (!options.length) {
-    return fallbackCourseId;
-  }
-  const frontLoopId = String(formData.get("frontLoopId") || "");
-  const backLoopId = String(formData.get("backLoopId") || "");
-  const loopIds = [frontLoopId, backLoopId].filter(Boolean);
-  const match = options.find((option) => {
-    if (!Array.isArray(option.loopIds) || option.loopIds.length !== loopIds.length) {
-      return false;
-    }
-    return option.loopIds.every((loopId, index) => loopId === loopIds[index]);
-  });
-  if (match) {
-    return match.id;
-  }
-  flash("That front/back route is not available yet.");
-  return "";
-}
-
-function formatLoopName(value) {
-  const text = String(value || "").replace(/[-_]+/g, " ").trim();
-  return text ? text.replace(/\b\w/g, (letter) => letter.toUpperCase()) : "Loop";
 }
 
 function renderPlayerSetupRows(course) {
   const teeOptions = (course?.tees || []).map((tee) => `<option value="${tee.id}">${escapeHtml(tee.name)}</option>`).join("");
   const defaults = ["Me", "", "", ""];
-  const myHandicap = manualHandicapIndex();
-  return defaults.slice(0, roundSetupPlayerCount).map((name, index) => `
+  return defaults.map((name, index) => `
     <div class="player-setup-row">
-      <div class="player-setup-badge">${index + 1}</div>
-      <div class="player-setup-fields">
-        <label>
-          <span>${index === 0 ? "You" : `Player ${index + 1}`}</span>
-          <input name="playerName${index}" type="text" value="${escapeAttribute(name)}" placeholder="${index === 0 ? "Your name" : "Player name"}" />
-        </label>
-        <label>
-          <span>Tee</span>
-          <select name="playerTee${index}">
-            ${teeOptions}
-          </select>
-        </label>
-        <label>
-          <span>HCP</span>
-          <input name="playerHandicap${index}" type="number" min="-10" max="54" step="0.1" inputmode="decimal" value="${index === 0 && myHandicap !== null ? escapeAttribute(myHandicap) : ""}" placeholder="-" />
-        </label>
-      </div>
+      <label>
+        <span>Player ${index + 1}</span>
+        <input name="playerName${index}" type="text" value="${escapeAttribute(name)}" placeholder="${index === 0 ? "Your name" : "Add player"}" />
+      </label>
+      <label>
+        <span>Tee</span>
+        <select name="playerTee${index}">
+          ${teeOptions}
+        </select>
+      </label>
     </div>
   `).join("");
 }
@@ -1270,7 +724,7 @@ function renderScoreCardOverlay() {
         <header class="score-card-head">
           <div>
             <p class="eyebrow">Score Entry</p>
-            <h2>${escapeHtml(courseDisplayName(course))}</h2>
+            <h2>${escapeHtml(course.name)}</h2>
             <p>Hole ${hole.number} - Par ${hole.par} - SI ${hole.strokeIndex}</p>
           </div>
           <button class="icon-action" type="button" data-action="close-score-card" aria-label="Close score card">X</button>
@@ -1293,315 +747,8 @@ function renderScoreCardOverlay() {
         </div>
         <footer class="score-card-footer">
           <button class="secondary-action" type="button" data-action="hole-prev">Prev</button>
-          <button class="primary-action" type="button" data-action="score-card-next">${Number(round.currentHole) >= course.holes.length ? "Finish Round" : "Save & Next"}</button>
+          <button class="primary-action" type="button" data-action="score-card-next">Save & Next</button>
         </footer>
-      </div>
-    </section>
-  `;
-}
-
-function renderRoundScorecardOverlay() {
-  const round = getActiveRound(state);
-  const course = round ? getCourse(state, round.courseId) : null;
-  if (!round || !course) {
-    return "";
-  }
-  const players = getRoundPlayers(round);
-  const usedTeeIds = Array.from(new Set(players.map((player) => player.teeId || round.teeId || course.tees?.[0]?.id).filter(Boolean)));
-  const usedTees = usedTeeIds
-    .map((teeId) => (course.tees || []).find((tee) => tee.id === teeId) || { id: teeId, name: teeId, color: "#f8f7f1" })
-    .filter(Boolean);
-  const holes = course.holes || [];
-  const front = holes.slice(0, 9);
-  const back = holes.slice(9, 18);
-  const par = holes.reduce((sum, hole) => sum + Number(hole.par || 0), 0);
-  return `
-    <section class="round-scorecard-backdrop" role="dialog" aria-modal="true" aria-label="Round scorecard">
-      <div class="round-scorecard-shell">
-        <header class="round-scorecard-head">
-          <div>
-            <p class="eyebrow">Round Card</p>
-            <h2>${escapeHtml(courseDisplayName(course))}</h2>
-            <div class="round-scorecard-meta" aria-label="Round summary">
-              <span>${holes.length || 18} holes</span>
-              <span>Par ${par || "-"}</span>
-              <span>${players.length} player${players.length === 1 ? "" : "s"}</span>
-            </div>
-          </div>
-          <button class="secondary-action" type="button" data-action="close-round-scorecard">Back to Play</button>
-        </header>
-        <div class="round-scorecard-scroll" data-scorecard-scroll-key="active-round-scorecard">
-          <table class="round-scorecard-table">
-            <thead>
-              <tr>
-                <th>TEES</th>
-                ${front.map((hole) => `<th>${hole.number}</th>`).join("")}
-                <th>OUT</th>
-                <th class="initials-cell">INITIALS</th>
-                ${back.map((hole) => `<th>${hole.number}</th>`).join("")}
-                <th>IN</th>
-                <th>TOTAL</th>
-                <th>HCP</th>
-                <th>NET</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${usedTees.map((tee) => renderRoundScorecardTeeRow(tee, front, back)).join("")}
-              ${renderRoundScorecardInfoRow("SI", front, back, (hole) => hole.strokeIndex || "-")}
-              ${renderRoundScorecardInfoRow("PAR", front, back, (hole) => hole.par || "-", true)}
-              ${players.map((player) => renderRoundScorecardPlayerRow(round, course, player, front, back)).join("")}
-            </tbody>
-          </table>
-        </div>
-        <footer class="round-scorecard-sign">
-          <label>SCORER:<input data-action="round-signature" data-field="scorer" type="text" value="${escapeAttribute(round.signatures?.scorer || "")}" /></label>
-          <label>ATTEST:<input data-action="round-signature" data-field="attest" type="text" value="${escapeAttribute(round.signatures?.attest || "")}" /></label>
-          <label>DATE:<input data-action="round-signature" data-field="date" type="date" value="${escapeAttribute(round.signatures?.date || new Date(round.startedAt || Date.now()).toISOString().slice(0, 10))}" /></label>
-        </footer>
-      </div>
-    </section>
-  `;
-}
-
-function renderRoundScorecardTeeRow(tee, front, back) {
-  const frontYards = front.map((hole) => Number(hole.yards?.[tee.id] || 0));
-  const backYards = back.map((hole) => Number(hole.yards?.[tee.id] || 0));
-  const out = frontYards.reduce((sum, yards) => sum + yards, 0);
-  const inn = backYards.reduce((sum, yards) => sum + yards, 0);
-  return `
-    <tr class="tee-yard-row" style="${teeRowStyle(tee)}">
-      <th><strong>${escapeHtml(tee.name)}</strong><small>${tee.rating || "-"} / ${tee.slope || "-"}</small></th>
-      ${frontYards.map((yards) => `<td>${yards || "-"}</td>`).join("")}
-      <td>${out || "-"}</td>
-      <td class="initials-cell"></td>
-      ${backYards.map((yards) => `<td>${yards || "-"}</td>`).join("")}
-      <td>${inn || "-"}</td>
-      <td>${out + inn || "-"}</td>
-      <td></td>
-      <td></td>
-    </tr>
-  `;
-}
-
-function renderRoundScorecardInfoRow(label, front, back, valueForHole, includeTotals = false) {
-  const frontValues = front.map(valueForHole);
-  const backValues = back.map(valueForHole);
-  const out = includeTotals ? front.reduce((sum, hole) => sum + Number(hole.par || 0), 0) : "";
-  const inn = includeTotals ? back.reduce((sum, hole) => sum + Number(hole.par || 0), 0) : "";
-  return `
-    <tr class="scorecard-info-row ${label.toLowerCase()}-row">
-      <th>${escapeHtml(label)}</th>
-      ${frontValues.map((value) => `<td>${value}</td>`).join("")}
-      <td>${out || ""}</td>
-      <td class="initials-cell"></td>
-      ${backValues.map((value) => `<td>${value}</td>`).join("")}
-      <td>${inn || ""}</td>
-      <td>${out || inn ? out + inn : ""}</td>
-      <td></td>
-      <td></td>
-    </tr>
-  `;
-}
-
-function renderRoundScorecardPlayerRow(round, course, player, front, back) {
-  const frontScores = front.map((hole) => ({
-    score: playerScorecardValue(round, hole.number, player.id),
-    par: Number(hole.par || 0),
-    holeNumber: hole.number
-  }));
-
-  const backScores = back.map((hole) => ({
-    score: playerScorecardValue(round, hole.number, player.id),
-    par: Number(hole.par || 0),
-    holeNumber: hole.number
-  }));
-
-  const out = scorecardScoreTotal(frontScores.map((item) => item.score));
-  const inn = scorecardScoreTotal(backScores.map((item) => item.score));
-  const gross = out + inn;
-  const handicap = playerHandicap(player);
-
-  const frontShots = front.map((hole) =>
-    handicapShotsForHole(handicap, hole.strokeIndex, course.holes.length)
-  );
-
-  const backShots = back.map((hole) =>
-    handicapShotsForHole(handicap, hole.strokeIndex, course.holes.length)
-  );
-
-  const totalShots = [...frontShots, ...backShots].reduce(
-    (sum, shots) => sum + Math.max(0, shots),
-    0
-  );
-
-  const net = gross ? gross - totalShots : "";
-
-  return `
-    <tr class="scorecard-player-row">
-      <th>${escapeHtml(player.name)}${handicap !== null ? `<small>HCP ${formatHandicapIndex(handicap)}</small>` : ""}</th>
-
-      ${frontScores.map((item, index) =>
-        renderPlayerScoreCell(item.score, item.par, frontShots[index], item.holeNumber)
-      ).join("")}
-
-      <td class="scorecard-total">${out || ""}</td>
-
-      <td class="initials-cell"></td>
-
-      ${backScores.map((item, index) =>
-        renderPlayerScoreCell(item.score, item.par, backShots[index], item.holeNumber)
-      ).join("")}
-
-      <td class="scorecard-total">${inn || ""}</td>
-      <td class="scorecard-total">${gross || ""}</td>
-      <td>${handicap !== null ? formatHandicapIndex(handicap) : ""}</td>
-      <td class="scorecard-total">${net || ""}</td>
-    </tr>
-  `;
-}
-
-function renderPlayerScoreCell(score, par, shots, holeNumber = "") {
-  const numericScore = Number(score || 0);
-  const numericPar = Number(par || 0);
-  const dots = shots > 0
-    ? `<span class="scorecard-shots">${Array.from({ length: shots }, () => "•").join("")}</span>`
-    : "";
-
-  if (!numericScore || !numericPar) {
-    return `<td data-scorecard-hole="${escapeAttribute(holeNumber)}"></td>`;
-  }
-
-  const scoreDiff = numericScore - numericPar;
-  const markClass = scorecardMarkClass(scoreDiff);
-  const label = scorecardMarkLabel(scoreDiff);
-  const cellLabel = holeNumber
-    ? `Hole ${holeNumber}, ${numericScore} on par ${numericPar}: ${label}`
-    : `${numericScore} on par ${numericPar}: ${label}`;
-
-  return `
-    <td data-scorecard-hole="${escapeAttribute(holeNumber)}" data-scorecard-par="${numericPar}" data-scorecard-score="${numericScore}" data-scorecard-diff="${scoreDiff}">
-      <span class="scorecard-mark ${markClass}" title="${escapeAttribute(cellLabel)}" aria-label="${escapeAttribute(cellLabel)}">
-        ${numericScore}
-      </span>
-      ${dots}
-    </td>
-  `;
-}
-
-function scorecardMarkClass(scoreDiff) {
-  if (scoreDiff <= -2) {
-    return "scorecard-eagle";
-  }
-
-  if (scoreDiff === -1) {
-    return "scorecard-birdie";
-  }
-
-  if (scoreDiff === 1) {
-    return "scorecard-bogey";
-  }
-
-  if (scoreDiff >= 2) {
-    return "scorecard-double-bogey";
-  }
-
-  return "scorecard-par";
-}
-
-function scorecardMarkLabel(scoreDiff) {
-  if (scoreDiff <= -3) {
-    return "Albatross or better";
-  }
-
-  if (scoreDiff === -2) {
-    return "Eagle";
-  }
-
-  if (scoreDiff === -1) {
-    return "Birdie";
-  }
-
-  if (scoreDiff === 0) {
-    return "Par";
-  }
-
-  if (scoreDiff === 1) {
-    return "Bogey";
-  }
-
-  if (scoreDiff === 2) {
-    return "Double bogey";
-  }
-
-  return `${scoreDiff} over par`;
-}
-
-function playerHandicap(player) {
-  if (player.handicap === null || player.handicap === undefined || player.handicap === "") {
-    return null;
-  }
-  const value = Number(player.handicap);
-  return Number.isFinite(value) ? clamp(value, -10, 54) : null;
-}
-
-function handicapShotsForHole(handicap, strokeIndex, holeCount = 18) {
-  if (!Number.isFinite(handicap) || handicap <= 0 || !Number.isFinite(Number(strokeIndex))) {
-    return 0;
-  }
-  const holes = Math.max(1, Number(holeCount) || 18);
-  const rounded = Math.round(handicap);
-  const base = Math.floor(rounded / holes);
-  const remainder = rounded % holes;
-  return base + (Number(strokeIndex) <= remainder ? 1 : 0);
-}
-
-function playerScorecardValue(round, holeNumber, playerId) {
-  const entry = getPlayerEntry(round, holeNumber, playerId);
-  return entry?.scoreEntered ? Number(entry.score || 0) : "";
-}
-
-function scorecardScoreTotal(scores) {
-  return scores.reduce((sum, score) => sum + Number(score || 0), 0);
-}
-
-function teeRowStyle(tee) {
-  const color = tee.color || "#f8f7f1";
-  return `--tee-row-color:${escapeAttribute(color)}; --tee-row-text:${darkTextForColor(color) ? "#071414" : "#f8fffb"};`;
-}
-
-function darkTextForColor(color) {
-  const hex = String(color || "").trim().replace("#", "");
-  if (![3, 6].includes(hex.length)) {
-    return false;
-  }
-  const expanded = hex.length === 3 ? hex.split("").map((char) => char + char).join("") : hex;
-  const red = parseInt(expanded.slice(0, 2), 16);
-  const green = parseInt(expanded.slice(2, 4), 16);
-  const blue = parseInt(expanded.slice(4, 6), 16);
-  return (red * 299 + green * 587 + blue * 114) / 1000 > 150;
-}
-
-function renderFinishRoundOverlay(prompt) {
-  const missing = prompt.missing || [];
-  const hasMissing = missing.length > 0;
-  return `
-    <section class="score-card-backdrop finish-round-backdrop" role="dialog" aria-modal="true" aria-label="Finish round">
-      <div class="finish-round-sheet">
-        <header class="score-card-head">
-          <div>
-            <p class="eyebrow">${hasMissing ? "Score Check" : "Finish Round"}</p>
-            <h2>${hasMissing ? "Some holes need scores" : "Save this round?"}</h2>
-            <p>${hasMissing
-              ? `Missing score entry for hole${missing.length === 1 ? "" : "s"} ${missing.join(", ")}.`
-              : "Your scorecard is complete. Save it to stats or discard it."}</p>
-          </div>
-          <button class="icon-action" type="button" data-action="close-finish-round" aria-label="Close finish round">X</button>
-        </header>
-        <div class="finish-round-actions">
-          ${hasMissing ? `<button class="secondary-action" type="button" data-action="review-missing-scores">Add Missing Scores</button>` : ""}
-          <button class="primary-action" type="button" data-action="confirm-save-round">Save Round</button>
-          <button class="finish-action" type="button" data-action="discard-round">Discard Round</button>
-        </div>
       </div>
     </section>
   `;
@@ -1643,8 +790,8 @@ function renderPlayerScoreCard(round, course, hole, player) {
 
 function renderHoleVisual(hole) {
   const course = activeVisualCourse();
-  if (arcgisImageryActiveForHole(hole, course)) {
-    return renderArcgisHoleVisual(hole, course);
+  if (arcgisMapsActiveForHole(hole, course)) {
+    return renderAzureHoleVisual(hole, course);
   }
   if (hole.visual?.photo && coursePhotoSource(photoCourseId(hole))) {
     return renderPhotoHoleVisual(hole);
@@ -1667,24 +814,35 @@ function renderHoleVisual(hole) {
   `;
 }
 
-function renderArcgisHoleVisual(hole, course) {
+function renderSnapshotHoleVisual(hole, course) {
+  return renderAzureHoleVisual(hole, course);
+}
+
+function renderAzureHoleVisual(hole, course) {
   const courseId = course?.id || photoCourseId(hole);
-  const anchors = arcgisHoleAnchors(hole, course);
+  const status = arcgisBasemapStatus();
+  if ((status.phase === "idle" || status.phase === "expired") && !ensureArcgisBasemap.pendingRender) {
+    ensureArcgisBasemap.pendingRender = true;
+    ensureArcgisBasemap()
+      .then(() => render())
+      .catch(() => render())
+      .finally(() => {
+        ensureArcgisBasemap.pendingRender = false;
+      });
+  }
+  const anchors = azureHoleAnchors(hole, course);
   const marker = photoTargetMarkers(hole.par);
   const panelRatio = satellitePanelRatio();
-  const map = arcgisMapViewForHole(anchors, marker, panelRatio);
+  const map = azureMapViewForHole(anchors, marker, panelRatio);
   if (!map) {
     return renderMappedHoleVisual(hole);
   }
-  const imageryLayer = getArcgisImageryLayer();
-  if (!imageryLayer) {
-    requestArcgisImageryLayer();
-  }
   const tee = { x: marker.tee[0], y: marker.tee[1] };
   const green = { x: marker.green[0], y: marker.green[1] };
-  const gpsPoint = gps.status === "ready" && gps.position ? arcgisGeoToTargetPoint(anchors, gps.position, marker, panelRatio) : null;
+  const greenShapeSvg = renderAzureGreenShapeSvg(hole, anchors, marker, panelRatio);
+  const gpsPoint = gps.status === "ready" && gps.position ? azureGeoToTargetPoint(anchors, gps.position, marker, panelRatio) : null;
   const start = gpsPoint || tee;
-  const shotPlan = resolveArcgisShotPlan(courseId, hole, anchors, marker, panelRatio);
+  const shotPlan = resolveAzureShotPlan(courseId, hole, anchors, marker, panelRatio);
   const trackedShotOverlay = renderTrackedShotOverlay(hole, anchors, marker, panelRatio);
   const routePoints = shotPlan
     ? [start, ...shotPlan.viewPoints, green].map((point) => `${point.x},${point.y}`).join(" ")
@@ -1696,34 +854,35 @@ function renderArcgisHoleVisual(hole, course) {
   const zoomClass = zoom > 1 ? " zoomed" : "";
   const editClass = photoEditMode ? " editing" : "";
   return `
-    <section class="hole-visual photo-hole arcgis-hole${shotPlan ? " planning" : ""}${zoomClass}${editClass}" style="--photo-marker-scale:${markerScale}; --satellite-panel-ratio:${panelRatio};" data-arcgis-hole="${hole.number}" data-arcgis-course-id="${courseId}" aria-label="${escapeAttribute(course?.name || "Course")} ArcGIS satellite hole ${hole.number}">
+    <section class="hole-visual photo-hole azure-hole${shotPlan ? " planning" : ""}${zoomClass}${editClass}" style="--photo-marker-scale:${markerScale}; --satellite-panel-ratio:${panelRatio};" data-azure-hole="${hole.number}" data-azure-course-id="${courseId}" aria-label="${escapeAttribute(course?.name || "Course")} ArcGIS satellite hole ${hole.number}">
       <div class="photo-pan-layer" style="transform:${photoPanTransform(pan)};">
         <div class="photo-zoom-layer" style="transform:scale(${zoom});">
-          <div class="arcgis-tile-layer${imageryLayer ? "" : " loading"}" data-arcgis-tile-layer>
-            ${renderArcgisTiles(map)}
-            <div class="arcgis-map-status" data-arcgis-map-status>${escapeHtml(arcgisImageryStatusText())}</div>
+          <div class="azure-tile-layer" data-azure-tile-layer>
+            ${renderAzureTiles(map)}
+            <div class="azure-map-status" data-azure-map-status>${escapeHtml(arcgisStatusLabel())}</div>
           </div>
           <svg class="photo-hole-overlay" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
             <defs>
-              <linearGradient id="arcgis-shot-gradient-${hole.number}" x1="0" y1="1" x2="0" y2="0">
+              <linearGradient id="azure-shot-gradient-${hole.number}" x1="0" y1="1" x2="0" y2="0">
                 <stop offset="0" stop-color="#ff4fd8"></stop>
                 <stop offset="1" stop-color="#8d5cff"></stop>
               </linearGradient>
             </defs>
+            ${greenShapeSvg}
             ${guide}
             ${trackedShotOverlay}
-            ${shotPlan ? `<polyline class="photo-plan-route" points="${routePoints}" stroke="url(#arcgis-shot-gradient-${hole.number})"></polyline>` : ""}
+            ${shotPlan ? `<polyline class="photo-plan-route" points="${routePoints}" stroke="url(#azure-shot-gradient-${hole.number})"></polyline>` : ""}
             ${shotPlan?.viewPoints.map((point, index) => `
-              <circle class="photo-plan-point" data-photo-plan-point="${index}" cx="${point.x}" cy="${point.y}" r="1.9"></circle>
-              <path class="photo-plan-cross" data-photo-plan-cross="${index}" d="M ${point.x - 1.4} ${point.y} L ${point.x + 1.4} ${point.y} M ${point.x} ${point.y - 1.4} L ${point.x} ${point.y + 1.4}"></path>
+              <circle class="photo-plan-point" cx="${point.x}" cy="${point.y}" r="1.9"></circle>
+              <path class="photo-plan-cross" d="M ${point.x - 1.4} ${point.y} L ${point.x + 1.4} ${point.y} M ${point.x} ${point.y - 1.4} L ${point.x} ${point.y + 1.4}"></path>
             `).join("") || ""}
           </svg>
-          ${renderPhotoGreenMarkerElement(green, hole.par)}
+          ${greenShapeSvg ? renderPhotoGreenCenterDot(green) : renderPhotoGreenMarkerElement(green, hole.par)}
           ${renderPhotoTeeMarkerElement(tee, Boolean(gpsPoint))}
           ${renderPhotoGpsMarker(gpsPoint)}
           ${photoEditMode ? `
-            <button class="photo-drag-handle tee" type="button" style="left:${tee.x}%; top:${tee.y}%;" data-arcgis-handle="tee" data-course-id="${courseId}" data-hole="${hole.number}" aria-label="Drag satellite tee anchor">T</button>
-            <button class="photo-drag-handle green" type="button" style="left:${green.x}%; top:${green.y}%;" data-arcgis-handle="green" data-course-id="${courseId}" data-hole="${hole.number}" aria-label="Drag satellite green anchor">G</button>
+            <button class="photo-drag-handle tee" type="button" style="left:${tee.x}%; top:${tee.y}%;" data-azure-handle="tee" data-course-id="${courseId}" data-hole="${hole.number}" aria-label="Drag satellite tee anchor">T</button>
+            <button class="photo-drag-handle green" type="button" style="left:${green.x}%; top:${green.y}%;" data-azure-handle="green" data-course-id="${courseId}" data-hole="${hole.number}" aria-label="Drag satellite green anchor">G</button>
           ` : ""}
         </div>
       </div>
@@ -1736,7 +895,7 @@ function renderArcgisHoleVisual(hole, course) {
           <span>SI ${hole.strokeIndex}</span>
           <em>${anchors.estimated ? "Estimated" : "Satellite"}</em>
         </div>
-        ${renderArcgisShotInfo(courseId, hole, shotPlan)}
+        ${renderAzureShotInfo(courseId, hole, shotPlan)}
       </div>
       ${photoEditMode ? "" : renderPhotoClubPanel(hole, shotPlan)}
       ${photoEditMode ? "" : renderGpsTestControls(hole, courseId)}
@@ -1745,7 +904,7 @@ function renderArcgisHoleVisual(hole, course) {
         <button class="photo-tool-button" type="button" data-action="toggle-photo-edit">${photoEditMode ? "Done" : "Adjust"}</button>
         ${photoEditMode && anchors.edited ? `<button class="photo-tool-button" type="button" data-action="reset-satellite-anchor" data-course-id="${courseId}" data-hole="${hole.number}">Reset</button>` : ""}
       </div>
-      <div class="satellite-attribution">${escapeHtml(map.attribution || arcgisImageryAttribution())}</div>
+      <div class="satellite-attribution">${escapeHtml(map.attribution || SATELLITE_ATTRIBUTION)}</div>
     </section>
   `;
 }
@@ -1758,13 +917,13 @@ function renderTrackedShotOverlay(hole, anchors, marker, panelRatio) {
   const completed = shots
     .map((shot) => ({
       shot,
-      start: arcgisGeoToTargetPoint(anchors, shot.start, marker, panelRatio),
-      end: arcgisGeoToTargetPoint(anchors, shot.end, marker, panelRatio)
+      start: azureGeoToTargetPoint(anchors, shot.start, marker, panelRatio),
+      end: azureGeoToTargetPoint(anchors, shot.end, marker, panelRatio)
     }))
     .filter((item) => item.start && item.end);
-  const activeStart = activeShot ? arcgisGeoToTargetPoint(anchors, activeShot.start, marker, panelRatio) : null;
+  const activeStart = activeShot ? azureGeoToTargetPoint(anchors, activeShot.start, marker, panelRatio) : null;
   const activeEnd = activeShot && gps.status === "ready" && gps.position
-    ? arcgisGeoToTargetPoint(anchors, gps.position, marker, panelRatio)
+    ? azureGeoToTargetPoint(anchors, gps.position, marker, panelRatio)
     : null;
 
   return `
@@ -1780,57 +939,89 @@ function renderTrackedShotOverlay(hole, anchors, marker, panelRatio) {
   `;
 }
 
-function renderArcgisTiles(map) {
-  if (!getArcgisImageryLayer()) {
+function renderAzureTiles(map) {
+  const status = arcgisBasemapStatus();
+  if (!status.ready) {
     return "";
   }
-  return map.tiles.map((tile) => `
-    <img class="arcgis-map-tile" src="${arcgisTileUrl(tile.x, tile.y, map.zoom)}" alt="" aria-hidden="true" loading="eager" decoding="async" referrerpolicy="no-referrer" data-arcgis-tile style="left:${tile.left}%; top:${tile.top}%; width:${tile.width}%; height:${tile.height}%; transform:rotate(${tile.rotation}deg);" />
-  `).join("");
+  if (map.image) {
+    return "";
+  }
+  return map.tiles.map((tile) => {
+    const src = satelliteTileUrl(tile.x, tile.y, map.zoom);
+    if (!src) {
+      return "";
+    }
+    return `
+      <img class="azure-map-tile" src="${escapeAttribute(src)}" alt="" aria-hidden="true" loading="eager" decoding="async" referrerpolicy="no-referrer" data-azure-tile style="left:${tile.left}%; top:${tile.top}%; width:${tile.width}%; height:${tile.height}%; transform:rotate(${tile.rotation}deg);" />
+    `;
+  }).join("");
+}
+
+function arcgisStatusLabel() {
+  const status = arcgisBasemapStatus();
+  if (status.ready) {
+    return "Loading satellite";
+  }
+  if (status.phase === "error") {
+    return status.error || "ArcGIS imagery unavailable";
+  }
+  if (status.phase === "loading-session") {
+    return "Starting ArcGIS map session";
+  }
+  if (status.phase === "loading-style") {
+    return "Loading ArcGIS imagery";
+  }
+  return "Preparing satellite imagery";
 }
 
 function queueCourseSatellitePreload(course, currentHoleNumber = 1) {
-  if (!course?.holes?.length || !arcgisImageryEnabled) {
+  if (!course?.holes?.length || !azureMapsEnabled) {
     return;
   }
-  if (!getArcgisImageryLayer()) {
-    requestArcgisImageryLayer();
-    return;
-  }
-  if (satellitePreloadCourseId !== course.id) {
-    satellitePreloadCourseId = course.id;
-    satellitePreloadQueue = [];
-    satellitePreloadedUrls = new Set();
-    satellitePreloadingUrls = new Set();
-    satellitePreloadActive = 0;
-  }
-  const ratio = satellitePanelRatio();
-  const current = Number(currentHoleNumber) || 1;
-  const preloadNumbers = new Set([current, current - 1, current + 1].filter((value) => value >= 1));
-  const orderedHoles = course.holes
-    .filter((hole) => preloadNumbers.has(Number(hole.number)))
-    .sort((a, b) => Math.abs(Number(a.number) - current) - Math.abs(Number(b.number) - current));
-  const queuedUrls = new Set([...satellitePreloadQueue.map((item) => item.src), ...satellitePreloadingUrls]);
-  orderedHoles.forEach((hole) => {
-    const items = satelliteMapPreloadItems(arcgisMapViewForHole(arcgisHoleAnchors(hole, course), photoTargetMarkers(hole.par), ratio));
-    items.forEach((item) => {
-      if (!item.src || satellitePreloadedUrls.has(item.src) || queuedUrls.has(item.src)) {
-        return;
-      }
-      queuedUrls.add(item.src);
-      satellitePreloadQueue.push(item);
+  ensureArcgisBasemap().then(() => {
+    if (satellitePreloadCourseId !== course.id) {
+      satellitePreloadCourseId = course.id;
+      satellitePreloadQueue = [];
+      satellitePreloadedUrls = new Set();
+      satellitePreloadingUrls = new Set();
+      satellitePreloadActive = 0;
+    }
+    const ratio = satellitePanelRatio();
+    const orderedHoles = course.holes
+      .filter((hole) => Math.abs(Number(hole.number) - Number(currentHoleNumber)) <= 1)
+      .sort((a, b) => {
+        const aDistance = Math.abs(Number(a.number) - Number(currentHoleNumber));
+        const bDistance = Math.abs(Number(b.number) - Number(currentHoleNumber));
+        return aDistance - bDistance || Number(a.number) - Number(b.number);
+      });
+    const queuedUrls = new Set([...satellitePreloadQueue.map((item) => item.src), ...satellitePreloadingUrls]);
+    orderedHoles.forEach((hole) => {
+      const items = satelliteMapPreloadItems(azureMapViewForHole(azureHoleAnchors(hole, course), photoTargetMarkers(hole.par), ratio));
+      items.forEach((item) => {
+        if (!item.src || satellitePreloadedUrls.has(item.src) || queuedUrls.has(item.src)) {
+          return;
+        }
+        queuedUrls.add(item.src);
+        satellitePreloadQueue.push(item);
+      });
     });
+    scheduleSatellitePreload();
+  }).catch(() => {
+    // The visible map will show the ArcGIS session error.
   });
-  scheduleSatellitePreload();
 }
 
 function satelliteMapPreloadItems(map) {
   if (!map) {
     return [];
   }
-  return (map.tiles || []).map((tile) => ({
-    src: arcgisTileUrl(tile.x, tile.y, map.zoom)
-  }));
+  if (map.image?.src) {
+    return [{ src: map.image.src }];
+  }
+  return (map.tiles || [])
+    .map((tile) => ({ src: satelliteTileUrl(tile.x, tile.y, map.zoom), fallbackSrc: "" }))
+    .filter((item) => item.src);
 }
 
 function scheduleSatellitePreload() {
@@ -1876,7 +1067,7 @@ function preloadSatelliteImage(src, fallbackSrc = "") {
   });
 }
 
-function renderArcgisShotInfo(courseId, hole, shotPlan) {
+function renderAzureShotInfo(courseId, hole, shotPlan) {
   if (!shotPlan) {
     return `<div class="photo-tap-hint">Tap the satellite image to plan a shot</div>`;
   }
@@ -1888,7 +1079,7 @@ function renderArcgisShotInfo(courseId, hole, shotPlan) {
           <strong>${segment.yards}<small>yd</small></strong>
         </div>
       `).join("")}
-      <button class="photo-clear-shot" type="button" data-action="clear-arcgis-shot-plan" data-course-id="${courseId}" data-hole="${hole.number}" aria-label="Clear shot path">Clear</button>
+      <button class="photo-clear-shot" type="button" data-action="clear-satellite-shot-plan" data-course-id="${courseId}" data-hole="${hole.number}" aria-label="Clear shot path">Clear</button>
     </div>
   `;
 }
@@ -2035,6 +1226,52 @@ function renderPhotoGpsMarker(marker) {
   `;
 }
 
+function renderSnapshotGreenShapeSvg(hole, snapshot, transform) {
+  const polygon = Array.isArray(hole?.geometry?.greenPolygon) ? hole.geometry.greenPolygon : [];
+  const points = polygon
+    .map((point) => snapshotGeoToTargetPoint(snapshot, point, transform))
+    .filter(Boolean);
+  if (!points.length) {
+    return "";
+  }
+  const path = points.map((point) => `${point.x},${point.y}`).join(" ");
+  const center = snapshotGeoToTargetPoint(snapshot, hole.greenCenter, transform) || { x: 50, y: 50 };
+  return `
+    <polygon class="photo-osm-green-shape" points="${path}"></polygon>
+    <circle class="photo-osm-green-centre" cx="${center.x}" cy="${center.y}" r="1.8"></circle>
+  `;
+}
+
+function renderSnapshotTrackedShotOverlay(hole, snapshot, transform) {
+  const round = getActiveRound(state);
+  const entry = round ? trackedRoundEntry(round, hole.number) : null;
+  const shots = trackedShots(entry);
+  const activeShot = trackedActiveShot(entry);
+  const completed = shots
+    .map((shot) => ({
+      shot,
+      start: snapshotGeoToTargetPoint(snapshot, shot.start, transform),
+      end: snapshotGeoToTargetPoint(snapshot, shot.end, transform)
+    }))
+    .filter((item) => item.start && item.end);
+  const activeStart = activeShot ? snapshotGeoToTargetPoint(snapshot, activeShot.start, transform) : null;
+  const activeEnd = activeShot && gps.status === "ready" && gps.position
+    ? snapshotGeoToTargetPoint(snapshot, gps.position, transform)
+    : null;
+
+  return `
+    ${completed.map(({ shot, start, end }) => `
+      <line class="tracked-shot-route" x1="${start.x}" y1="${start.y}" x2="${end.x}" y2="${end.y}"></line>
+      <circle class="tracked-shot-landing" cx="${end.x}" cy="${end.y}" r="1.55"></circle>
+      <text class="tracked-shot-label" x="${end.x + 1.8}" y="${end.y - 1.8}">${shot.number}</text>
+    `).join("")}
+    ${activeStart && activeEnd ? `
+      <line class="tracked-shot-route active" x1="${activeStart.x}" y1="${activeStart.y}" x2="${activeEnd.x}" y2="${activeEnd.y}"></line>
+      <circle class="tracked-shot-landing active" cx="${activeStart.x}" cy="${activeStart.y}" r="1.4"></circle>
+    ` : ""}
+  `;
+}
+
 function renderPhotoGreenMarkerElement(marker, par) {
   const size = Number(par) === 3 ? 36 : 32;
   return `
@@ -2042,6 +1279,41 @@ function renderPhotoGreenMarkerElement(marker, par) {
       <span class="photo-green-core"></span>
     </span>
   `;
+}
+
+function renderPhotoGreenCenterDot(marker) {
+  if (!marker) {
+    return "";
+  }
+  return `
+    <span class="photo-green-center-dot" style="left:${marker.x}%; top:${marker.y}%;">
+      <span></span>
+    </span>
+  `;
+}
+
+function renderAzureGreenShapeSvg(hole, anchors, marker, panelRatio = satellitePanelRatio()) {
+  const polygon = holeGreenPolygon(hole);
+  if (!polygon.length) {
+    return "";
+  }
+  const points = polygon
+    .map((point) => azureGeoToTargetPoint(anchors, point, marker, panelRatio))
+    .filter(Boolean);
+  if (points.length < 3) {
+    return "";
+  }
+  const path = points.map((point) => `${point.x},${point.y}`).join(" ");
+  const center = azureGeoToTargetPoint(anchors, hole.greenCenter || anchors.green, marker, panelRatio) || { x: marker.green[0], y: marker.green[1] };
+  return `
+    <polygon class="photo-osm-green-shape" points="${path}"></polygon>
+    <circle class="photo-osm-green-centre" cx="${center.x}" cy="${center.y}" r="1.8"></circle>
+  `;
+}
+
+function holeGreenPolygon(hole) {
+  const polygon = hole?.geometry?.greenPolygon || hole?.greenPolygon || hole?.green?.polygon || [];
+  return Array.isArray(polygon) ? polygon.filter(validGeoPoint) : [];
 }
 
 function renderPhotoTeeMarkerElement(marker, reference = false) {
@@ -2130,23 +1402,10 @@ function recommendClub(distance) {
   if (!Number.isFinite(target) || target <= 0) {
     return null;
   }
-  const clubs = activeBagClubs()
+  const clubs = (state.clubs || [])
     .filter((club) => Number(club.carryYards) > 0)
     .sort((a, b) => Math.abs(Number(a.carryYards) - target) - Math.abs(Number(b.carryYards) - target));
   return clubs[0] || null;
-}
-
-function activeBag() {
-  const bags = Array.isArray(state.bags) ? state.bags : [];
-  return bags.find((bag) => bag.id === state.activeBagId) || bags[0] || null;
-}
-
-function activeBagClubs() {
-  return activeBag()?.clubs || state.clubs || [];
-}
-
-function syncActiveBagClubs() {
-  state.clubs = activeBagClubs().map((club) => ({ ...club }));
 }
 
 function gpsDistanceToGreen(hole) {
@@ -2162,75 +1421,70 @@ function activeVisualCourse() {
   return round ? getCourse(state, round.courseId) : getCourse(state, state.selectedCourseId);
 }
 
-function arcgisImageryActiveForHole(hole, course = activeVisualCourse()) {
-  return Boolean(arcgisImageryEnabled && satelliteAvailableForHole(hole, course));
+function snapshotAvailableForHole() {
+  return false;
+}
+
+function validHoleSnapshot() {
+  return false;
+}
+
+function normalizeHoleSnapshot() {
+  return null;
+}
+
+function arcgisMapsActiveForHole(hole, course = activeVisualCourse()) {
+  return Boolean(azureMapsEnabled && satelliteAvailableForHole(hole, course));
+}
+
+function azureMapsActiveForHole(hole, course = activeVisualCourse()) {
+  return arcgisMapsActiveForHole(hole, course);
 }
 
 function satelliteAvailableForHole(hole, course = activeVisualCourse()) {
-  return Boolean(arcgisHoleAnchors(hole, course));
+  return Boolean(azureHoleAnchors(hole, course));
 }
 
-function initArcgisImageryEnabled() {
+function initArcgisMapsEnabled() {
   const params = new URLSearchParams(window.location.search);
-  const queryValue = params.get(ARCGIS_IMAGERY_QUERY_ENABLED);
+  const queryValue = params.get(ARCGIS_MAPS_QUERY_ENABLED);
   if (queryValue !== null) {
     const enabled = queryValue !== "0" && queryValue.toLowerCase() !== "false";
     try {
-      localStorage.setItem(ARCGIS_IMAGERY_ENABLED_STORAGE, enabled ? "1" : "0");
+      localStorage.setItem(ARCGIS_MAPS_ENABLED_STORAGE, enabled ? "1" : "0");
     } catch {
       // Keep the setting in memory if storage is blocked.
     }
     return enabled;
   }
-  return true;
+  return readLocalStorage(ARCGIS_MAPS_ENABLED_STORAGE, "1") !== "0";
 }
 
-function saveArcgisImageryEnabled() {
+function saveArcgisMapsEnabled() {
   try {
-    localStorage.setItem(ARCGIS_IMAGERY_ENABLED_STORAGE, arcgisImageryEnabled ? "1" : "0");
+    localStorage.setItem(ARCGIS_MAPS_ENABLED_STORAGE, azureMapsEnabled ? "1" : "0");
   } catch {
     // In-memory toggle still works for this session.
   }
 }
 
-function arcgisImageryStatusText() {
-  const error = getArcgisImageryError();
-  if (error) {
-    return error;
-  }
-  return getArcgisImageryLayer() ? "Loading imagery" : "Starting ArcGIS imagery";
+function saveAzureMapsEnabled() {
+  saveArcgisMapsEnabled();
 }
 
-function requestArcgisImageryLayer() {
-  if (!arcgisImageryEnabled) {
-    return;
-  }
-  if (getArcgisImageryError() && Date.now() < arcgisImageryRetryAt) {
-    return;
-  }
-  ensureArcgisImageryLayer()
-    .then(() => {
-      arcgisImageryRetryAt = 0;
-      if (view === "play") {
-        const round = getActiveRound(state);
-        if (round) {
-          const course = getCourse(state, round.courseId);
-          if (course) {
-            queueCourseSatellitePreload(course, round.currentHole || 1);
-          }
-        }
-        render();
-      }
-    })
-    .catch(() => {
-      arcgisImageryRetryAt = Date.now() + 30000;
-      if (view === "play") {
-        render();
-      }
-    });
+function satelliteTileUrl(x, y, zoom) {
+  return arcgisTileUrl(x, y, zoom);
 }
 
-function arcgisHoleAnchors(hole, course = activeVisualCourse()) {
+function esriTileUrl(x, y, zoom) {
+  return arcgisTileUrl(x, y, zoom);
+}
+
+function esriExportUrl() {
+  return "";
+}
+
+function azureHoleAnchors(hole, course = activeVisualCourse()) {
   const courseId = course?.id || photoCourseId(hole);
   const edited = satelliteAnchorEdit(courseId, hole?.number);
   if (edited?.tee && edited?.green) {
@@ -2271,11 +1525,11 @@ function confirmedHoleAnchors(course, hole) {
   return null;
 }
 
-function arcgisMapViewForHole(anchors, marker = photoTargetMarkers(4), panelRatio = satellitePanelRatio()) {
+function azureMapViewForHole(anchors, marker = photoTargetMarkers(4), panelRatio = satellitePanelRatio()) {
   if (!anchors?.tee || !anchors?.green) {
     return null;
   }
-  const zoom = ARCGIS_ZOOM;
+  const zoom = ARCGIS_MAPS_ZOOM;
   const tee = geoToWorldPixel(anchors.tee, zoom);
   const green = geoToWorldPixel(anchors.green, zoom);
   const ratio = normalizedSatelliteRatio(panelRatio);
@@ -2292,29 +1546,64 @@ function arcgisMapViewForHole(anchors, marker = photoTargetMarkers(4), panelRati
   if (worldCorners.length !== 4) {
     return null;
   }
-  const minTileX = Math.floor(Math.min(...worldCorners.map((point) => point.x)) / ARCGIS_TILE_SIZE);
-  const maxTileX = Math.floor(Math.max(...worldCorners.map((point) => point.x)) / ARCGIS_TILE_SIZE);
-  const minTileY = Math.floor(Math.min(...worldCorners.map((point) => point.y)) / ARCGIS_TILE_SIZE);
-  const maxTileY = Math.floor(Math.max(...worldCorners.map((point) => point.y)) / ARCGIS_TILE_SIZE);
+  const minTileX = Math.floor(Math.min(...worldCorners.map((point) => point.x)) / arcgisTileSize());
+  const maxTileX = Math.floor(Math.max(...worldCorners.map((point) => point.x)) / arcgisTileSize());
+  const minTileY = Math.floor(Math.min(...worldCorners.map((point) => point.y)) / arcgisTileSize());
+  const maxTileY = Math.floor(Math.max(...worldCorners.map((point) => point.y)) / arcgisTileSize());
   const tiles = [];
   for (let x = minTileX; x <= maxTileX; x += 1) {
     for (let y = minTileY; y <= maxTileY; y += 1) {
       const origin = satelliteWorldToTarget({
-        x: x * ARCGIS_TILE_SIZE,
-        y: y * ARCGIS_TILE_SIZE
+        x: x * arcgisTileSize(),
+        y: y * arcgisTileSize()
       }, transform, marker, ratio);
       tiles.push({
         x,
         y,
         left: Number(origin.x.toFixed(4)),
         top: Number(origin.y.toFixed(4)),
-        width: Number((ARCGIS_TILE_SIZE * transform.scale + 0.12).toFixed(4)),
-        height: Number(((ARCGIS_TILE_SIZE * transform.scale + 0.12) / ratio).toFixed(4)),
+        width: Number((arcgisTileSize() * transform.scale + 0.12).toFixed(4)),
+        height: Number(((arcgisTileSize() * transform.scale + 0.12) / ratio).toFixed(4)),
         rotation: Number(transform.rotation.toFixed(4))
       });
     }
   }
-  return { zoom, tiles, attribution: arcgisImageryAttribution() };
+  return { zoom, tiles, attribution: SATELLITE_ATTRIBUTION };
+}
+
+function satelliteExportImage(worldCorners, transform, marker, panelRatio = SATELLITE_PANEL_RATIO) {
+  const left = Math.min(...worldCorners.map((point) => point.x));
+  const right = Math.max(...worldCorners.map((point) => point.x));
+  const top = Math.min(...worldCorners.map((point) => point.y));
+  const bottom = Math.max(...worldCorners.map((point) => point.y));
+  const width = Math.max(1, right - left);
+  const height = Math.max(1, bottom - top);
+  const ratio = normalizedSatelliteRatio(panelRatio);
+  const topLeft = satelliteWorldToTarget({ x: left, y: top }, transform, marker, ratio);
+  const maxImageEdge = 1800;
+  const imageScale = Math.min(2.5, maxImageEdge / Math.max(width, height));
+  const imageWidth = Math.max(256, Math.round(width * imageScale));
+  const imageHeight = Math.max(256, Math.round(height * imageScale));
+  const mercatorTopLeft = worldPixelToWebMercator({ x: left, y: top }, ARCGIS_MAPS_ZOOM);
+  const mercatorBottomRight = worldPixelToWebMercator({ x: right, y: bottom }, ARCGIS_MAPS_ZOOM);
+  const bounds = {
+    imageWidth,
+    imageHeight,
+    mercator: {
+      left: mercatorTopLeft.x,
+      top: mercatorTopLeft.y,
+      right: mercatorBottomRight.x,
+      bottom: mercatorBottomRight.y
+    }
+  };
+  return {
+    src: esriExportUrl(bounds),
+    left: Number(topLeft.x.toFixed(4)),
+    top: Number(topLeft.y.toFixed(4)),
+    width: Number((width * transform.scale).toFixed(4)),
+    height: Number(((height * transform.scale) / ratio).toFixed(4)),
+    rotation: Number(transform.rotation.toFixed(4))
+  };
 }
 
 function satelliteWorldTransform(tee, green, marker = photoTargetMarkers(4), panelRatio = SATELLITE_PANEL_RATIO) {
@@ -2361,44 +1650,19 @@ function satelliteTargetToWorld(point, transform, marker = photoTargetMarkers(4)
   };
 }
 
-function arcgisEventToPosition(panel, anchors, marker, event) {
+function azureEventToPosition(panel, anchors, marker, event) {
   const rect = panel.getBoundingClientRect();
   if (!rect.width || !rect.height) {
     return null;
   }
-  const point = eventToPhotoLayerPercent(
-    panel,
-    event,
-    panel.dataset.arcgisCourseId || state.selectedCourseId,
-    panel.dataset.arcgisHole || ""
-  );
-  if (!point) {
-    return null;
-  }
-  return arcgisTargetPointToGeo(anchors, point, marker, rect.height / rect.width);
-}
-
-function eventToPhotoLayerPercent(panel, event, courseId = "", holeNumber = "") {
-  const rect = panel.getBoundingClientRect();
-  if (!rect.width || !rect.height) {
-    return null;
-  }
-  const panelPoint = {
+  const point = {
     x: ((event.clientX - rect.left) / rect.width) * 100,
     y: ((event.clientY - rect.top) / rect.height) * 100
   };
-  const zoom = photoZoomLevel(courseId, holeNumber);
-  if (zoom <= 1) {
-    return panelPoint;
-  }
-  const pan = photoPanOffset(courseId, holeNumber, zoom);
-  return {
-    x: 50 + (panelPoint.x - pan.x - 50) / zoom,
-    y: 50 + (panelPoint.y - pan.y - 50) / zoom
-  };
+  return azureTargetPointToGeo(anchors, point, marker, rect.height / rect.width);
 }
 
-function geoToWorldPixel(position, zoom, tileSize = ARCGIS_TILE_SIZE) {
+function geoToWorldPixel(position, zoom, tileSize = arcgisTileSize()) {
   const lat = clamp(Number(position.lat), -85.05112878, 85.05112878);
   const lng = Number(position.lng);
   const scale = tileSize * 2 ** zoom;
@@ -2409,7 +1673,7 @@ function geoToWorldPixel(position, zoom, tileSize = ARCGIS_TILE_SIZE) {
   };
 }
 
-function worldPixelToGeo(pixel, zoom, tileSize = ARCGIS_TILE_SIZE) {
+function worldPixelToGeo(pixel, zoom, tileSize = arcgisTileSize()) {
   const scale = tileSize * 2 ** zoom;
   const lng = (pixel.x / scale) * 360 - 180;
   const n = Math.PI - (2 * Math.PI * pixel.y) / scale;
@@ -2418,7 +1682,7 @@ function worldPixelToGeo(pixel, zoom, tileSize = ARCGIS_TILE_SIZE) {
 }
 
 function worldPixelToWebMercator(pixel, zoom) {
-  const scale = ARCGIS_TILE_SIZE * 2 ** zoom;
+  const scale = arcgisTileSize() * 2 ** zoom;
   const originShift = Math.PI * 6378137;
   return {
     x: (pixel.x / scale) * (originShift * 2) - originShift,
@@ -2447,13 +1711,13 @@ function destinationPoint(origin, bearingDegrees, distanceMeters) {
   };
 }
 
-function arcgisShotPlanKey(courseId, holeNumber) {
+function azureShotPlanKey(courseId, holeNumber) {
   return `${courseId || "course"}:${String(holeNumber || "")}`;
 }
 
-function resolveArcgisShotPlan(courseId, hole, anchors, marker, panelRatio = satellitePanelRatio()) {
-  const saved = arcgisShotPlans[arcgisShotPlanKey(courseId, hole.number)];
-  const points = sortArcGISPlanPoints(anchors, saved?.points || []);
+function resolveAzureShotPlan(courseId, hole, anchors, marker, panelRatio = satellitePanelRatio()) {
+  const saved = azureShotPlans[azureShotPlanKey(courseId, hole.number)];
+  const points = sortAzurePlanPoints(anchors, saved?.points || []);
   if (!points.length) {
     return null;
   }
@@ -2468,12 +1732,265 @@ function resolveArcgisShotPlan(courseId, hole, anchors, marker, panelRatio = sat
   });
   return {
     points,
-    viewPoints: points.map((point) => arcgisGeoToTargetPoint(anchors, point, marker, panelRatio)),
+    viewPoints: points.map((point) => azureGeoToTargetPoint(anchors, point, marker, panelRatio)),
     segments
   };
 }
 
-function arcgisGeoToTargetPoint(anchors, position, marker = photoTargetMarkers(4), panelRatio = SATELLITE_PANEL_RATIO) {
+function resolveSnapshotShotPlan(courseId, hole, anchors, snapshot, transform) {
+  const saved = azureShotPlans[azureShotPlanKey(courseId, hole.number)];
+  const points = sortAzurePlanPoints(anchors, saved?.points || []);
+  if (!points.length) {
+    return null;
+  }
+  const start = gps.status === "ready" && gps.position ? gps.position : anchors.tee;
+  const route = [start, ...points, anchors.green];
+  const segments = route.slice(0, -1).map((point, index) => {
+    const last = index === route.length - 2;
+    return {
+      label: last ? "Into green" : `Shot ${index + 1}`,
+      yards: yardsBetween(point, route[index + 1]) || 0
+    };
+  });
+  return {
+    points,
+    viewPoints: points.map((point) => snapshotGeoToTargetPoint(snapshot, point, transform)).filter(Boolean),
+    segments
+  };
+}
+
+function snapshotGeoToTargetPoint(snapshot, position, transform = null) {
+  const imagePoint = snapshotGeoToImagePoint(snapshot, position);
+  if (!imagePoint) {
+    return null;
+  }
+  if (transform) {
+    return snapshotImagePointToTarget(imagePoint, transform);
+  }
+  return imagePoint;
+}
+
+function snapshotGeoToImagePoint(snapshot, position) {
+  const normalized = normalizeHoleSnapshot(snapshot);
+  if (!normalized || !validGeoPoint(position)) {
+    return null;
+  }
+  const centerWorld = geoToWorldPixel(normalized.center, normalized.zoom, 512);
+  const pointWorld = geoToWorldPixel(position, normalized.zoom, 512);
+  let dx = pointWorld.x - centerWorld.x;
+  const worldSize = 512 * 2 ** normalized.zoom;
+  if (Math.abs(dx) > worldSize / 2) {
+    dx += dx > 0 ? -worldSize : worldSize;
+  }
+  return {
+    x: Number(clamp(50 + (dx / normalized.width) * 100, -8, 108).toFixed(2)),
+    y: Number(clamp(50 + ((pointWorld.y - centerWorld.y) / normalized.height) * 100, -8, 108).toFixed(2))
+  };
+}
+
+function snapshotTargetPointToGeo(snapshot, point, transform = null) {
+  const normalized = normalizeHoleSnapshot(snapshot);
+  if (!normalized || !point) {
+    return null;
+  }
+  const imagePoint = transform ? snapshotTargetPointToImage(point, transform) : point;
+  if (!imagePoint) {
+    return null;
+  }
+  const centerWorld = geoToWorldPixel(normalized.center, normalized.zoom, 512);
+  const world = {
+    x: centerWorld.x + ((Number(imagePoint.x) - 50) / 100) * normalized.width,
+    y: centerWorld.y + ((Number(imagePoint.y) - 50) / 100) * normalized.height
+  };
+  return worldPixelToGeo(world, normalized.zoom, 512);
+}
+
+function snapshotGeometrySignature(courseId, hole) {
+  if (!hole) {
+    return "";
+  }
+  return fnv1a(JSON.stringify({
+    course: courseId || "",
+    hole: Number(hole.number),
+    tee: normalizeSignaturePoint(hole.tee),
+    green: normalizeSignaturePoint(hole.greenCenter),
+    front: normalizeSignaturePoint(hole.greenFront),
+    back: normalizeSignaturePoint(hole.greenBack),
+    polygon: holeGreenPolygon(hole).map(normalizeSignaturePoint).filter(Boolean)
+  })).toString(16).padStart(8, "0");
+}
+
+function fnv1a(value) {
+  let hash = 0x811c9dc5;
+  for (let index = 0; index < value.length; index += 1) {
+    hash ^= value.charCodeAt(index);
+    hash = Math.imul(hash, 0x01000193) >>> 0;
+  }
+  return hash >>> 0;
+}
+
+function normalizeSignaturePoint(point) {
+  const normalized = normalizeGeoPoint(point);
+  return normalized ? { lat: normalized.lat, lng: normalized.lng } : null;
+}
+
+function snapshotDisplayTransform(snapshot, anchors, marker = photoTargetMarkers(4), panelRatio = SATELLITE_PANEL_RATIO) {
+  const normalized = normalizeHoleSnapshot(snapshot);
+  const tee = snapshotGeoToImagePoint(normalized, anchors?.tee);
+  const green = snapshotGeoToImagePoint(normalized, anchors?.green);
+  if (!normalized || !tee || !green || !marker?.tee || !marker?.green) {
+    return null;
+  }
+
+  const ratio = normalizedSatelliteRatio(panelRatio);
+  const sourceTee = { x: tee.x, y: tee.y * ratio };
+  const sourceGreen = { x: green.x, y: green.y * ratio };
+  const targetTee = { x: Number(marker.tee[0]), y: Number(marker.tee[1]) * ratio };
+  const targetGreen = { x: Number(marker.green[0]), y: Number(marker.green[1]) * ratio };
+  const sourceVector = {
+    x: sourceGreen.x - sourceTee.x,
+    y: sourceGreen.y - sourceTee.y
+  };
+  const targetVector = {
+    x: targetGreen.x - targetTee.x,
+    y: targetGreen.y - targetTee.y
+  };
+  const lengthSquared = sourceVector.x * sourceVector.x + sourceVector.y * sourceVector.y;
+  if (lengthSquared < 0.01) {
+    return null;
+  }
+
+  const a = (targetVector.x * sourceVector.x + targetVector.y * sourceVector.y) / lengthSquared;
+  const b = (targetVector.y * sourceVector.x - targetVector.x * sourceVector.y) / lengthSquared;
+  const matrix = {
+    a,
+    b,
+    c: -b,
+    d: a,
+    tx: targetTee.x - (a * sourceTee.x - b * sourceTee.y),
+    ty: targetTee.y - (b * sourceTee.x + a * sourceTee.y)
+  };
+  return {
+    ratio,
+    matrix,
+    inverse: invertSnapshotMatrix(matrix)
+  };
+}
+
+function snapshotImagePointToTarget(point, transform) {
+  if (!point || !transform?.matrix) {
+    return null;
+  }
+  const source = {
+    x: Number(point.x),
+    y: Number(point.y) * transform.ratio
+  };
+  const target = applySnapshotMatrix(source, transform.matrix);
+  return {
+    x: Number(clamp(target.x, -32, 132).toFixed(2)),
+    y: Number(clamp(target.y / transform.ratio, -32, 132).toFixed(2))
+  };
+}
+
+function snapshotTargetPointToImage(point, transform) {
+  if (!point || !transform?.inverse) {
+    return null;
+  }
+  const target = {
+    x: Number(point.x),
+    y: Number(point.y) * transform.ratio
+  };
+  const source = applySnapshotMatrix(target, transform.inverse);
+  return {
+    x: Number(source.x.toFixed(2)),
+    y: Number((source.y / transform.ratio).toFixed(2))
+  };
+}
+
+function snapshotImageTransform(transform) {
+  if (!transform?.matrix) {
+    return "";
+  }
+  const { a, b, c, d, tx, ty } = transform.matrix;
+  const ratio = transform.ratio || 1;
+  const svgA = a;
+  const svgB = b / ratio;
+  const svgC = c * ratio;
+  const svgD = d;
+  const svgTx = tx;
+  const svgTy = ty / ratio;
+  return `matrix(${formatTransformNumber(svgA)} ${formatTransformNumber(svgB)} ${formatTransformNumber(svgC)} ${formatTransformNumber(svgD)} ${formatTransformNumber(svgTx)} ${formatTransformNumber(svgTy)})`;
+}
+
+function applySnapshotMatrix(point, matrix) {
+  return {
+    x: matrix.a * point.x + matrix.c * point.y + matrix.tx,
+    y: matrix.b * point.x + matrix.d * point.y + matrix.ty
+  };
+}
+
+function invertSnapshotMatrix(matrix) {
+  const determinant = matrix.a * matrix.d - matrix.b * matrix.c;
+  if (!Number.isFinite(determinant) || Math.abs(determinant) < 0.000001) {
+    return null;
+  }
+  const a = matrix.d / determinant;
+  const b = -matrix.b / determinant;
+  const c = -matrix.c / determinant;
+  const d = matrix.a / determinant;
+  return {
+    a,
+    b,
+    c,
+    d,
+    tx: -(a * matrix.tx + c * matrix.ty),
+    ty: -(b * matrix.tx + d * matrix.ty)
+  };
+}
+
+function formatTransformNumber(value) {
+  return Number(Number(value).toFixed(6));
+}
+
+function snapshotEventToPosition(panel, hole, event) {
+  const snapshot = normalizeHoleSnapshot(hole?.snapshot);
+  if (!snapshot) {
+    return null;
+  }
+  const rect = panel.getBoundingClientRect();
+  if (!rect.width || !rect.height) {
+    return null;
+  }
+  const courseId = panel.dataset.azureCourseId || state.selectedCourseId;
+  const course = getCourse(state, courseId);
+  const anchors = azureHoleAnchors(hole, course);
+  const marker = photoTargetMarkers(hole.par);
+  const transform = snapshotDisplayTransform(snapshot, anchors, marker, rect.height / rect.width);
+  return snapshotTargetPointToGeo(snapshot, {
+    x: ((event.clientX - rect.left) / rect.width) * 100,
+    y: ((event.clientY - rect.top) / rect.height) * 100
+  }, transform);
+}
+
+function sortAzurePlanPoints(anchors, points) {
+  const tee = geoToLocalMeters(anchors.tee, gps.status === "ready" && gps.position ? gps.position : anchors.tee);
+  const green = geoToLocalMeters(anchors.tee, anchors.green);
+  const vector = { x: green.x - tee.x, y: green.y - tee.y };
+  const lengthSquared = Math.max(1, vector.x * vector.x + vector.y * vector.y);
+  return points
+    .filter((point) => point && typeof point.lat === "number" && typeof point.lng === "number")
+    .map((point) => {
+      const candidate = geoToLocalMeters(anchors.tee, point);
+      const progress = ((candidate.x - tee.x) * vector.x + (candidate.y - tee.y) * vector.y) / lengthSquared;
+      return { point, progress };
+    })
+    .filter((item) => item.progress > -0.08 && item.progress < 1.08)
+    .sort((a, b) => a.progress - b.progress)
+    .map((item) => item.point)
+    .slice(0, 4);
+}
+
+function azureGeoToTargetPoint(anchors, position, marker = photoTargetMarkers(4), panelRatio = SATELLITE_PANEL_RATIO) {
   if (!anchors?.tee || !anchors?.green || !position) {
     return null;
   }
@@ -2497,7 +2014,7 @@ function arcgisGeoToTargetPoint(anchors, position, marker = photoTargetMarkers(4
   };
 }
 
-function arcgisTargetPointToGeo(anchors, point, marker = photoTargetMarkers(4), panelRatio = SATELLITE_PANEL_RATIO) {
+function azureTargetPointToGeo(anchors, point, marker = photoTargetMarkers(4), panelRatio = SATELLITE_PANEL_RATIO) {
   if (!anchors?.tee || !anchors?.green || !point) {
     return null;
   }
@@ -2533,14 +2050,14 @@ function normalizedSatelliteRatio(value) {
   return Number.isFinite(ratio) && ratio > 0 ? clamp(ratio, 0.45, 3.1) : SATELLITE_PANEL_RATIO;
 }
 
-function clearArcgisShotPlan(courseId, holeNumber) {
-  const key = arcgisShotPlanKey(courseId, holeNumber);
-  if (!key || !arcgisShotPlans[key]) {
+function clearAzureShotPlan(courseId, holeNumber) {
+  const key = azureShotPlanKey(courseId, holeNumber);
+  if (!key || !azureShotPlans[key]) {
     return;
   }
-  const next = { ...arcgisShotPlans };
+  const next = { ...azureShotPlans };
   delete next[key];
-  arcgisShotPlans = next;
+  azureShotPlans = next;
   render();
 }
 
@@ -2591,7 +2108,6 @@ function applySatelliteAnchorEditToHole(courseId, holeNumber) {
     source: "PinScope satellite alignment",
     updatedAt: new Date().toISOString()
   });
-  delete hole["snap" + "shot"];
   saveState(state);
   return true;
 }
@@ -3200,6 +2716,8 @@ function renderRealisticHoleVisual(hole) {
         ${renderPolylines(features.paths, "real-path")}
         ${renderPolygons(features.tees, "real-tee-box")}
         ${renderPolygons(features.bunkers, "real-bunker")}
+        ${renderPolygons(features.greens, "real-green")}
+        ${renderGreenStripes(features.greens)}
         <circle class="real-tee-pin" cx="${tee[0]}" cy="${tee[1]}" r="2.2"></circle>
         <circle class="real-flag" cx="${green[0]}" cy="${green[1]}" r="2.4"></circle>
         <text class="map-hole-number" x="7" y="14">H${hole.number}</text>
@@ -3231,6 +2749,22 @@ function renderFairwayStripes(polygons = []) {
       const stripes = [];
       for (let x = box.minX; x <= box.maxX; x += 7) {
         stripes.push(`<line class="fairway-stripe" x1="${x.toFixed(1)}" y1="${box.minY.toFixed(1)}" x2="${(x + 13).toFixed(1)}" y2="${box.maxY.toFixed(1)}"></line>`);
+      }
+      return stripes.join("");
+    })
+    .join("");
+}
+
+function renderGreenStripes(polygons = []) {
+  return polygons
+    .map((polygon) => {
+      const box = boundsOf(polygon);
+      if (!box) {
+        return "";
+      }
+      const stripes = [];
+      for (let x = box.minX; x <= box.maxX; x += 4) {
+        stripes.push(`<line class="green-stripe" x1="${x.toFixed(1)}" y1="${box.minY.toFixed(1)}" x2="${(x + 8).toFixed(1)}" y2="${box.maxY.toFixed(1)}"></line>`);
       }
       return stripes.join("");
     })
@@ -3298,7 +2832,7 @@ function renderVerificationPanel(course) {
     <section class="verification-panel">
       <div>
         <p class="eyebrow">Verified Pack</p>
-        <h3>${escapeHtml(courseDisplayName(course))}</h3>
+        <h3>${escapeHtml(course.name)}</h3>
         <p>${escapeHtml(course.verification.confidence)}</p>
       </div>
     </section>
@@ -3367,586 +2901,21 @@ function toggleButton(field, value, label, activeValue, holeNumber, playerId = "
 }
 
 function renderStats() {
-  const completed = completedRoundSummaries();
-  const filteredRounds = filteredStatRounds(completed);
-  const summary = buildGameStats(filteredRounds);
+  const summary = statSummary(state.rounds, state.courses);
+  const completed = state.rounds.filter((round) => round.status === "complete").slice().reverse();
   return `
-    <section class="stats-hero">
-      <div>
-        <p class="eyebrow">Form Check</p>
-        <h2>${statsFilterLabel()}</h2>
-        <p>${summary.rounds ? `${summary.rounds} scored ${summary.rounds === 1 ? "round" : "rounds"} feeding this view` : "Finish a round to unlock your game picture."}</p>
-      </div>
-      ${renderStatsFilter()}
-    </section>
-
     <section class="stats-grid">
+      ${statTile("Rounds", summary.rounds)}
       ${statTile("Avg score", summary.averageScore ? summary.averageScore.toFixed(1) : "-")}
-      ${statTile("Avg to par", summary.averageToPar !== null ? formatSignedDecimal(summary.averageToPar) : "-")}
-      ${statTile("Best round", summary.bestRound ? `${summary.bestRound.totals.score} (${formatToPar(summary.bestRound.totals.toPar)})` : "-")}
-      ${statTile("Fairways", summary.fairwayPct !== null ? `${Math.round(summary.fairwayPct)}%` : "-")}
-      ${statTile("GIR", summary.girPct !== null ? `${Math.round(summary.girPct)}%` : "-")}
+      ${statTile("Fairways", summary.fairwayPct ? `${Math.round(summary.fairwayPct)}%` : "-")}
+      ${statTile("GIR", summary.girPct ? `${Math.round(summary.girPct)}%` : "-")}
       ${statTile("Putts / hole", summary.puttsPerHole ? summary.puttsPerHole.toFixed(1) : "-")}
     </section>
-
-    ${renderRecentForm(summary)}
-    ${renderGameInsights(summary)}
-    ${renderScoringBreakdown(summary)}
-    ${renderParSplit(summary)}
-    ${renderCoursePerformance(summary)}
-    ${renderHardestHoles(summary)}
-
     <section class="round-list">
-      <div class="panel-heading">
-        <div>
-          <p class="eyebrow">History</p>
-          <h2>Rounds played</h2>
-        </div>
-      </div>
-      ${filteredRounds.length ? filteredRounds.map(({ round, course }) => renderRoundRow(round, course)).join("") : `<p class="empty-copy">Finished rounds will appear here.</p>`}
+      <h2>Rounds</h2>
+      ${completed.length ? completed.map(renderRoundRow).join("") : `<p class="empty-copy">Finished rounds will appear here.</p>`}
     </section>
   `;
-}
-
-function renderStatsFilter() {
-  const options = [
-    ["all", "All"],
-    ["last5", "Last 5"],
-    ["last10", "Last 10"]
-  ];
-  return `
-    <div class="stats-filter" role="group" aria-label="Stats range">
-      ${options.map(([value, label]) => `
-        <button class="${statsFilter === value ? "active" : ""}" type="button" data-action="stats-filter" data-filter="${value}">${label}</button>
-      `).join("")}
-    </div>
-  `;
-}
-
-function statsFilterLabel() {
-  if (statsFilter === "last5") {
-    return "Last 5 rounds";
-  }
-  if (statsFilter === "last10") {
-    return "Last 10 rounds";
-  }
-  return "All-time game stats";
-}
-
-function completedRoundSummaries() {
-  return state.rounds
-    .filter((round) => round.status === "complete")
-    .map((round) => {
-      const course = getCourse(state, round.courseId);
-      if (!course) {
-        return null;
-      }
-      const players = getRoundPlayers(round);
-      const playerId = players[0]?.id || "player-1";
-      return {
-        round,
-        course,
-        playerId,
-        totals: roundTotals(round, course, playerId),
-        playedAt: Date.parse(round.completedAt || round.startedAt || "") || 0
-      };
-    })
-    .filter(Boolean)
-    .sort((a, b) => b.playedAt - a.playedAt);
-}
-
-function filteredStatRounds(rounds) {
-  if (statsFilter === "last5") {
-    return rounds.slice(0, 5);
-  }
-  if (statsFilter === "last10") {
-    return rounds.slice(0, 10);
-  }
-  return rounds;
-}
-
-function buildGameStats(rounds) {
-  const holes = rounds.flatMap((summary) => statHoleRows(summary));
-  const totalScore = rounds.reduce((sum, item) => sum + item.totals.score, 0);
-  const totalToPar = rounds.reduce((sum, item) => sum + item.totals.toPar, 0);
-  const putts = holes.reduce((sum, item) => sum + item.putts, 0);
-  const penalties = holes.reduce((sum, item) => sum + item.penalties, 0);
-  const fairways = holes.filter((item) => item.par > 3 && item.fairway !== "unset");
-  const greens = holes.filter((item) => typeof item.gir === "boolean");
-  const bestRound = rounds.length ? rounds.reduce((best, item) => item.totals.toPar < best.totals.toPar ? item : best, rounds[0]) : null;
-  const scoringCounts = scoringDistribution(holes);
-  return {
-    rounds: rounds.length,
-    holes,
-    averageScore: rounds.length ? totalScore / rounds.length : 0,
-    averageToPar: rounds.length ? totalToPar / rounds.length : null,
-    bestRound,
-    fairwayPct: fairways.length ? (fairways.filter((item) => item.fairway === "hit").length / fairways.length) * 100 : null,
-    girPct: greens.length ? (greens.filter((item) => item.gir).length / greens.length) * 100 : null,
-    puttsPerHole: holes.length ? putts / holes.length : 0,
-    penaltiesPerRound: rounds.length ? penalties / rounds.length : 0,
-    scoringCounts,
-    parSplits: parSplits(holes),
-    recentRounds: rounds.slice(0, 6).slice().reverse(),
-    coursePerformance: coursePerformance(rounds),
-    hardestHoles: hardestHoles(holes),
-    insights: gameInsights(rounds, holes)
-  };
-}
-
-function statHoleRows(summary) {
-  return summary.course.holes.map((hole) => {
-    const entry = getPlayerEntry(summary.round, hole.number, summary.playerId);
-    if (!entry || entry.scoreEntered !== true) {
-      return null;
-    }
-    const score = Number(entry.score || 0);
-    const par = Number(hole.par || 0);
-    if (!Number.isFinite(score) || score <= 0 || !Number.isFinite(par) || par <= 0) {
-      return null;
-    }
-    return {
-      courseId: summary.course.id,
-      courseName: courseDisplayName(summary.course),
-      holeNumber: hole.number,
-      par,
-      score,
-      toPar: score - par,
-      putts: Number(entry.putts || 0),
-      penalties: Number(entry.penalties || 0),
-      fairway: entry.fairway || "unset",
-      gir: Boolean(entry.gir)
-    };
-  }).filter(Boolean);
-}
-
-function scoringDistribution(holes) {
-  return holes.reduce((counts, hole) => {
-    if (hole.toPar <= -1) {
-      counts.birdie += 1;
-    } else if (hole.toPar === 0) {
-      counts.par += 1;
-    } else if (hole.toPar === 1) {
-      counts.bogey += 1;
-    } else {
-      counts.double += 1;
-    }
-    return counts;
-  }, { birdie: 0, par: 0, bogey: 0, double: 0 });
-}
-
-function parSplits(holes) {
-  return [3, 4, 5].map((par) => {
-    const rows = holes.filter((hole) => hole.par === par);
-    const totalScore = rows.reduce((sum, hole) => sum + hole.score, 0);
-    const totalToPar = rows.reduce((sum, hole) => sum + hole.toPar, 0);
-    return {
-      par,
-      holes: rows.length,
-      averageScore: rows.length ? totalScore / rows.length : 0,
-      averageToPar: rows.length ? totalToPar / rows.length : 0
-    };
-  });
-}
-
-function coursePerformance(rounds) {
-  const groups = new Map();
-  rounds.forEach((item) => {
-    const key = item.course.venueId || item.course.id;
-    const current = groups.get(key) || {
-      course: item.course,
-      rounds: 0,
-      score: 0,
-      toPar: 0,
-      best: item.totals
-    };
-    current.rounds += 1;
-    current.score += item.totals.score;
-    current.toPar += item.totals.toPar;
-    if (item.totals.toPar < current.best.toPar) {
-      current.best = item.totals;
-    }
-    groups.set(key, current);
-  });
-  return Array.from(groups.values())
-    .map((item) => ({
-      ...item,
-      averageScore: item.score / item.rounds,
-      averageToPar: item.toPar / item.rounds
-    }))
-    .sort((a, b) => b.rounds - a.rounds || a.averageToPar - b.averageToPar);
-}
-
-function hardestHoles(holes) {
-  const groups = new Map();
-  holes.forEach((hole) => {
-    const key = `${hole.courseId}-${hole.holeNumber}`;
-    const current = groups.get(key) || {
-      courseName: hole.courseName,
-      holeNumber: hole.holeNumber,
-      par: hole.par,
-      played: 0,
-      toPar: 0,
-      putts: 0,
-      penalties: 0
-    };
-    current.played += 1;
-    current.toPar += hole.toPar;
-    current.putts += hole.putts;
-    current.penalties += hole.penalties;
-    groups.set(key, current);
-  });
-  return Array.from(groups.values())
-    .filter((item) => item.played > 0)
-    .map((item) => ({
-      ...item,
-      averageToPar: item.toPar / item.played,
-      averagePutts: item.putts / item.played
-    }))
-    .sort((a, b) => b.averageToPar - a.averageToPar)
-    .slice(0, 3);
-}
-
-function gameInsights(rounds, holes) {
-  if (!rounds.length) {
-    return [];
-  }
-  const insights = [];
-  const fairways = holes.filter((item) => item.par > 3 && item.fairway !== "unset");
-  const fairwayPct = fairways.length ? (fairways.filter((item) => item.fairway === "hit").length / fairways.length) * 100 : null;
-  const girPct = holes.length ? pct(holes.filter((item) => item.gir).length, holes.length) : null;
-  const puttsPerHole = holes.length ? holes.reduce((sum, item) => sum + item.putts, 0) / holes.length : null;
-  const penaltiesPerRound = rounds.length ? holes.reduce((sum, item) => sum + item.penalties, 0) / rounds.length : null;
-  const doubleRate = holes.length ? pct(holes.filter((item) => item.toPar >= 2).length, holes.length) : null;
-  const threePuttRate = holes.length ? pct(holes.filter((item) => item.putts >= 3).length, holes.length) : null;
-  const parOrBetterRate = holes.length ? pct(holes.filter((item) => item.toPar <= 0).length, holes.length) : null;
-  const parSplitMinimum = Math.min(4, Math.max(2, Math.ceil(holes.length * 0.2)));
-  const parSplitLeak = parSplits(holes)
-    .filter((item) => item.holes >= parSplitMinimum)
-    .sort((a, b) => b.averageToPar - a.averageToPar)[0] || null;
-  const missSide = fairwayMissSide(fairways);
-  const trend = roundTrend(rounds);
-
-  if (trend) {
-    insights.push(trend);
-  }
-  if (doubleRate !== null && doubleRate >= 18) {
-    insights.push({
-      label: "Leak",
-      title: "Big numbers are the main damage",
-      value: `${Math.round(doubleRate)}% double+`,
-      copy: `${holes.filter((item) => item.toPar >= 2).length} of ${holes.length} holes are double bogey or worse. Play for the boring miss until that drops.`,
-      score: 95 + doubleRate
-    });
-  }
-  if (penaltiesPerRound !== null && penaltiesPerRound >= 0.8) {
-    insights.push({
-      label: "Penalty",
-      title: "Penalty shots are leaking score",
-      value: `${penaltiesPerRound.toFixed(1)} / round`,
-      copy: `That is about ${penaltiesPerRound.toFixed(1)} strokes before putting starts. Pick the safer target when trouble is in play.`,
-      score: 90 + penaltiesPerRound * 10
-    });
-  }
-  if (threePuttRate !== null && threePuttRate >= 18) {
-    insights.push({
-      label: "Putting",
-      title: "Three-putts are showing up",
-      value: `${Math.round(threePuttRate)}% 3-putt`,
-      copy: `${holes.filter((item) => item.putts >= 3).length} holes needed three or more putts. Lag speed is the quickest practice win here.`,
-      score: 82 + threePuttRate
-    });
-  }
-  if (puttsPerHole !== null && puttsPerHole >= 2.05) {
-    insights.push({
-      label: "Putting",
-      title: "Putting volume is high",
-      value: `${puttsPerHole.toFixed(1)} / hole`,
-      copy: "If first putts are long, this is approach distance. If they are short, it is make-rate practice.",
-      score: 72 + puttsPerHole * 10
-    });
-  }
-  if (girPct !== null && girPct < 35 && holes.length >= 9) {
-    insights.push({
-      label: "Approach",
-      title: "Approaches are not finding enough greens",
-      value: `${Math.round(girPct)}% GIR`,
-      copy: `${holes.filter((item) => item.gir).length} greens in regulation from ${holes.length} holes. Club for the middle more often than the pin.`,
-      score: 70 + (35 - girPct)
-    });
-  }
-  if (fairwayPct !== null && fairwayPct < 45 && fairways.length >= 5) {
-    insights.push({
-      label: missSide ? "Tee bias" : "Tee",
-      title: "Fairways are under pressure",
-      value: `${Math.round(fairwayPct)}% hit`,
-      copy: missSide
-        ? `${missSide.label} is the common miss (${missSide.count} of ${missSide.total} recorded misses). Aim and club choice should protect that side.`
-        : "A safer tee club may be worth testing on tighter holes.",
-      score: 68 + (45 - fairwayPct)
-    });
-  }
-  if (parSplitLeak && parSplitLeak.averageToPar >= 1) {
-    insights.push({
-      label: `Par ${parSplitLeak.par}`,
-      title: `Par ${parSplitLeak.par}s are costing the most`,
-      value: `${formatSignedDecimal(parSplitLeak.averageToPar)} / hole`,
-      copy: `${parSplitLeak.holes} played in this sample. Build the strategy around leaving your next shot in a comfortable yardage.`,
-      score: 66 + parSplitLeak.averageToPar * 12
-    });
-  }
-  if (parOrBetterRate !== null && parOrBetterRate >= 45) {
-    insights.push({
-      label: "Strength",
-      title: "You are giving yourself enough chances",
-      value: `${Math.round(parOrBetterRate)}% par+`,
-      copy: "Keep protecting the blow-up holes; the scoring base is already there.",
-      score: 50 + parOrBetterRate / 2
-    });
-  }
-  if (!insights.length && holes.length) {
-    insights.push({
-      label: "Baseline",
-      title: "The sample is building",
-      value: `${holes.length} holes`,
-      copy: "No single leak dominates yet. A few more rounds will make the pattern sharper.",
-      score: 1
-    });
-  }
-  return insights
-    .sort((a, b) => (b.score || 0) - (a.score || 0))
-    .slice(0, 3)
-    .map(({ score, ...item }) => item);
-}
-
-function roundTrend(rounds) {
-  if (rounds.length < 4) {
-    return null;
-  }
-  const recent = rounds.slice(0, 3);
-  const previous = rounds.slice(3, 6);
-  if (!previous.length) {
-    return null;
-  }
-  const recentAverage = average(recent.map(normalizedRoundToPar));
-  const previousAverage = average(previous.map(normalizedRoundToPar));
-  const change = recentAverage - previousAverage;
-  return {
-    label: change <= 0 ? "Trend" : "Watch",
-    title: change <= 0 ? "Recent form is improving" : "Recent form has drifted",
-    value: `${formatSignedDecimal(change)} / 18`,
-    copy: change <= 0
-      ? `Last ${recent.length} rounds are better than the prior ${previous.length} after normalizing for round length.`
-      : `Last ${recent.length} rounds are higher than the prior ${previous.length}; check penalties, doubles, and three-putts first.`,
-    score: 88 + Math.abs(change)
-  };
-}
-
-function normalizedRoundToPar(summary) {
-  const holes = Math.max(1, Number(summary.totals.completedHoles || summary.course.holes?.length || 18));
-  return (summary.totals.toPar / holes) * 18;
-}
-
-function fairwayMissSide(fairways) {
-  const misses = fairways.filter((item) => item.fairway === "left" || item.fairway === "right");
-  if (misses.length < 3) {
-    return null;
-  }
-  const left = misses.filter((item) => item.fairway === "left").length;
-  const right = misses.length - left;
-  const count = Math.max(left, right);
-  if (count / misses.length < 0.6) {
-    return null;
-  }
-  return {
-    label: left > right ? "Left miss" : "Right miss",
-    count,
-    total: misses.length
-  };
-}
-
-function average(values) {
-  const finite = values.filter((value) => Number.isFinite(value));
-  return finite.length ? finite.reduce((sum, value) => sum + value, 0) / finite.length : 0;
-}
-
-function pct(value, total) {
-  return total ? (value / total) * 100 : 0;
-}
-
-function renderRecentForm(summary) {
-  if (!summary.recentRounds.length) {
-    return "";
-  }
-  const values = summary.recentRounds.map((item) => item.totals.toPar);
-  const max = Math.max(4, ...values.map((value) => Math.abs(value)));
-  return `
-    <section class="stats-panel">
-      <div class="panel-heading">
-        <div>
-          <p class="eyebrow">Trend</p>
-          <h2>Recent form</h2>
-        </div>
-      </div>
-      <div class="form-chart">
-        ${summary.recentRounds.map((item) => {
-          const height = 26 + (Math.abs(item.totals.toPar) / max) * 74;
-          return `
-            <div class="form-bar ${item.totals.toPar <= 0 ? "good" : ""}">
-              <span style="height:${height.toFixed(1)}%"></span>
-              <strong>${formatToPar(item.totals.toPar)}</strong>
-              <em>${formatShortDate(item.round.completedAt || item.round.startedAt)}</em>
-            </div>
-          `;
-        }).join("")}
-      </div>
-    </section>
-  `;
-}
-
-function renderGameInsights(summary) {
-  return `
-    <section class="stats-panel">
-      <div class="panel-heading">
-        <div>
-          <p class="eyebrow">Read</p>
-          <h2>Game insights</h2>
-        </div>
-      </div>
-      <div class="insight-grid">
-        ${summary.insights.length ? summary.insights.map((item) => `
-          <article class="insight-card">
-            <span>${escapeHtml(item.label)}</span>
-            <strong>${escapeHtml(item.value)}</strong>
-            <h3>${escapeHtml(item.title)}</h3>
-            <p>${escapeHtml(item.copy)}</p>
-          </article>
-        `).join("") : `<p class="empty-copy">Add a few scored rounds and PinScope will start calling out patterns.</p>`}
-      </div>
-    </section>
-  `;
-}
-
-function renderScoringBreakdown(summary) {
-  const total = Object.values(summary.scoringCounts).reduce((sum, value) => sum + value, 0);
-  if (!total) {
-    return "";
-  }
-  const items = [
-    ["Birdie+", summary.scoringCounts.birdie],
-    ["Par", summary.scoringCounts.par],
-    ["Bogey", summary.scoringCounts.bogey],
-    ["Double+", summary.scoringCounts.double]
-  ];
-  return `
-    <section class="stats-panel">
-      <div class="panel-heading">
-        <div>
-          <p class="eyebrow">Scoring</p>
-          <h2>Hole outcomes</h2>
-        </div>
-      </div>
-      <div class="outcome-list">
-        ${items.map(([label, value]) => `
-          <div>
-            <span>${label}</span>
-            <strong>${value}</strong>
-            <em style="width:${((value / total) * 100).toFixed(1)}%"></em>
-          </div>
-        `).join("")}
-      </div>
-    </section>
-  `;
-}
-
-function renderParSplit(summary) {
-  if (!summary.holes.length) {
-    return "";
-  }
-  return `
-    <section class="stats-panel">
-      <div class="panel-heading">
-        <div>
-          <p class="eyebrow">Shape</p>
-          <h2>Par 3 / 4 / 5 scoring</h2>
-        </div>
-      </div>
-      <div class="par-split-grid">
-        ${summary.parSplits.map((item) => `
-          <article>
-            <span>Par ${item.par}</span>
-            <strong>${item.holes ? item.averageScore.toFixed(2) : "-"}</strong>
-            <em>${item.holes ? `${formatSignedDecimal(item.averageToPar)} avg` : "No holes"}</em>
-          </article>
-        `).join("")}
-      </div>
-    </section>
-  `;
-}
-
-function renderCoursePerformance(summary) {
-  if (!summary.coursePerformance.length) {
-    return "";
-  }
-  return `
-    <section class="stats-panel">
-      <div class="panel-heading">
-        <div>
-          <p class="eyebrow">Courses</p>
-          <h2>Course form</h2>
-        </div>
-      </div>
-      <div class="course-stat-list">
-        ${summary.coursePerformance.map((item) => `
-          <article>
-            <div>
-              <h3>${escapeHtml(courseDisplayName(item.course))}</h3>
-              <p>${item.rounds} ${item.rounds === 1 ? "round" : "rounds"} - best ${item.best.score} (${formatToPar(item.best.toPar)})</p>
-            </div>
-            <strong>${item.averageScore.toFixed(1)}</strong>
-            <span>${formatSignedDecimal(item.averageToPar)}</span>
-          </article>
-        `).join("")}
-      </div>
-    </section>
-  `;
-}
-
-function renderHardestHoles(summary) {
-  if (!summary.hardestHoles.length) {
-    return "";
-  }
-  return `
-    <section class="stats-panel">
-      <div class="panel-heading">
-        <div>
-          <p class="eyebrow">Leaks</p>
-          <h2>Hardest holes</h2>
-        </div>
-      </div>
-      <div class="hard-hole-list">
-        ${summary.hardestHoles.map((item) => `
-          <article>
-            <div>
-              <h3>${escapeHtml(item.courseName)} - ${item.holeNumber}</h3>
-              <p>Par ${item.par} - ${item.played} played - ${item.averagePutts.toFixed(1)} putts</p>
-            </div>
-            <strong>${formatSignedDecimal(item.averageToPar)}</strong>
-          </article>
-        `).join("")}
-      </div>
-    </section>
-  `;
-}
-
-function formatSignedDecimal(value) {
-  if (!Number.isFinite(value)) {
-    return "-";
-  }
-  if (Math.abs(value) < 0.05) {
-    return "E";
-  }
-  return value > 0 ? `+${value.toFixed(1)}` : value.toFixed(1);
 }
 
 function statTile(label, value) {
@@ -3958,242 +2927,76 @@ function statTile(label, value) {
   `;
 }
 
-function renderRoundRow(round, providedCourse = null) {
-  const course = providedCourse || getCourse(state, round.courseId);
+function renderRoundRow(round) {
+  const course = getCourse(state, round.courseId);
   if (!course) {
     return "";
   }
   const players = getRoundPlayers(round);
   const date = new Date(round.completedAt || round.startedAt).toLocaleDateString();
-  const leadTotals = roundTotals(round, course, players[0]?.id);
-  const shotHoleCount = roundTrackedShotHoles(round, course).length;
   return `
-    <article class="round-row previous-round-card">
-      <details data-previous-round-id="${escapeAttribute(round.id)}" ${previousRoundOpenIds.has(round.id) ? "open" : ""}>
-        <summary>
-          <span>
-            <strong>${escapeHtml(courseDisplayName(course))}</strong>
-            <small>${date} - ${players.length} player${players.length === 1 ? "" : "s"}${shotHoleCount ? ` - tracked shots on ${shotHoleCount} hole${shotHoleCount === 1 ? "" : "s"}` : ""}</small>
-          </span>
-          <em>${leadTotals.score} (${formatToPar(leadTotals.toPar)})</em>
-        </summary>
-        <div class="previous-round-detail">
-          <div class="previous-round-scoreline">
-            ${players.map((player) => {
-              const totals = roundTotals(round, course, player.id);
-              return `<span>${escapeHtml(player.name)} <strong>${totals.score}</strong> <em>${formatToPar(totals.toPar)}</em></span>`;
-            }).join("")}
-          </div>
-          ${renderPreviousRoundScorecard(round, course)}
-          ${renderRoundShotMaps(round, course)}
-        </div>
-      </details>
+    <article class="round-row">
+      <div>
+        <h3>${escapeHtml(course.name)}</h3>
+        <p>${date} - ${players.map((player) => {
+          const totals = roundTotals(round, course, player.id);
+          return `${escapeHtml(player.name)} ${totals.score} (${formatToPar(totals.toPar)})`;
+        }).join(" - ")}</p>
+      </div>
+      ${renderRoundShotLog(round)}
     </article>
   `;
 }
 
-function renderPreviousRoundScorecard(round, course) {
-  const holes = course.holes || [];
-  const front = holes.slice(0, 9);
-  const back = holes.slice(9, 18);
-  const players = getRoundPlayers(round);
-  const usedTeeIds = Array.from(new Set(players.map((player) => player.teeId || round.teeId || course.tees?.[0]?.id).filter(Boolean)));
-  const usedTees = usedTeeIds
-    .map((teeId) => (course.tees || []).find((tee) => tee.id === teeId) || { id: teeId, name: teeId, color: "#f8f7f1" })
-    .filter(Boolean);
-  return `
-    <div class="previous-scorecard-scroll" data-scorecard-scroll-key="previous-${escapeAttribute(round.id)}" aria-label="Previous round scorecard">
-      <table class="round-scorecard-table previous-scorecard-table">
-        <thead>
-          <tr>
-            <th>TEES</th>
-            ${front.map((hole) => `<th>${hole.number}</th>`).join("")}
-            <th>OUT</th>
-            <th class="initials-cell">INITIALS</th>
-            ${back.map((hole) => `<th>${hole.number}</th>`).join("")}
-            <th>IN</th>
-            <th>TOTAL</th>
-            <th>HCP</th>
-            <th>NET</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${usedTees.map((tee) => renderRoundScorecardTeeRow(tee, front, back)).join("")}
-          ${renderRoundScorecardInfoRow("SI", front, back, (hole) => hole.strokeIndex || "-")}
-          ${renderRoundScorecardInfoRow("PAR", front, back, (hole) => hole.par || "-", true)}
-          ${players.map((player) => renderRoundScorecardPlayerRow(round, course, player, front, back)).join("")}
-        </tbody>
-      </table>
-    </div>
-  `;
-}
-
-function roundTrackedShotHoles(round, course) {
+function renderRoundShotLog(round) {
   const holes = (round.entries || [])
     .map((entry) => ({
       holeNumber: entry.holeNumber,
-      hole: (course?.holes || []).find((hole) => Number(hole.number) === Number(entry.holeNumber)),
-      shots: trackedShots(entry).filter((shot) => validGeoPointLike(shot.start) && validGeoPointLike(shot.end))
+      shots: trackedShots(entry)
     }))
-    .filter((entry) => entry.hole && entry.shots.length);
-  return holes;
-}
-
-function renderRoundShotMaps(round, course) {
-  const holes = roundTrackedShotHoles(round, course);
+    .filter((entry) => entry.shots.length);
   if (!holes.length) {
-    return `<p class="empty-copy">No tracked shots saved for this round.</p>`;
+    return "";
   }
   return `
-    <div class="round-shot-gallery">
+    <div class="round-shot-log">
       ${holes.map((entry) => `
         <details>
-          <summary>Hole ${entry.holeNumber} - ${entry.shots.length} tracked shot${entry.shots.length === 1 ? "" : "s"}</summary>
-          ${renderRoundShotMap(course, entry.hole, entry.shots)}
-          ${renderRoundShotList(entry.shots)}
+          <summary>Hole ${entry.holeNumber} - ${entry.shots.length} shot${entry.shots.length === 1 ? "" : "s"}</summary>
+          <div class="round-shot-list">
+            ${entry.shots.map((shot) => `
+              <div>
+                <strong>Shot ${shot.number}</strong>
+                <span>${Number.isFinite(Number(shot.yards)) ? Number(shot.yards) : "-"} yd</span>
+                ${shot.end ? `<small>${formatShotLanding(shot.end)}</small>` : ""}
+              </div>
+            `).join("")}
+          </div>
         </details>
       `).join("")}
     </div>
   `;
 }
 
-function renderRoundShotList(shots) {
-  return `
-    <div class="round-shot-list">
-      ${shots.map((shot) => `
-        <div>
-          <strong>Shot ${shot.number}</strong>
-          <span>${Number.isFinite(Number(shot.yards)) ? Number(shot.yards) : "-"} yd</span>
-          ${shot.end ? `<small>${formatShotLanding(shot.end)}</small>` : ""}
-        </div>
-      `).join("")}
-    </div>
-  `;
-}
-
-function renderRoundShotMap(course, hole, shots) {
-  const anchors = arcgisHoleAnchors(hole, course);
-  const marker = photoTargetMarkers(hole.par);
-  const panelRatio = satellitePanelRatio();
-  const mapped = shots
-    .map((shot) => {
-      const start = anchors ? arcgisGeoToTargetPoint(anchors, shot.start, marker, panelRatio) : null;
-      const end = anchors ? arcgisGeoToTargetPoint(anchors, shot.end, marker, panelRatio) : null;
-      return start && end ? { shot, start, end } : null;
-    })
-    .filter(Boolean);
-
-  if (!mapped.length) {
-    return `<p class="empty-copy">Tracked shots were saved, but this hole does not have enough map data to draw them.</p>`;
-  }
-
-  const tee = anchors ? arcgisGeoToTargetPoint(anchors, anchors.tee, marker, panelRatio) : null;
-  const green = anchors ? arcgisGeoToTargetPoint(anchors, anchors.green, marker, panelRatio) : null;
-  const gradientId = `previous-shot-gradient-${course.id}-${hole.number}`.replace(/[^a-zA-Z0-9_-]/g, "-");
-  return `
-    <div class="previous-shot-map" style="--satellite-panel-ratio:${panelRatio};">
-      <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-label="Tracked shot map for hole ${hole.number}">
-        <defs>
-          <linearGradient id="${gradientId}" x1="0" y1="1" x2="0" y2="0">
-            <stop offset="0%" stop-color="#35f0c1"></stop>
-            <stop offset="100%" stop-color="#ff4fd8"></stop>
-          </linearGradient>
-        </defs>
-        ${tee ? `<circle class="previous-shot-tee" cx="${tee.x}" cy="${tee.y}" r="1.7"></circle>` : ""}
-        ${green ? `<circle class="previous-shot-green" cx="${green.x}" cy="${green.y}" r="2.2"></circle>` : ""}
-        ${mapped.map(({ shot, start, end }) => `
-          <line class="tracked-shot-route" x1="${start.x}" y1="${start.y}" x2="${end.x}" y2="${end.y}" stroke="url(#${gradientId})"></line>
-          <circle class="tracked-shot-landing" cx="${end.x}" cy="${end.y}" r="1.7"></circle>
-          <text class="tracked-shot-label" x="${clamp(end.x + 2, 4, 94)}" y="${clamp(end.y - 2, 6, 96)}">${shot.number}</text>
-        `).join("")}
-      </svg>
-    </div>
-  `;
-}
-
-function validGeoPointLike(point) {
-  return Boolean(
-    point &&
-      Number.isFinite(Number(point.lat)) &&
-      Number.isFinite(Number(point.lng)) &&
-      Math.abs(Number(point.lat)) <= 90 &&
-      Math.abs(Number(point.lng)) <= 180
-  );
-}
-
 function formatShotLanding(point) {
-  if (!validGeoPointLike(point)) {
+  if (!point || typeof point.lat !== "number" || typeof point.lng !== "number") {
     return "";
   }
-  return `${Number(point.lat).toFixed(6)}, ${Number(point.lng).toFixed(6)}`;
+  return `${point.lat.toFixed(6)}, ${point.lng.toFixed(6)}`;
 }
 
 function renderBag() {
-  const bag = activeBag();
-  const bags = Array.isArray(state.bags) && state.bags.length ? state.bags : [];
-  const clubs = bag?.clubs || [];
-  const longest = clubs.reduce((best, club) => Number(club.carryYards || 0) > Number(best?.carryYards || 0) ? club : best, null);
   return `
-    <section class="bag-hero">
-      <div>
-        <p class="eyebrow">Active Loadout</p>
-        <h2>${escapeHtml(bag?.name || "My Bag")}</h2>
-        <p>${clubs.length} clubs tuned for recommendations${longest ? ` - longest ${escapeHtml(longest.name)} at ${Number(longest.carryYards)} yd` : ""}</p>
-      </div>
-      <div class="bag-hero-spots" aria-hidden="true"></div>
-    </section>
-
-    <section class="bag-switcher" aria-label="Golf bags">
-      ${bags.map((item) => {
-        const active = item.id === bag?.id;
-        const clubCount = Array.isArray(item.clubs) ? item.clubs.length : 0;
-        return `
-          <button class="bag-switch ${active ? "active" : ""}" type="button" data-action="set-active-bag" data-bag-id="${escapeAttribute(item.id)}" aria-pressed="${active ? "true" : "false"}">
-            <span>${active ? "Active" : "Bag"}</span>
-            <strong>${escapeHtml(item.name)}</strong>
-            <small>${clubCount} club${clubCount === 1 ? "" : "s"}</small>
-          </button>
-        `;
-      }).join("")}
-      <button class="bag-switch add" type="button" data-action="add-bag">
-        <span>New</span>
-        <strong>Add Bag</strong>
-        <small>Copy current setup</small>
-      </button>
-    </section>
-
-    <section class="tool-panel open-panel bag-editor">
-      <div class="bag-editor-head">
-        <div>
-          <p class="eyebrow">Club Matrix</p>
-          <h2>Name and Yardage</h2>
-        </div>
-      </div>
+    <section class="tool-panel open-panel">
+      <h2>Club Yardages</h2>
       <form data-form="bag" class="bag-list">
-        <label class="bag-name-field">
-          <span>Bag name</span>
-          <input name="bagName" type="text" maxlength="32" value="${escapeAttribute(bag?.name || "")}" placeholder="Bag name" required />
-        </label>
-        <div class="club-table" role="list">
-          ${clubs.map((club) => `
-            <div class="club-row" role="listitem">
-              <label>
-                <span>Club</span>
-                <input name="clubName-${escapeAttribute(club.id)}" type="text" maxlength="28" value="${escapeAttribute(club.name)}" placeholder="Club name" required />
-              </label>
-              <label>
-                <span>Carry</span>
-                <input name="clubYards-${escapeAttribute(club.id)}" type="number" min="0" max="400" step="1" value="${Number(club.carryYards || 0)}" inputmode="numeric" />
-              </label>
-              <button class="club-remove" type="button" data-action="remove-club" data-club-id="${escapeAttribute(club.id)}" aria-label="Remove ${escapeAttribute(club.name)}">x</button>
-            </div>
-          `).join("")}
-        </div>
-        <button class="add-club-row" type="button" data-action="add-club">
-          <span>+</span>
-          <strong>Add Club</strong>
-        </button>
-        <button class="primary-action full" type="submit">Save Active Bag</button>
+        ${state.clubs.map((club) => `
+          <label class="club-row">
+            <span>${escapeHtml(club.name)}</span>
+            <input name="${club.id}" type="number" min="0" max="400" step="1" value="${club.carryYards}" />
+          </label>
+        `).join("")}
+        <button class="primary-action full" type="submit">Save Bag</button>
       </form>
     </section>
   `;
@@ -4207,7 +3010,7 @@ function handleClick(event) {
   const action = button.dataset.action;
 
   if (action === "gps") {
-    toggleGps();
+    startGps();
   }
 
   if (action === "track-shot") {
@@ -4219,13 +3022,13 @@ function handleClick(event) {
   }
 
   if (action === "toggle-arcgis-maps") {
-    arcgisImageryEnabled = !arcgisImageryEnabled;
-    saveArcgisImageryEnabled();
+    azureMapsEnabled = !azureMapsEnabled;
+    saveAzureMapsEnabled();
     render();
   }
 
-  if (action === "clear-arcgis-shot-plan") {
-    clearArcgisShotPlan(button.dataset.courseId, button.dataset.hole);
+  if (action === "clear-satellite-shot-plan") {
+    clearAzureShotPlan(button.dataset.courseId, button.dataset.hole);
   }
 
   if (action === "reset-satellite-anchor") {
@@ -4241,12 +3044,8 @@ function handleClick(event) {
     importNearbyCourses();
   }
 
-  if (action === "use-current-location-courses") {
-    importCoursesForCurrentLocation();
-  }
-
-  if (action === "refresh-local-area" || action === "import-home-area") {
-    importSelectedLocalAreaCourses();
+  if (action === "import-home-area") {
+    importHomeAreaCourses();
   }
 
   if (action === "refresh-course-layout") {
@@ -4266,37 +3065,6 @@ function handleClick(event) {
     openRoundSetup(button.dataset.courseId);
   }
 
-  if (action === "add-setup-player") {
-    roundSetupPlayerCount = clamp(roundSetupPlayerCount + 1, 1, 4);
-    render();
-  }
-
-  if (action === "stats-filter") {
-    statsFilter = button.dataset.filter || "all";
-    render();
-  }
-
-  if (action === "dismiss-handicap-intro") {
-    handicapSettings().introDismissed = true;
-    persist("Handicap setup hidden.");
-  }
-
-  if (action === "set-active-bag") {
-    setActiveBag(button.dataset.bagId);
-  }
-
-  if (action === "add-bag") {
-    addBag();
-  }
-
-  if (action === "add-club") {
-    addClubToActiveBag();
-  }
-
-  if (action === "remove-club") {
-    removeClubFromActiveBag(button.dataset.clubId);
-  }
-
   if (action === "entry-step") {
     updateEntryStep(button);
   }
@@ -4314,42 +3082,16 @@ function handleClick(event) {
   }
 
   if (action === "score-card-next") {
-    handleScoreCardNext();
+    scoreCardOpen = false;
+    moveHole(1);
   }
 
   if (action === "finish-round") {
-    requestFinishRound();
-  }
-
-  if (action === "close-finish-round") {
-    finishRoundPrompt = null;
-    render();
-  }
-
-  if (action === "review-missing-scores") {
-    reviewMissingScores();
-  }
-
-  if (action === "confirm-save-round") {
-    saveFinishedRound();
-  }
-
-  if (action === "discard-round") {
-    discardActiveRound();
+    finishRound();
   }
 
   if (action === "open-score-card") {
     scoreCardOpen = true;
-    render();
-  }
-
-  if (action === "open-round-scorecard") {
-    roundScorecardOpen = true;
-    render();
-  }
-
-  if (action === "close-round-scorecard") {
-    roundScorecardOpen = false;
     render();
   }
 
@@ -4392,16 +3134,6 @@ function handleSubmit(event) {
   event.preventDefault();
   const data = new FormData(form);
 
-  if (form.dataset.form === "local-area-search") {
-    const query = String(data.get("area") || "").trim();
-    if (!query) {
-      flash("Add an area first.");
-      return;
-    }
-    form.reset();
-    importCoursesForAreaQuery(query);
-  }
-
   if (form.dataset.form === "add-course") {
     const name = String(data.get("name") || "").trim();
     if (!name) {
@@ -4419,16 +3151,12 @@ function handleSubmit(event) {
   }
 
   if (form.dataset.form === "start-round") {
-    const courseId = resolveRoundCourseId(data, String(data.get("courseId") || state.selectedCourseId));
-    if (!courseId) {
-      return;
-    }
+    const courseId = String(data.get("courseId") || state.selectedCourseId);
     const players = [0, 1, 2, 3]
       .map((index) => ({
         id: `player-${index + 1}`,
         name: String(data.get(`playerName${index}`) || "").trim(),
-        teeId: String(data.get(`playerTee${index}`) || "white"),
-        handicap: parseHandicapInput(data.get(`playerHandicap${index}`))
+        teeId: String(data.get(`playerTee${index}`) || "white")
       }))
       .filter((player, index) => player.name || index === 0)
       .map((player, index) => ({
@@ -4440,105 +3168,13 @@ function handleSubmit(event) {
   }
 
   if (form.dataset.form === "bag") {
-    const bag = activeBag();
-    if (!bag) {
-      return;
-    }
-    bag.name = String(data.get("bagName") || bag.name || "My Bag").trim() || "My Bag";
-    bag.clubs = bag.clubs.map((club) => ({
+    state.clubs = state.clubs.map((club) => ({
       ...club,
-      name: String(data.get(`clubName-${club.id}`) || club.name || "Club").trim() || "Club",
-      carryYards: clamp(Math.round(Number(data.get(`clubYards-${club.id}`) || 0)), 0, 400)
+      carryYards: clamp(Number(data.get(club.id) || club.carryYards), 0, 400)
     }));
-    syncActiveBagClubs();
     persist("Bag saved.");
   }
 
-  if (form.dataset.form === "handicap-setup") {
-    const value = Number(data.get("manualIndex"));
-    if (!Number.isFinite(value)) {
-      flash("Add a handicap number first.");
-      return;
-    }
-    const settings = handicapSettings();
-    settings.manualIndex = clamp(value, -10, 54);
-    settings.introDismissed = true;
-    form.reset();
-    persist("Handicap saved.");
-  }
-
-}
-
-function parseHandicapInput(value) {
-  if (value === null || value === undefined || String(value).trim() === "") {
-    return null;
-  }
-  const handicap = Number(value);
-  return Number.isFinite(handicap) ? clamp(handicap, -10, 54) : null;
-}
-
-function handicapSettings() {
-  state.settings = state.settings || {};
-  state.settings.handicap = {
-    manualIndex: null,
-    introDismissed: false,
-    ...(state.settings.handicap || {})
-  };
-  return state.settings.handicap;
-}
-
-function setActiveBag(bagId) {
-  if (!Array.isArray(state.bags) || !state.bags.some((bag) => bag.id === bagId)) {
-    return;
-  }
-  state.activeBagId = bagId;
-  syncActiveBagClubs();
-  persist("Active bag changed.");
-}
-
-function addBag() {
-  const source = activeBag();
-  const id = `bag-${Date.now()}-${Math.random().toString(16).slice(2)}`;
-  const bags = Array.isArray(state.bags) ? state.bags : [];
-  const nextNumber = bags.length + 1;
-  const clubs = (source?.clubs?.length ? source.clubs : defaultClubs).map((club) => ({
-    ...club,
-    id: `club-${Date.now()}-${Math.random().toString(16).slice(2)}-${club.id}`
-  }));
-  state.bags = [...bags, {
-    id,
-    name: `Bag ${nextNumber}`,
-    clubs
-  }];
-  state.activeBagId = id;
-  syncActiveBagClubs();
-  persist("New bag created.");
-}
-
-function addClubToActiveBag() {
-  const bag = activeBag();
-  if (!bag) {
-    return;
-  }
-  const nextClub = {
-    id: `club-${Date.now()}-${Math.random().toString(16).slice(2)}`,
-    name: "New club",
-    carryYards: 100
-  };
-  bag.clubs = [...(bag.clubs || []), nextClub];
-  syncActiveBagClubs();
-  persist("Club added.");
-}
-
-function removeClubFromActiveBag(clubId) {
-  const bag = activeBag();
-  if (!bag || !Array.isArray(bag.clubs) || bag.clubs.length <= 1) {
-    flash("Keep at least one club in the active bag.");
-    return;
-  }
-  bag.clubs = bag.clubs.filter((club) => club.id !== clubId);
-  syncActiveBagClubs();
-  persist("Club removed.");
 }
 
 function handleInput(event) {
@@ -4557,9 +3193,6 @@ function handleInput(event) {
   }
   if (event.target.matches("[data-action='club-select']")) {
     updateClub(event.target);
-  }
-  if (event.target.matches("[data-action='round-signature']")) {
-    updateRoundSignature(event.target);
   }
 }
 
@@ -4591,58 +3224,49 @@ function handleChange(event) {
   }
 }
 
-function handleToggle(event) {
-  const details = event.target.closest("details[data-previous-round-id]");
-  if (!details) {
-    return;
-  }
-  const roundId = details.dataset.previousRoundId;
-  if (!roundId) {
-    return;
-  }
-  if (details.open) {
-    previousRoundOpenIds.add(roundId);
-  } else {
-    previousRoundOpenIds.delete(roundId);
-  }
-}
-
-function handleArcgisTileLoad(event) {
-  const tile = event.target.closest?.("[data-arcgis-tile]");
+function handleAzureTileLoad(event) {
+  const tile = event.target.closest?.("[data-azure-tile]");
   if (!tile) {
     return;
   }
   tile.dataset.loaded = "1";
-  updateArcgisTileStatus(tile.closest("[data-arcgis-tile-layer]"));
+  updateAzureTileStatus(tile.closest("[data-azure-tile-layer]"));
 }
 
-function handleArcgisTileError(event) {
-  const tile = event.target.closest?.("[data-arcgis-tile]");
+function handleAzureTileError(event) {
+  const tile = event.target.closest?.("[data-azure-tile]");
   if (!tile) {
     return;
   }
+  const fallbackSrc = tile.dataset.fallbackSrc || "";
+  if (fallbackSrc && tile.dataset.fallbackTried !== "1" && tile.getAttribute("src") !== fallbackSrc) {
+    tile.dataset.fallbackTried = "1";
+    tile.removeAttribute("data-error");
+    tile.setAttribute("src", fallbackSrc);
+    return;
+  }
   tile.dataset.error = "1";
-  updateArcgisTileStatus(tile.closest("[data-arcgis-tile-layer]"));
+  updateAzureTileStatus(tile.closest("[data-azure-tile-layer]"));
 }
 
-function updateArcgisTileStatus(layer) {
+function updateAzureTileStatus(layer) {
   if (!layer) {
     return;
   }
-  const tiles = Array.from(layer.querySelectorAll("[data-arcgis-tile]"));
+  const tiles = Array.from(layer.querySelectorAll("[data-azure-tile]"));
   const loaded = tiles.filter((tile) => tile.dataset.loaded === "1").length;
   const failed = tiles.filter((tile) => tile.dataset.error === "1").length;
   const complete = tiles.length > 0 && loaded === tiles.length;
   const allFinished = tiles.length > 0 && loaded + failed === tiles.length;
-  const status = layer.querySelector("[data-arcgis-map-status]");
+  const status = layer.querySelector("[data-azure-map-status]");
   layer.classList.toggle("loaded", complete);
   layer.classList.toggle("failed", allFinished && failed > 0);
   if (status) {
-    status.textContent = complete ? "ArcGIS imagery ready" : allFinished && failed > 0 ? "ArcGIS imagery incomplete" : "Loading ArcGIS imagery";
+    status.textContent = complete ? "Satellite ready" : allFinished && failed > 0 ? "ArcGIS imagery incomplete" : "Loading satellite";
   }
 }
 
-function handleArcgisPlanningClick(event) {
+function handleAzurePlanningClick(event) {
   if (suppressPhotoPlanningClick) {
     suppressPhotoPlanningClick = false;
     event.preventDefault();
@@ -4654,26 +3278,26 @@ function handleArcgisPlanningClick(event) {
   if (event.target.closest("[data-action], [data-gps-test-marker], button, input, label, .photo-hole-badge, .photo-align-toolbar, .photo-yardage-card, .photo-tap-hint, .photo-club-panel, .photo-zoom-toolbar")) {
     return;
   }
-  const panel = event.target.closest(".arcgis-hole");
+  const panel = event.target.closest(".azure-hole");
   if (!panel) {
     return;
   }
-  const course = getCourse(state, panel.dataset.arcgisCourseId);
-  const hole = course?.holes?.find((item) => item.number === Number(panel.dataset.arcgisHole));
-  const anchors = hole ? arcgisHoleAnchors(hole, course) : null;
+  const course = getCourse(state, panel.dataset.azureCourseId);
+  const hole = course?.holes?.find((item) => item.number === Number(panel.dataset.azureHole));
+  const anchors = hole ? azureHoleAnchors(hole, course) : null;
   if (!hole || !anchors) {
     return;
   }
-  const point = arcgisEventToPosition(panel, anchors, photoTargetMarkers(hole.par), event);
+  const point = azureEventToPosition(panel, anchors, photoTargetMarkers(hole.par), event);
   if (!point) {
     return;
   }
-  const key = arcgisShotPlanKey(panel.dataset.arcgisCourseId, hole.number);
-  const existing = arcgisShotPlans[key]?.points || [];
-  arcgisShotPlans = {
-    ...arcgisShotPlans,
+  const key = azureShotPlanKey(panel.dataset.azureCourseId, hole.number);
+  const existing = azureShotPlans[key]?.points || [];
+  azureShotPlans = {
+    ...azureShotPlans,
     [key]: {
-      points: sortArcGISPlanPoints(anchors, [...existing, point]).slice(0, 4)
+      points: sortAzurePlanPoints(anchors, [...existing, point]).slice(0, 4)
     }
   };
   render();
@@ -4691,7 +3315,7 @@ function handlePhotoPlanningClick(event) {
   if (event.target.closest("[data-action], [data-photo-handle], [data-gps-test-marker], button, input, label, .photo-hole-badge, .photo-align-toolbar, .photo-yardage-card, .photo-tap-hint, .photo-club-panel, .photo-zoom-toolbar")) {
     return;
   }
-  const panel = photoPanelFromEvent(event);
+  const panel = event.target.closest(".photo-hole");
   const canvas = panel?.querySelector(".photo-hole-canvas");
   if (!panel || !canvas || !coursePhotoSource(canvas.dataset.photoCourseId)) {
     return;
@@ -4723,9 +3347,9 @@ function handlePhotoPointerDown(event) {
     beginGpsTestDrag(event, gpsMarker);
     return;
   }
-  const arcgisHandle = event.target.closest("[data-arcgis-handle]");
-  if (arcgisHandle && photoEditMode) {
-    beginSatelliteAnchorDrag(event, arcgisHandle);
+  const azureHandle = event.target.closest("[data-azure-handle]");
+  if (azureHandle && photoEditMode) {
+    beginSatelliteAnchorDrag(event, azureHandle);
     return;
   }
   if (!photoEditMode && beginSatellitePlanOrPanDrag(event)) {
@@ -4804,6 +3428,9 @@ function beginPhotoPlanOrPanDrag(event) {
   if (event.defaultPrevented) {
     return;
   }
+  if (event.target.closest("[data-action], [data-gps-test-marker], button, input, label, .photo-hole-badge, .photo-align-toolbar, .photo-yardage-card, .photo-tap-hint, .photo-club-panel, .photo-zoom-toolbar")) {
+    return;
+  }
   const panel = event.target.closest(".photo-hole");
   const canvas = panel?.querySelector(".photo-hole-canvas");
   if (!panel || !canvas || !coursePhotoSource(canvas.dataset.photoCourseId)) {
@@ -4820,18 +3447,15 @@ function beginPhotoPlanOrPanDrag(event) {
   if (!hole) {
     return;
   }
+  if (gpsTestEnabled() && gpsTestMoveMode) {
+    beginGpsTestDragOnHole(event, panel, canvas, courseId, holeNumber, hole);
+    return;
+  }
   const teeInfo = photoPlanningTee(hole);
   const shotPlan = resolvePhotoShotPlan(hole, teeInfo);
   const hit = hitTestPhotoPlanPoint(canvas, shotPlan, event);
   if (hit) {
     beginPhotoShotDrag(event, panel, canvas, courseId, holeNumber, hole, shotPlan, hit);
-    return;
-  }
-  if (event.target.closest("[data-action], [data-gps-test-marker], button, input, label, .photo-hole-badge, .photo-align-toolbar, .photo-yardage-card, .photo-tap-hint, .photo-club-panel, .photo-zoom-toolbar")) {
-    return;
-  }
-  if (gpsTestEnabled() && gpsTestMoveMode) {
-    beginGpsTestDragOnHole(event, panel, canvas, courseId, holeNumber, hole);
     return;
   }
 
@@ -4845,31 +3469,18 @@ function beginSatellitePlanOrPanDrag(event) {
   if (event.target.closest("[data-action], [data-gps-test-marker], button, input, label, .photo-hole-badge, .photo-align-toolbar, .photo-yardage-card, .photo-tap-hint, .photo-club-panel, .photo-zoom-toolbar")) {
     return false;
   }
-  const panel = arcgisPanelFromEvent(event);
+  const panel = event.target.closest(".azure-hole");
   if (!panel) {
     return false;
   }
-  const courseId = panel.dataset.arcgisCourseId || "";
-  const holeNumber = String(panel.dataset.arcgisHole || "");
+  const courseId = panel.dataset.azureCourseId || "";
+  const holeNumber = String(panel.dataset.azureHole || "");
   if (!courseId || !holeNumber) {
     return false;
   }
   trackPhotoPointer(event, panel, null, courseId, holeNumber);
   if (beginPhotoPinchIfReady(event, panel, null, courseId, holeNumber)) {
     return true;
-  }
-  const course = getCourse(state, courseId);
-  const hole = course?.holes?.find((item) => item.number === Number(holeNumber));
-  const anchors = hole ? arcgisHoleAnchors(hole, course) : null;
-  const marker = hole ? photoTargetMarkers(hole.par) : photoTargetMarkers(4);
-  const shotPlan = hole && anchors ? resolveArcgisShotPlan(courseId, hole, anchors, marker, satellitePanelRatio()) : null;
-  const hit = hitTestPanelPlanPoint(panel, shotPlan, event, courseId, holeNumber);
-  if (hit && hole && anchors) {
-    beginArcGISShotDrag(event, panel, courseId, holeNumber, hole, anchors, marker, shotPlan, hit);
-    return true;
-  }
-  if (event.target.closest("[data-action], [data-gps-test-marker], button, input, label, .photo-hole-badge, .photo-align-toolbar, .photo-yardage-card, .photo-tap-hint, .photo-club-panel, .photo-zoom-toolbar")) {
-    return false;
   }
   if (photoZoomLevel(courseId, holeNumber) > 1) {
     beginPhotoPanDrag(event, panel, null, courseId, holeNumber);
@@ -4878,31 +3489,14 @@ function beginSatellitePlanOrPanDrag(event) {
   return false;
 }
 
-function photoPanelFromEvent(event) {
-  return event.target.closest(".photo-hole") || panelFromPoint(event, ".photo-hole");
-}
-
-function arcgisPanelFromEvent(event) {
-  return event.target.closest(".arcgis-hole") || panelFromPoint(event, ".arcgis-hole");
-}
-
-function panelFromPoint(event, selector) {
-  if (typeof document.elementsFromPoint !== "function") {
-    return null;
-  }
-  return document.elementsFromPoint(event.clientX, event.clientY)
-    .map((element) => element.closest?.(selector))
-    .find(Boolean) || null;
-}
-
 function beginSatelliteAnchorDrag(event, handle) {
-  const panel = handle.closest(".arcgis-hole");
+  const panel = handle.closest(".azure-hole");
   if (!panel || Number(event.button || 0) !== 0) {
     return;
   }
-  const course = getCourse(state, panel.dataset.arcgisCourseId);
-  const hole = course?.holes?.find((item) => item.number === Number(panel.dataset.arcgisHole));
-  const anchors = hole ? arcgisHoleAnchors(hole, course) : null;
+  const course = getCourse(state, panel.dataset.azureCourseId);
+  const hole = course?.holes?.find((item) => item.number === Number(panel.dataset.azureHole));
+  const anchors = hole ? azureHoleAnchors(hole, course) : null;
   if (!hole || !anchors) {
     return;
   }
@@ -4910,9 +3504,9 @@ function beginSatelliteAnchorDrag(event, handle) {
   capturePhotoPointer(handle, event.pointerId);
   photoDrag = {
     type: "satellite-anchor",
-    field: handle.dataset.arcgisHandle,
-    courseId: panel.dataset.arcgisCourseId || "",
-    holeNumber: String(panel.dataset.arcgisHole || ""),
+    field: handle.dataset.azureHandle,
+    courseId: panel.dataset.azureCourseId || "",
+    holeNumber: String(panel.dataset.azureHole || ""),
     hole,
     anchors,
     marker: photoTargetMarkers(hole.par),
@@ -4972,26 +3566,6 @@ function beginPhotoShotDrag(event, panel, canvas, courseId, holeNumber, hole, sh
   movePhotoPlanPoint(event);
 }
 
-function beginArcGISShotDrag(event, panel, courseId, holeNumber, hole, anchors, marker, shotPlan, hit) {
-  event.preventDefault();
-  capturePhotoPointer(panel, event.pointerId);
-  suppressPhotoPlanningClick = true;
-  photoDrag = {
-    type: "arcgis-shot",
-    index: hit.index,
-    hole,
-    holeNumber,
-    courseId,
-    panel,
-    anchors,
-    marker,
-    points: [...shotPlan.points],
-    route: panel.querySelector(".photo-plan-route")
-  };
-  panel.classList.add("dragging-shot");
-  moveArcgisPlanPoint(event);
-}
-
 function beginPhotoPanDrag(event, panel, canvas, courseId, holeNumber) {
   if (Number(event.button || 0) !== 0 || photoZoomLevel(courseId, holeNumber) <= 1) {
     return;
@@ -5033,10 +3607,6 @@ function handlePhotoPointerMove(event) {
     moveSatelliteAnchorHandle(event);
     return;
   }
-  if (photoDrag.type === "arcgis-shot") {
-    moveArcgisPlanPoint(event);
-    return;
-  }
   event.preventDefault();
   if (photoDrag.type === "shot") {
     movePhotoPlanPoint(event);
@@ -5065,10 +3635,6 @@ function handlePhotoPointerEnd(event) {
   }
   if (photoDrag.type === "satellite-anchor") {
     finishSatelliteAnchorDrag(event);
-    return;
-  }
-  if (photoDrag.type === "arcgis-shot") {
-    finishArcgisPlanDrag(event);
     return;
   }
   event.preventDefault();
@@ -5103,8 +3669,8 @@ function handlePhotoWheel(event) {
   }
   const panel = event.target.closest(".photo-hole");
   const canvas = panel?.querySelector(".photo-hole-canvas");
-  const arcgisPanel = panel?.matches(".arcgis-hole") ? panel : null;
-  if (!panel || (!canvas && !arcgisPanel)) {
+  const azurePanel = panel?.matches(".azure-hole") ? panel : null;
+  if (!panel || (!canvas && !azurePanel)) {
     return;
   }
   if (Math.abs(event.deltaY) < 1) {
@@ -5118,7 +3684,7 @@ function handlePhotoWheel(event) {
   if (canvas) {
     updatePhotoZoomValue(canvas.dataset.photoCourseId, canvas.dataset.photoHole, direction);
   } else {
-    updatePhotoZoomValue(arcgisPanel.dataset.arcgisCourseId, arcgisPanel.dataset.arcgisHole, direction);
+    updatePhotoZoomValue(azurePanel.dataset.azureCourseId, azurePanel.dataset.azureHole, direction);
   }
 }
 
@@ -5141,8 +3707,8 @@ function handleHoleSwipePointerDown(event) {
   if (canvas && photoZoomLevel(canvas.dataset.photoCourseId, canvas.dataset.photoHole) > 1) {
     return;
   }
-  const arcgisPanel = event.target.closest(".arcgis-hole");
-  if (arcgisPanel && photoZoomLevel(arcgisPanel.dataset.arcgisCourseId, arcgisPanel.dataset.arcgisHole) > 1) {
+  const azurePanel = event.target.closest(".azure-hole");
+  if (azurePanel && photoZoomLevel(azurePanel.dataset.azureCourseId, azurePanel.dataset.azureHole) > 1) {
     return;
   }
 
@@ -5153,7 +3719,6 @@ function handleHoleSwipePointerDown(event) {
     latestX: event.clientX,
     latestY: event.clientY
   };
-  resetHoleSwipePreview();
 }
 
 function handleHoleSwipePointerMove(event) {
@@ -5166,7 +3731,6 @@ function handleHoleSwipePointerMove(event) {
   const dy = event.clientY - holeSwipe.startY;
   if (Math.abs(dx) > 20 && Math.abs(dx) > Math.abs(dy) * 1.1) {
     event.preventDefault();
-    updateHoleSwipePreview(dx);
   }
 }
 
@@ -5186,7 +3750,6 @@ function handleHoleSwipePointerEnd(event) {
   const dx = endX - swipe.startX;
   const dy = endY - swipe.startY;
   if (Math.abs(dx) < HOLE_SWIPE_MIN_DISTANCE || Math.abs(dx) < Math.abs(dy) * HOLE_SWIPE_VERTICAL_RATIO) {
-    resetHoleSwipePreview();
     return;
   }
 
@@ -5201,30 +3764,7 @@ function handleHoleSwipePointerEnd(event) {
 function cancelHoleSwipe(event) {
   if (!holeSwipe || !event || event.pointerId === holeSwipe.pointerId) {
     holeSwipe = null;
-    resetHoleSwipePreview();
   }
-}
-
-function updateHoleSwipePreview(dx) {
-  const screen = document.querySelector("[data-play-round]");
-  if (!screen) {
-    return;
-  }
-  const limited = clamp(dx * 0.22, -HOLE_SWIPE_PREVIEW_LIMIT, HOLE_SWIPE_PREVIEW_LIMIT);
-  const intent = clamp(Math.abs(dx) / HOLE_SWIPE_MIN_DISTANCE, 0, 1);
-  screen.classList.add("is-swiping-hole");
-  screen.style.setProperty("--hole-swipe-drag", `${limited.toFixed(1)}px`);
-  screen.style.setProperty("--hole-swipe-intent", intent.toFixed(2));
-}
-
-function resetHoleSwipePreview() {
-  const screen = document.querySelector("[data-play-round]");
-  if (!screen) {
-    return;
-  }
-  screen.classList.remove("is-swiping-hole");
-  screen.style.removeProperty("--hole-swipe-drag");
-  screen.style.removeProperty("--hole-swipe-intent");
 }
 
 function handlePlayHorizontalWheel(event) {
@@ -5269,34 +3809,6 @@ function finishPhotoPlanDrag(event) {
   setPhotoShotPoints(courseId, holeNumber, hole, points);
 }
 
-function finishArcgisPlanDrag(event) {
-  const geoPoint = arcgisDragEventToPosition(photoDrag, event) || photoDrag.latestGeoPoint;
-  const courseId = photoDrag.courseId;
-  const holeNumber = photoDrag.holeNumber;
-  const index = photoDrag.index;
-  const points = [...photoDrag.points];
-  const anchors = photoDrag.anchors;
-  photoDrag.panel.classList.remove("dragging-shot");
-  photoDrag = null;
-  window.setTimeout(() => {
-    suppressPhotoPlanningClick = false;
-  }, 250);
-
-  if (!geoPoint || !courseId || !holeNumber || index < 0 || !anchors) {
-    render();
-    return;
-  }
-
-  points[index] = geoPoint;
-  arcgisShotPlans = {
-    ...arcgisShotPlans,
-    [arcgisShotPlanKey(courseId, holeNumber)]: {
-      points: sortArcGISPlanPoints(anchors, points).slice(0, 4)
-    }
-  };
-  render();
-}
-
 function moveGpsTestMarker(event) {
   event.preventDefault();
   const sourcePoint = photoEventToSourcePoint(photoDrag.canvas, event);
@@ -5338,25 +3850,6 @@ function movePhotoPlanPoint(event) {
   }
   photoDrag.latestSourcePoint = sourcePoint;
   updatePhotoPlanRouteDom(photoDrag.panel, photoDrag.index, viewPoint);
-}
-
-function moveArcgisPlanPoint(event) {
-  const viewPoint = eventToPhotoLayerPercent(photoDrag.panel, event, photoDrag.courseId, photoDrag.holeNumber);
-  const geoPoint = arcgisDragEventToPosition(photoDrag, event, viewPoint);
-  if (!viewPoint || !geoPoint) {
-    return;
-  }
-  photoDrag.latestGeoPoint = geoPoint;
-  updatePhotoPlanRouteDom(photoDrag.panel, photoDrag.index, viewPoint);
-}
-
-function arcgisDragEventToPosition(drag, event, viewPoint = null) {
-  const point = viewPoint || eventToPhotoLayerPercent(drag.panel, event, drag.courseId, drag.holeNumber);
-  if (!point) {
-    return null;
-  }
-  const rect = drag.panel.getBoundingClientRect();
-  return arcgisTargetPointToGeo(drag.anchors, point, drag.marker, rect.height / Math.max(1, rect.width));
 }
 
 function movePhotoPan(event) {
@@ -5415,7 +3908,7 @@ function finishSatelliteAnchorDrag(event) {
   drag.handle.classList.remove("dragging");
   const point = drag.latestPoint || eventToPanelPercent(drag.panel, event);
   const rect = drag.panel?.getBoundingClientRect?.();
-  const position = point ? arcgisTargetPointToGeo(drag.anchors, point, drag.marker, rect?.width && rect?.height ? rect.height / rect.width : satellitePanelRatio()) : null;
+  const position = point ? azureTargetPointToGeo(drag.anchors, point, drag.marker, rect?.width && rect?.height ? rect.height / rect.width : satellitePanelRatio()) : null;
   if (!position) {
     render();
     return;
@@ -5563,15 +4056,6 @@ function setPhotoLayerTransforms(panel, zoom, pan) {
 
 function hitTestPhotoPlanPoint(canvas, shotPlan, event) {
   const pointer = photoEventToViewPoint(canvas, event);
-  return hitTestPlanViewPoint(pointer, shotPlan);
-}
-
-function hitTestPanelPlanPoint(panel, shotPlan, event, courseId = "", holeNumber = "") {
-  const pointer = eventToPhotoLayerPercent(panel, event, courseId, holeNumber);
-  return hitTestPlanViewPoint(pointer, shotPlan);
-}
-
-function hitTestPlanViewPoint(pointer, shotPlan) {
   const viewPoints = shotPlan?.viewPoints || [];
   if (!pointer || !viewPoints.length) {
     return null;
@@ -5622,18 +4106,8 @@ function eventToPanelPercent(panel, event) {
 }
 
 function startRound(courseId, teeId = "") {
-  const activeRound = getActiveRound(state);
-  if (activeRound) {
-    resumeActiveRound(activeRound, "Round already in progress.");
-    return;
-  }
   const course = getCourse(state, courseId);
   if (!course) {
-    flash("Select a course first.");
-    return;
-  }
-  if (!Array.isArray(course.holes) || course.holes.length === 0) {
-    flash("That course needs hole data before starting a round.");
     return;
   }
   const tee = teeId || course.tees?.[0]?.id || "white";
@@ -5641,121 +4115,50 @@ function startRound(courseId, teeId = "") {
   state.rounds = [round, ...state.rounds];
   state.activeRoundId = round.id;
   state.selectedCourseId = course.id;
-  roundSetupPlayerCount = 1;
   view = "play";
   window.location.hash = "play";
   queueCourseSatellitePreload(course, round.currentHole);
-  scrollToTop();
   persist("Round started.");
 }
 
-function resumeActiveRound(round = getActiveRound(state), message = "Continuing round.") {
-  if (!round) {
-    return false;
-  }
-  const course = getCourse(state, round.courseId);
-  state.activeRoundId = round.id;
-  if (course) {
-    state.selectedCourseId = course.id;
-    queueCourseSatellitePreload(course, round.currentHole || 1);
-  }
-  roundSetupPlayerCount = 1;
-  view = "play";
-  window.location.hash = "play";
-  scrollToTop();
-  persist(message);
-  return true;
-}
-
 function openRoundSetup(courseId) {
-  if (resumeActiveRound(getActiveRound(state))) {
-    return;
-  }
   const course = getCourse(state, courseId);
-  if (!course) {
-    flash("Course not found.");
-    return;
-  }
   state.selectedCourseId = courseId;
   state.activeRoundId = "";
-  roundSetupPlayerCount = 1;
   view = "play";
   window.location.hash = "play";
   queueCourseSatellitePreload(course, 1);
-  scrollToTop();
   persist("Course ready.");
 }
 
 function updateEntryStep(button) {
   const round = getActiveRound(state);
-  const course = round ? getCourse(state, round.courseId) : null;
-  if (!round || !course) {
+  if (!round) {
     return;
   }
-  const holeNumber = Number(button.dataset.hole);
-  const entry = getRoundEntry(round, holeNumber);
+  const entry = getRoundEntry(round, Number(button.dataset.hole));
   const playerEntry = button.dataset.playerId
-    ? getPlayerEntry(round, holeNumber, button.dataset.playerId)
+    ? getPlayerEntry(round, Number(button.dataset.hole), button.dataset.playerId)
     : entry;
   const field = button.dataset.field;
   const delta = Number(button.dataset.delta);
   const min = Number(button.dataset.min);
   const max = Number(button.dataset.max);
   playerEntry[field] = clamp(Number(playerEntry[field] || 0) + delta, min, max);
-  if (field === "score" || field === "putts") {
-    playerEntry.scoreEntered = true;
-    syncEntryGirFromScore(course, holeNumber, playerEntry);
-  }
   persistScoreEntry();
 }
 
 function updateEntryValue(button) {
   const round = getActiveRound(state);
-  const course = round ? getCourse(state, round.courseId) : null;
-  if (!round || !course) {
+  if (!round) {
     return;
   }
-  const holeNumber = Number(button.dataset.hole);
-  const entry = getRoundEntry(round, holeNumber);
+  const entry = getRoundEntry(round, Number(button.dataset.hole));
   const playerEntry = button.dataset.playerId
-    ? getPlayerEntry(round, holeNumber, button.dataset.playerId)
+    ? getPlayerEntry(round, Number(button.dataset.hole), button.dataset.playerId)
     : entry;
   playerEntry[button.dataset.field] = button.dataset.value;
-  if (button.dataset.field === "score" || button.dataset.field === "putts") {
-    playerEntry.scoreEntered = true;
-    syncEntryGirFromScore(course, holeNumber, playerEntry);
-  }
   persistScoreEntry();
-}
-
-function markCurrentScorecardHoleEntered(round, course) {
-  const hole = course.holes.find((item) => item.number === round.currentHole) || course.holes[0];
-  if (!hole) {
-    return;
-  }
-  getRoundPlayers(round).forEach((player) => {
-    const playerEntry = getPlayerEntry(round, hole.number, player.id) || getRoundEntry(round, hole.number);
-    if (!playerEntry) {
-      return;
-    }
-    playerEntry.scoreEntered = true;
-    syncEntryGirFromScore(course, hole.number, playerEntry);
-  });
-  saveState(state);
-}
-
-function syncEntryGirFromScore(course, holeNumber, playerEntry) {
-  const hole = course?.holes?.find((item) => Number(item.number) === Number(holeNumber));
-  if (!hole || !playerEntry?.scoreEntered) {
-    return;
-  }
-  const score = Number(playerEntry.score);
-  const putts = Number(playerEntry.putts);
-  const par = Number(hole.par);
-  if (!Number.isFinite(score) || !Number.isFinite(putts) || !Number.isFinite(par) || score <= 0 || putts < 0 || par <= 0) {
-    return;
-  }
-  playerEntry.gir = score - putts <= par - 2;
 }
 
 function updateEntryCheck(input) {
@@ -5784,22 +4187,6 @@ function updateClub(select) {
   persistScoreEntry();
 }
 
-function updateRoundSignature(input) {
-  const round = getActiveRound(state);
-  if (!round) {
-    return;
-  }
-  const field = input.dataset.field;
-  if (!["scorer", "attest", "date"].includes(field)) {
-    return;
-  }
-  round.signatures = {
-    ...(round.signatures || {}),
-    [field]: String(input.value || "").trim()
-  };
-  saveState(state);
-}
-
 function moveHole(delta) {
   const round = getActiveRound(state);
   const course = round ? getCourse(state, round.courseId) : null;
@@ -5808,10 +4195,6 @@ function moveHole(delta) {
   }
   const previousHole = round.currentHole;
   round.currentHole = clamp(round.currentHole + delta, 1, course.holes.length);
-  if (round.currentHole === previousHole) {
-    resetHoleSwipePreview();
-    return;
-  }
   if (delta > 0 && previousHole === course.holes.length) {
     scoreCardOpen = false;
   }
@@ -5834,7 +4217,7 @@ function exportCoursePackJson() {
     courses: defaults
   };
   downloadTextFile("pinscope-course-pack.json", JSON.stringify(payload, null, 2), "application/json");
-  flash(`Exported course pack JSON for ${defaults.length} course${defaults.length === 1 ? "" : "s"}. Put it in data/course-pack, then run the course-pack builder.`);
+  flash(`Exported course pack JSON for ${defaults.length} course${defaults.length === 1 ? "" : "s"}. Put it in data/course-pack; ArcGIS imagery loads live at runtime.`);
 }
 
 function courseToSharedDefault(course) {
@@ -5907,6 +4290,10 @@ function holeToSharedDefault(hole, course = null) {
     osm: hole.osm || null,
     visual: sanitizeVisualCoordinates(hole.visual)
   });
+}
+
+function normalizeExportSnapshot() {
+  return null;
 }
 
 function normalizeExportGeometry(geometry, fallbackGreenPolygon) {
@@ -5991,65 +4378,7 @@ function downloadTextFile(filename, text, type = "text/plain") {
   URL.revokeObjectURL(url);
 }
 
-function handleScoreCardNext() {
-  const round = getActiveRound(state);
-  const course = round ? getCourse(state, round.courseId) : null;
-  if (!round || !course) {
-    return;
-  }
-  markCurrentScorecardHoleEntered(round, course);
-  if (Number(round.currentHole) >= course.holes.length) {
-    requestFinishRound();
-    return;
-  }
-  scoreCardOpen = false;
-  moveHole(1);
-}
-
-function requestFinishRound() {
-  const round = getActiveRound(state);
-  const course = round ? getCourse(state, round.courseId) : null;
-  if (!round || !course) {
-    return;
-  }
-  const missing = missingScoreHoles(round, course);
-  finishRoundPrompt = {
-    missing,
-    requestedAt: Date.now()
-  };
-  if (missing.length) {
-    flash(`Missing scores on hole${missing.length === 1 ? "" : "s"} ${missing.join(", ")}.`);
-  }
-  render();
-}
-
-function missingScoreHoles(round, course) {
-  return (course.holes || [])
-    .filter((hole) => {
-      const players = getRoundPlayers(round);
-      return players.some((player) => {
-        const entry = getPlayerEntry(round, hole.number, player.id) || getRoundEntry(round, hole.number);
-        return !entry || entry.scoreEntered !== true;
-      });
-    })
-    .map((hole) => hole.number);
-}
-
-function reviewMissingScores() {
-  const round = getActiveRound(state);
-  const missing = finishRoundPrompt?.missing || [];
-  if (!round || !missing.length) {
-    finishRoundPrompt = null;
-    render();
-    return;
-  }
-  round.currentHole = missing[0];
-  finishRoundPrompt = null;
-  scoreCardOpen = true;
-  persist("Add the missing score, then finish again.");
-}
-
-function saveFinishedRound() {
+function finishRound() {
   const round = getActiveRound(state);
   if (!round) {
     return;
@@ -6057,34 +4386,12 @@ function saveFinishedRound() {
   round.status = "complete";
   round.completedAt = new Date().toISOString();
   state.activeRoundId = "";
-  scoreCardOpen = false;
-  roundScorecardOpen = false;
-  finishRoundPrompt = null;
   view = "stats";
   window.location.hash = "stats";
   persist("Round saved.");
 }
 
-function discardActiveRound() {
-  const round = getActiveRound(state);
-  if (!round) {
-    return;
-  }
-  state.rounds = state.rounds.filter((item) => item.id !== round.id);
-  state.activeRoundId = "";
-  scoreCardOpen = false;
-  roundScorecardOpen = false;
-  finishRoundPrompt = null;
-  view = "courses";
-  window.location.hash = "courses";
-  persist("Round discarded.");
-}
-
 async function importNearbyCourses() {
-  return importCoursesForCurrentLocation();
-}
-
-async function importCoursesForCurrentLocation() {
   if (!navigator.geolocation) {
     flash("GPS is not available in this browser.");
     return;
@@ -6092,106 +4399,27 @@ async function importCoursesForCurrentLocation() {
   flash("Finding courses near you...");
   try {
     const position = await getCurrentPosition();
-    const localArea = setActiveLocalArea({
-      id: "gps-local-area",
-      label: "Current Location",
-      center: {
-        lat: position.coords.latitude,
-        lng: position.coords.longitude
-      }
-    });
-    await importCoursesForLocalArea(localArea, "Current Location");
+    const courses = await findNearbyOsmCourses(
+      { lat: position.coords.latitude, lng: position.coords.longitude },
+      25000
+    );
+    mergeImportedCourses(courses, "");
   } catch (error) {
     flash(error.message || "Could not import nearby courses.");
   }
 }
 
-async function importCoursesForAreaQuery(query) {
-  flash(`Finding courses near ${query}...`);
+async function importHomeAreaCourses() {
+  flash(`Refreshing ${homeArea.label} courses...`);
   try {
-    const result = await geocodeLocalArea(query);
-    const localArea = setActiveLocalArea({
-      id: `area-${slugifyLocalArea(result.label)}`,
-      label: result.label,
-      center: result.center
-    });
-    await importCoursesForLocalArea(localArea, result.label);
+    const courses = await findNearbyOsmCourses(homeArea.center, homeArea.radiusMeters);
+    mergeImportedCourses(
+      courses.map((course) => ({ ...course, homeAreaId: homeArea.id })),
+      homeArea.label
+    );
   } catch (error) {
-    flash(error.message || `Could not find courses near ${query}.`);
+    flash(error.message || `Could not refresh ${homeArea.label} courses.`);
   }
-}
-
-async function importSelectedLocalAreaCourses() {
-  const localArea = activeLocalArea();
-  if (!localArea) {
-    flash("Choose an area first.");
-    return;
-  }
-  flash(`Refreshing ${localArea.label} courses...`);
-  try {
-    await importCoursesForLocalArea(localArea, localArea.label);
-  } catch (error) {
-    flash(error.message || `Could not refresh ${localArea.label} courses.`);
-  }
-}
-
-async function importCoursesForLocalArea(localArea, label) {
-  if (!localArea?.center) {
-    throw new Error("Choose an area first.");
-  }
-  const courses = await findNearbyOsmCourses(localArea.center, localArea.radiusMeters);
-  mergeImportedCourses(
-    courses.map((course) => ({ ...course, homeAreaId: localArea.id })),
-    label
-  );
-}
-
-async function geocodeLocalArea(query) {
-  const url = new URL("https://nominatim.openstreetmap.org/search");
-  url.searchParams.set("format", "jsonv2");
-  url.searchParams.set("addressdetails", "1");
-  url.searchParams.set("limit", "1");
-  url.searchParams.set("countrycodes", "gb");
-  url.searchParams.set("q", query);
-  const response = await fetch(url.toString(), {
-    headers: {
-      Accept: "application/json"
-    }
-  });
-  if (!response.ok) {
-    throw new Error(`Area search failed (${response.status}).`);
-  }
-  const results = await response.json();
-  const match = Array.isArray(results) ? results[0] : null;
-  const center = normalizeGeoPoint({ lat: match?.lat, lng: match?.lon });
-  if (!center) {
-    throw new Error("No matching area found.");
-  }
-  return {
-    label: localAreaLabel(match, query),
-    center
-  };
-}
-
-function localAreaLabel(match, fallback) {
-  const address = match?.address || {};
-  return String(
-    address.city ||
-    address.town ||
-    address.village ||
-    address.hamlet ||
-    address.suburb ||
-    match?.name ||
-    fallback
-  ).trim();
-}
-
-function slugifyLocalArea(value) {
-  return String(value || "local")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 48) || "local";
 }
 
 function mergeImportedCourses(courses, label) {
@@ -6232,7 +4460,7 @@ async function refreshCourseLayout(courseId) {
     applyCourseGeometry(course.id, layout, {
       source: "OpenStreetMap",
       message: layout.mappedCount || layout.greenShapeCount
-        ? `Mapped ${layout.mappedCount || 0} tee/green hole${(layout.mappedCount || 0) === 1 ? "" : "s"} and ${layout.greenShapeCount || 0} green shape${(layout.greenShapeCount || 0) === 1 ? "" : "s"} from course-locked OSM${layout.courseArea ? " boundary" : " area"}${layout.counts ? ` (${layout.counts.holeLines} hole lines, ${layout.counts.greens} greens, ${layout.counts.tees} tees found inside the course)` : ""}. Export the course pack, then run the course-pack builder.`
+        ? `Mapped ${layout.mappedCount || 0} tee/green hole${(layout.mappedCount || 0) === 1 ? "" : "s"} and ${layout.greenShapeCount || 0} green shape${(layout.greenShapeCount || 0) === 1 ? "" : "s"} from course-locked OSM${layout.courseArea ? " boundary" : " area"}${layout.counts ? ` (${layout.counts.holeLines} hole lines, ${layout.counts.greens} greens, ${layout.counts.tees} tees found inside the course)` : ""}. Export the course pack; ArcGIS imagery loads live at runtime.`
         : "No OSM hole geometry found for this course."
     });
   } catch (error) {
@@ -6245,7 +4473,7 @@ async function importCourseGeometryFile(file, courseId) {
     const payload = JSON.parse(await file.text());
     applyCourseGeometry(courseId, payload, {
       source: payload.source || payload.schema || "PinScope Green Mapper",
-      message: "Imported mapper geometry. Export the course pack, then run the course-pack builder."
+      message: "Imported mapper geometry. Export the course pack; ArcGIS imagery loads live at runtime."
     });
   } catch (error) {
     flash(error.message || "Could not import that geometry JSON.");
@@ -6493,28 +4721,6 @@ function compareCourses(a, b) {
     return aDistance - bDistance;
   }
   return a.name.localeCompare(b.name);
-}
-
-function toggleGps() {
-  if (gps.status === "ready" || gps.status === "watching") {
-    stopGps();
-    return;
-  }
-  startGps();
-}
-
-function stopGps() {
-  if (gps.watchId !== null && navigator.geolocation) {
-    navigator.geolocation.clearWatch(gps.watchId);
-  }
-  gps = {
-    status: "off",
-    position: null,
-    error: "",
-    watchId: null
-  };
-  gpsTestMoveMode = false;
-  render();
 }
 
 function startGps() {
@@ -7330,11 +5536,4 @@ function escapeHtml(value) {
 
 function escapeAttribute(value) {
   return escapeHtml(value).replaceAll("`", "&#096;");
-}
-
-function cssEscape(value) {
-  if (window.CSS?.escape) {
-    return window.CSS.escape(String(value));
-  }
-  return String(value).replaceAll("\\", "\\\\").replaceAll('"', '\\"');
 }
