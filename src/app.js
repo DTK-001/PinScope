@@ -43,13 +43,19 @@ const HOLE_SWIPE_VERTICAL_RATIO = 1.25;
 const HOLE_SWIPE_PREVIEW_LIMIT = 58;
 const GPS_TEST_QUERY_KEY = "gpsTest";
 const ARCGIS_IMAGERY_ENABLED_STORAGE = "pinscope:arcgis-maps-enabled:v1";
+const ARCGIS_IMAGERY_QUALITY_STORAGE = "pinscope:arcgis-imagery-quality:v1";
 const SATELLITE_ANCHOR_EDITS_STORAGE = "pinscope:satellite-anchor-edits:v1";
 const ARCGIS_IMAGERY_QUERY_ENABLED = "arcgisMaps";
+const ARCGIS_IMAGERY_QUERY_QUALITY = "arcgisQuality";
 const ARCGIS_TILE_SIZE = 256;
-const ARCGIS_MIN_ZOOM = 17;
-const ARCGIS_MAX_ZOOM = 19;
+const ARCGIS_IMAGERY_QUALITIES = {
+  balanced: { key: "balanced", label: "Balanced", minZoom: 17, maxZoom: 18, maxTiles: 144 },
+  high: { key: "high", label: "High", minZoom: 18, maxZoom: 19, maxTiles: 256 },
+  ultra: { key: "ultra", label: "Ultra", minZoom: 18, maxZoom: 20, maxTiles: 420 }
+};
+const ARCGIS_IMAGERY_QUALITY_ORDER = ["balanced", "high", "ultra"];
+const ARCGIS_DEFAULT_IMAGERY_QUALITY = "ultra";
 const SATELLITE_PRELOAD_CONCURRENCY = 2;
-const MAX_ARCGIS_TILES_PER_HOLE = 196;
 const SATELLITE_PANEL_RATIO = 13 / 9;
 const HANDICAP_MIN_HOLES = 54;
 const HANDICAP_SCORE_TABLE = [
@@ -93,6 +99,7 @@ let courseSearchQuery = "";
 let statsFilter = "all";
 let gpsTestMoveMode = false;
 let arcgisImageryEnabled = initArcgisImageryEnabled();
+let arcgisImageryQuality = initArcgisImageryQuality();
 let view = getViewFromHash();
 let gps = {
   status: "off",
@@ -1738,7 +1745,7 @@ function renderArcgisHoleVisual(hole, course) {
           <strong>Par ${hole.par}</strong>
           <span>${firstHoleYardage(hole.yards)} yd</span>
           <span>SI ${hole.strokeIndex}</span>
-          <em>${anchors.estimated ? "Estimated" : "Satellite"}</em>
+          <em>${anchors.estimated ? "Estimated" : "Satellite"} · Z${map.zoom} · ${escapeHtml(map.qualityLabel || arcgisQualityLabel())}</em>
         </div>
         ${renderArcgisShotInfo(courseId, hole, shotPlan)}
       </div>
@@ -1746,6 +1753,7 @@ function renderArcgisHoleVisual(hole, course) {
       ${photoEditMode ? "" : renderGpsTestControls(hole, courseId)}
       ${photoEditMode ? "" : renderPhotoZoomControls(courseId, hole.number, zoom)}
       <div class="photo-align-toolbar">
+        ${photoEditMode ? "" : `<button class="photo-tool-button" type="button" data-action="cycle-arcgis-quality" title="Change ArcGIS tile zoom quality">Quality: ${escapeHtml(arcgisQualityLabel())}</button>`}
         <button class="photo-tool-button" type="button" data-action="toggle-photo-edit">${photoEditMode ? "Done" : "Adjust"}</button>
         ${photoEditMode && anchors.edited ? `<button class="photo-tool-button" type="button" data-action="reset-satellite-anchor" data-course-id="${courseId}" data-hole="${hole.number}">Reset</button>` : ""}
       </div>
@@ -2189,6 +2197,63 @@ function initArcgisImageryEnabled() {
   return true;
 }
 
+function normalizeArcgisImageryQuality(value) {
+  const key = String(value || "").trim().toLowerCase();
+  return ARCGIS_IMAGERY_QUALITIES[key] ? key : ARCGIS_DEFAULT_IMAGERY_QUALITY;
+}
+
+function initArcgisImageryQuality() {
+  const params = new URLSearchParams(window.location.search);
+  const queryValue = params.get(ARCGIS_IMAGERY_QUERY_QUALITY);
+  if (queryValue) {
+    const quality = normalizeArcgisImageryQuality(queryValue);
+    try {
+      localStorage.setItem(ARCGIS_IMAGERY_QUALITY_STORAGE, quality);
+    } catch {
+      // Keep the selected quality in memory if storage is blocked.
+    }
+    return quality;
+  }
+
+  try {
+    return normalizeArcgisImageryQuality(localStorage.getItem(ARCGIS_IMAGERY_QUALITY_STORAGE));
+  } catch {
+    return ARCGIS_DEFAULT_IMAGERY_QUALITY;
+  }
+}
+
+function saveArcgisImageryQuality() {
+  try {
+    localStorage.setItem(ARCGIS_IMAGERY_QUALITY_STORAGE, arcgisImageryQuality);
+  } catch {
+    // In-memory quality still works for this session.
+  }
+}
+
+function activeArcgisQualityConfig() {
+  return ARCGIS_IMAGERY_QUALITIES[normalizeArcgisImageryQuality(arcgisImageryQuality)] || ARCGIS_IMAGERY_QUALITIES[ARCGIS_DEFAULT_IMAGERY_QUALITY];
+}
+
+function arcgisQualityLabel() {
+  return activeArcgisQualityConfig().label;
+}
+
+function cycleArcgisImageryQuality() {
+  const current = normalizeArcgisImageryQuality(arcgisImageryQuality);
+  const index = ARCGIS_IMAGERY_QUALITY_ORDER.indexOf(current);
+  const next = ARCGIS_IMAGERY_QUALITY_ORDER[(index + 1) % ARCGIS_IMAGERY_QUALITY_ORDER.length];
+  arcgisImageryQuality = next;
+  saveArcgisImageryQuality();
+
+  // Existing preloaded tiles may be for a different zoom level, so reset the
+  // lightweight preload bookkeeping before rendering the new quality.
+  satellitePreloadQueue = [];
+  satellitePreloadedUrls = new Set();
+  satellitePreloadingUrls = new Set();
+  satellitePreloadActive = 0;
+  render();
+}
+
 function saveArcgisImageryEnabled() {
   try {
     localStorage.setItem(ARCGIS_IMAGERY_ENABLED_STORAGE, arcgisImageryEnabled ? "1" : "0");
@@ -2301,20 +2366,22 @@ function arcgisMapViewForHole(anchors, marker = photoTargetMarkers(4), panelRati
     return null;
   }
 
-  // Use the highest-detail tiles that still keep the hole view manageable.
-  // Zoom 19 gives noticeably sharper golf-hole imagery than zoom 17, but very
-  // long holes can require too many tiles, so we gracefully step down.
-  for (let zoom = ARCGIS_MAX_ZOOM; zoom >= ARCGIS_MIN_ZOOM; zoom -= 1) {
-    const map = arcgisMapViewForHoleAtZoom(anchors, marker, panelRatio, zoom);
+  const quality = activeArcgisQualityConfig();
+
+  // Use the highest-detail tiles allowed by the selected quality that still
+  // keep the hole view manageable. Ultra tries zoom 20 first, then gracefully
+  // steps down for long holes or dense tile grids.
+  for (let zoom = quality.maxZoom; zoom >= quality.minZoom; zoom -= 1) {
+    const map = arcgisMapViewForHoleAtZoom(anchors, marker, panelRatio, zoom, quality.maxTiles);
     if (map) {
-      return map;
+      return { ...map, quality: quality.key, qualityLabel: quality.label };
     }
   }
 
   return null;
 }
 
-function arcgisMapViewForHoleAtZoom(anchors, marker, panelRatio, zoom) {
+function arcgisMapViewForHoleAtZoom(anchors, marker, panelRatio, zoom, maxTiles) {
   const tee = geoToWorldPixel(anchors.tee, zoom);
   const green = geoToWorldPixel(anchors.green, zoom);
   const ratio = normalizedSatelliteRatio(panelRatio);
@@ -2336,7 +2403,7 @@ function arcgisMapViewForHoleAtZoom(anchors, marker, panelRatio, zoom) {
   const minTileY = Math.floor(Math.min(...worldCorners.map((point) => point.y)) / ARCGIS_TILE_SIZE);
   const maxTileY = Math.floor(Math.max(...worldCorners.map((point) => point.y)) / ARCGIS_TILE_SIZE);
   const tileCount = (maxTileX - minTileX + 1) * (maxTileY - minTileY + 1);
-  if (!Number.isFinite(tileCount) || tileCount <= 0 || tileCount > MAX_ARCGIS_TILES_PER_HOLE) {
+  if (!Number.isFinite(tileCount) || tileCount <= 0 || tileCount > maxTiles) {
     return null;
   }
   const tiles = [];
@@ -4306,6 +4373,10 @@ function handleClick(event) {
     arcgisImageryEnabled = !arcgisImageryEnabled;
     saveArcgisImageryEnabled();
     render();
+  }
+
+  if (action === "cycle-arcgis-quality") {
+    cycleArcgisImageryQuality();
   }
 
   if (action === "clear-arcgis-shot-plan") {
