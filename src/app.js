@@ -43,13 +43,20 @@ const HOLE_SWIPE_VERTICAL_RATIO = 1.25;
 const HOLE_SWIPE_PREVIEW_LIMIT = 58;
 const GPS_TEST_QUERY_KEY = "gpsTest";
 const ARCGIS_IMAGERY_ENABLED_STORAGE = "pinscope:arcgis-maps-enabled:v1";
+const ARCGIS_IMAGERY_QUALITY_STORAGE = "pinscope:arcgis-imagery-quality:v1";
 const SATELLITE_ANCHOR_EDITS_STORAGE = "pinscope:satellite-anchor-edits:v1";
 const ARCGIS_IMAGERY_QUERY_ENABLED = "arcgisMaps";
+const ARCGIS_IMAGERY_QUERY_QUALITY = "arcgisQuality";
 const ARCGIS_TILE_SIZE = 256;
-const ARCGIS_MIN_ZOOM = 17;
-const ARCGIS_MAX_ZOOM = 19;
+const ARCGIS_DEFAULT_SOURCE_MAX_ZOOM = 19;
+const ARCGIS_IMAGERY_QUALITIES = {
+  balanced: { key: "balanced", label: "Balanced", minZoom: 17, maxZoom: 18, maxTiles: 144 },
+  high: { key: "high", label: "High", minZoom: 18, maxZoom: 19, maxTiles: 256 },
+  ultra: { key: "ultra", label: "Ultra", minZoom: 18, maxZoom: 20, maxTiles: 420 }
+};
+const ARCGIS_IMAGERY_QUALITY_ORDER = ["balanced", "high", "ultra"];
+const ARCGIS_DEFAULT_IMAGERY_QUALITY = "ultra";
 const SATELLITE_PRELOAD_CONCURRENCY = 2;
-const MAX_ARCGIS_TILES_PER_HOLE = 196;
 const SATELLITE_PANEL_RATIO = 13 / 9;
 const HANDICAP_MIN_HOLES = 54;
 const HANDICAP_SCORE_TABLE = [
@@ -93,6 +100,7 @@ let courseSearchQuery = "";
 let statsFilter = "all";
 let gpsTestMoveMode = false;
 let arcgisImageryEnabled = initArcgisImageryEnabled();
+let arcgisImageryQuality = initArcgisImageryQuality();
 let view = getViewFromHash();
 let gps = {
   status: "off",
@@ -124,8 +132,27 @@ window.addEventListener("hashchange", () => {
   scrollToTop();
 });
 
+function isTextEntryActive() {
+  const active = document.activeElement;
+  return Boolean(
+    active &&
+      active.matches?.(
+        "input, textarea, select, [contenteditable='true'], [contenteditable='']"
+      )
+  );
+}
+
 function handleWindowResize() {
   queuePhotoCanvasRender();
+
+  // Mobile browsers fire resize events when the software keyboard opens.
+  // Re-rendering during that moment replaces the focused scorecard input,
+  // which immediately closes the keyboard. Defer play-screen renders while
+  // any text field is active so Scorer/Attest inputs stay focused.
+  if (isTextEntryActive()) {
+    return;
+  }
+
   if (view === "play" && getActiveRound(state)) {
     window.clearTimeout(handleWindowResize.pending);
     handleWindowResize.pending = window.setTimeout(render, 90);
@@ -133,7 +160,13 @@ function handleWindowResize() {
 }
 
 window.addEventListener("resize", handleWindowResize);
-window.addEventListener("orientationchange", () => window.setTimeout(render, 120));
+window.addEventListener("orientationchange", () => {
+  window.setTimeout(() => {
+    if (!isTextEntryActive()) {
+      render();
+    }
+  }, 120);
+});
 app.addEventListener("load", handleArcgisTileLoad, true);
 app.addEventListener("error", handleArcgisTileError, true);
 window.addEventListener("pointermove", handlePhotoPointerMove);
@@ -1358,8 +1391,8 @@ function renderRoundScorecardOverlay() {
           </table>
         </div>
         <footer class="round-scorecard-sign">
-          <label>SCORER:<input data-action="round-signature" data-field="scorer" type="text" value="${escapeAttribute(round.signatures?.scorer || "")}" /></label>
-          <label>ATTEST:<input data-action="round-signature" data-field="attest" type="text" value="${escapeAttribute(round.signatures?.attest || "")}" /></label>
+          <label>SCORER:<input data-action="round-signature" data-field="scorer" type="text" inputmode="text" autocomplete="name" autocapitalize="words" value="${escapeAttribute(round.signatures?.scorer || "")}" /></label>
+          <label>ATTEST:<input data-action="round-signature" data-field="attest" type="text" inputmode="text" autocomplete="name" autocapitalize="words" value="${escapeAttribute(round.signatures?.attest || "")}" /></label>
           <label>DATE:<input data-action="round-signature" data-field="date" type="date" value="${escapeAttribute(round.signatures?.date || new Date(round.startedAt || Date.now()).toISOString().slice(0, 10))}" /></label>
         </footer>
       </div>
@@ -1738,7 +1771,7 @@ function renderArcgisHoleVisual(hole, course) {
           <strong>Par ${hole.par}</strong>
           <span>${firstHoleYardage(hole.yards)} yd</span>
           <span>SI ${hole.strokeIndex}</span>
-          <em>${anchors.estimated ? "Estimated" : "Satellite"}</em>
+          <em>${anchors.estimated ? "Estimated" : "Satellite"} · Z${map.zoom} · ${escapeHtml(map.qualityLabel || arcgisQualityLabel())}</em>
         </div>
         ${renderArcgisShotInfo(courseId, hole, shotPlan)}
       </div>
@@ -1746,6 +1779,7 @@ function renderArcgisHoleVisual(hole, course) {
       ${photoEditMode ? "" : renderGpsTestControls(hole, courseId)}
       ${photoEditMode ? "" : renderPhotoZoomControls(courseId, hole.number, zoom)}
       <div class="photo-align-toolbar">
+        ${photoEditMode ? "" : `<button class="photo-tool-button" type="button" data-action="cycle-arcgis-quality" title="Change ArcGIS tile zoom quality">Quality: ${escapeHtml(arcgisQualityLabel())}</button>`}
         <button class="photo-tool-button" type="button" data-action="toggle-photo-edit">${photoEditMode ? "Done" : "Adjust"}</button>
         ${photoEditMode && anchors.edited ? `<button class="photo-tool-button" type="button" data-action="reset-satellite-anchor" data-course-id="${courseId}" data-hole="${hole.number}">Reset</button>` : ""}
       </div>
@@ -2189,6 +2223,73 @@ function initArcgisImageryEnabled() {
   return true;
 }
 
+function normalizeArcgisImageryQuality(value) {
+  const key = String(value || "").trim().toLowerCase();
+  return ARCGIS_IMAGERY_QUALITIES[key] ? key : ARCGIS_DEFAULT_IMAGERY_QUALITY;
+}
+
+function initArcgisImageryQuality() {
+  const params = new URLSearchParams(window.location.search);
+  const queryValue = params.get(ARCGIS_IMAGERY_QUERY_QUALITY);
+  if (queryValue) {
+    const quality = normalizeArcgisImageryQuality(queryValue);
+    try {
+      localStorage.setItem(ARCGIS_IMAGERY_QUALITY_STORAGE, quality);
+    } catch {
+      // Keep the selected quality in memory if storage is blocked.
+    }
+    return quality;
+  }
+
+  try {
+    return normalizeArcgisImageryQuality(localStorage.getItem(ARCGIS_IMAGERY_QUALITY_STORAGE));
+  } catch {
+    return ARCGIS_DEFAULT_IMAGERY_QUALITY;
+  }
+}
+
+function saveArcgisImageryQuality() {
+  try {
+    localStorage.setItem(ARCGIS_IMAGERY_QUALITY_STORAGE, arcgisImageryQuality);
+  } catch {
+    // In-memory quality still works for this session.
+  }
+}
+
+function activeArcgisQualityConfig() {
+  const base = ARCGIS_IMAGERY_QUALITIES[normalizeArcgisImageryQuality(arcgisImageryQuality)] || ARCGIS_IMAGERY_QUALITIES[ARCGIS_DEFAULT_IMAGERY_QUALITY];
+  const layer = getArcgisImageryLayer();
+  const sourceMaxZoom = Number.isFinite(Number(layer?.maxZoom))
+    ? Number(layer.maxZoom)
+    : ARCGIS_DEFAULT_SOURCE_MAX_ZOOM;
+  const sourceMinZoom = Number.isFinite(Number(layer?.minZoom))
+    ? Number(layer.minZoom)
+    : base.minZoom;
+  const maxZoom = Math.max(0, Math.min(base.maxZoom, Math.floor(sourceMaxZoom)));
+  const minZoom = Math.max(0, Math.min(maxZoom, Math.max(base.minZoom, Math.floor(sourceMinZoom))));
+  return { ...base, minZoom, maxZoom, sourceMaxZoom };
+}
+
+function arcgisQualityLabel() {
+  return activeArcgisQualityConfig().label;
+}
+
+function cycleArcgisImageryQuality() {
+  const current = normalizeArcgisImageryQuality(arcgisImageryQuality);
+  const index = ARCGIS_IMAGERY_QUALITY_ORDER.indexOf(current);
+  const next = ARCGIS_IMAGERY_QUALITY_ORDER[(index + 1) % ARCGIS_IMAGERY_QUALITY_ORDER.length];
+  arcgisImageryQuality = next;
+  saveArcgisImageryQuality();
+
+  // Existing preloaded tiles may be for a different zoom level, so reset the
+  // lightweight preload bookkeeping before rendering the new quality.
+  satellitePreloadQueue = [];
+  satellitePreloadedUrls = new Set();
+  satellitePreloadingUrls = new Set();
+  satellitePreloadActive = 0;
+  render();
+}
+
 function saveArcgisImageryEnabled() {
   try {
     localStorage.setItem(ARCGIS_IMAGERY_ENABLED_STORAGE, arcgisImageryEnabled ? "1" : "0");
@@ -2301,20 +2402,22 @@ function arcgisMapViewForHole(anchors, marker = photoTargetMarkers(4), panelRati
     return null;
   }
 
-  // Use the highest-detail tiles that still keep the hole view manageable.
-  // Zoom 19 gives noticeably sharper golf-hole imagery than zoom 17, but very
-  // long holes can require too many tiles, so we gracefully step down.
-  for (let zoom = ARCGIS_MAX_ZOOM; zoom >= ARCGIS_MIN_ZOOM; zoom -= 1) {
-    const map = arcgisMapViewForHoleAtZoom(anchors, marker, panelRatio, zoom);
+  const quality = activeArcgisQualityConfig();
+
+  // Use the highest-detail tiles allowed by the selected quality that still
+  // keep the hole view manageable. Ultra tries zoom 20 first, then gracefully
+  // steps down for long holes or dense tile grids.
+  for (let zoom = quality.maxZoom; zoom >= quality.minZoom; zoom -= 1) {
+    const map = arcgisMapViewForHoleAtZoom(anchors, marker, panelRatio, zoom, quality.maxTiles);
     if (map) {
-      return map;
+      return { ...map, quality: quality.key, qualityLabel: quality.label };
     }
   }
 
   return null;
 }
 
-function arcgisMapViewForHoleAtZoom(anchors, marker, panelRatio, zoom) {
+function arcgisMapViewForHoleAtZoom(anchors, marker, panelRatio, zoom, maxTiles) {
   const tee = geoToWorldPixel(anchors.tee, zoom);
   const green = geoToWorldPixel(anchors.green, zoom);
   const ratio = normalizedSatelliteRatio(panelRatio);
@@ -2336,7 +2439,7 @@ function arcgisMapViewForHoleAtZoom(anchors, marker, panelRatio, zoom) {
   const minTileY = Math.floor(Math.min(...worldCorners.map((point) => point.y)) / ARCGIS_TILE_SIZE);
   const maxTileY = Math.floor(Math.max(...worldCorners.map((point) => point.y)) / ARCGIS_TILE_SIZE);
   const tileCount = (maxTileX - minTileX + 1) * (maxTileY - minTileY + 1);
-  if (!Number.isFinite(tileCount) || tileCount <= 0 || tileCount > MAX_ARCGIS_TILES_PER_HOLE) {
+  if (!Number.isFinite(tileCount) || tileCount <= 0 || tileCount > maxTiles) {
     return null;
   }
   const tiles = [];
@@ -4308,6 +4411,10 @@ function handleClick(event) {
     render();
   }
 
+  if (action === "cycle-arcgis-quality") {
+    cycleArcgisImageryQuality();
+  }
+
   if (action === "clear-arcgis-shot-plan") {
     clearArcgisShotPlan(button.dataset.courseId, button.dataset.hole);
   }
@@ -4718,11 +4825,23 @@ function updateArcgisTileStatus(layer) {
   const failed = tiles.filter((tile) => tile.dataset.error === "1").length;
   const complete = tiles.length > 0 && loaded === tiles.length;
   const allFinished = tiles.length > 0 && loaded + failed === tiles.length;
+  const hasUsableImagery = loaded > 0 && (complete || allFinished);
   const status = layer.querySelector("[data-arcgis-map-status]");
-  layer.classList.toggle("loaded", complete);
-  layer.classList.toggle("failed", allFinished && failed > 0);
+
+  // Some ArcGIS imagery sources do not have every tile at the highest zoom for
+  // every course. Do not cover a usable hole image with the "incomplete" panel
+  // just because one edge/corner tile failed. If at least one tile loaded and
+  // the rest have finished, show the usable imagery and keep the user moving.
+  layer.classList.toggle("loaded", complete || hasUsableImagery);
+  layer.classList.toggle("failed", allFinished && failed > 0 && loaded === 0);
   if (status) {
-    status.textContent = complete ? "ArcGIS imagery ready" : allFinished && failed > 0 ? "ArcGIS imagery incomplete" : "Loading ArcGIS imagery";
+    status.textContent = complete
+      ? "ArcGIS imagery ready"
+      : allFinished && loaded > 0
+        ? "ArcGIS imagery loaded with some unavailable edge tiles"
+        : allFinished && failed > 0
+          ? "ArcGIS imagery unavailable at this zoom"
+          : "Loading ArcGIS imagery";
   }
 }
 
@@ -5879,7 +5998,9 @@ function updateRoundSignature(input) {
   }
   round.signatures = {
     ...(round.signatures || {}),
-    [field]: String(input.value || "").trim()
+    // Save without rendering or trimming while the user types. Rendering here
+    // would replace the focused input and close the Android keyboard.
+    [field]: String(input.value || "")
   };
   saveState(state);
 }
