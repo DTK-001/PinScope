@@ -1,4 +1,4 @@
-const CACHE_NAME = "local-loop-golf-v112-arcgis-quality-fallback-test";
+const CACHE_NAME = "local-loop-golf-v110-frontend-arcgis-test";
 
 const APP_SHELL = [
   "./",
