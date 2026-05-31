@@ -46,9 +46,10 @@ const ARCGIS_IMAGERY_ENABLED_STORAGE = "pinscope:arcgis-maps-enabled:v1";
 const SATELLITE_ANCHOR_EDITS_STORAGE = "pinscope:satellite-anchor-edits:v1";
 const ARCGIS_IMAGERY_QUERY_ENABLED = "arcgisMaps";
 const ARCGIS_TILE_SIZE = 256;
-const ARCGIS_ZOOM = 17;
+const ARCGIS_MIN_ZOOM = 17;
+const ARCGIS_MAX_ZOOM = 19;
 const SATELLITE_PRELOAD_CONCURRENCY = 2;
-const MAX_ARCGIS_TILES_PER_HOLE = 64;
+const MAX_ARCGIS_TILES_PER_HOLE = 196;
 const SATELLITE_PANEL_RATIO = 13 / 9;
 const HANDICAP_MIN_HOLES = 54;
 const HANDICAP_SCORE_TABLE = [
@@ -2299,7 +2300,21 @@ function arcgisMapViewForHole(anchors, marker = photoTargetMarkers(4), panelRati
   if (!anchors?.tee || !anchors?.green) {
     return null;
   }
-  const zoom = ARCGIS_ZOOM;
+
+  // Use the highest-detail tiles that still keep the hole view manageable.
+  // Zoom 19 gives noticeably sharper golf-hole imagery than zoom 17, but very
+  // long holes can require too many tiles, so we gracefully step down.
+  for (let zoom = ARCGIS_MAX_ZOOM; zoom >= ARCGIS_MIN_ZOOM; zoom -= 1) {
+    const map = arcgisMapViewForHoleAtZoom(anchors, marker, panelRatio, zoom);
+    if (map) {
+      return map;
+    }
+  }
+
+  return null;
+}
+
+function arcgisMapViewForHoleAtZoom(anchors, marker, panelRatio, zoom) {
   const tee = geoToWorldPixel(anchors.tee, zoom);
   const green = geoToWorldPixel(anchors.green, zoom);
   const ratio = normalizedSatelliteRatio(panelRatio);
@@ -2342,7 +2357,7 @@ function arcgisMapViewForHole(anchors, marker = photoTargetMarkers(4), panelRati
       });
     }
   }
-  return { zoom, tiles, attribution: arcgisImageryAttribution() };
+  return { zoom, tiles, tileCount, attribution: arcgisImageryAttribution() };
 }
 
 function satelliteWorldTransform(tee, green, marker = photoTargetMarkers(4), panelRatio = SATELLITE_PANEL_RATIO) {
