@@ -2,7 +2,8 @@ import { ensureArcgisSession } from "./arcgisSession.js";
 
 const ARCGIS_IMAGERY_STYLE = "arcgis/imagery/standard";
 const ARCGIS_STYLE_URL = `https://basemapstyles-api.arcgis.com/arcgis/rest/services/styles/v2/styles/${ARCGIS_IMAGERY_STYLE}`;
-const ARCGIS_ATTRIBUTION = "Imagery: Esri, Maxar, Earthstar Geographics, and the GIS User Community";
+const ARCGIS_ATTRIBUTION = "Imagery: Esri, Vantor, Earthstar Geographics, and the GIS User Community";
+const ARCGIS_REQUEST_TIMEOUT_MS = 10000;
 
 let currentLayer = null;
 let pendingLayer = null;
@@ -64,9 +65,9 @@ export async function ensureArcgisImageryLayer() {
 }
 
 async function loadArcgisImageryLayer(session) {
-  const style = await fetchJson(`${ARCGIS_STYLE_URL}?token=${encodeURIComponent(session.sessionToken)}&echoToken=true`);
+  const style = await fetchJson(`${ARCGIS_STYLE_URL}?token=${encodeURIComponent(session.sessionToken)}&echoToken=true&f=json`);
   const source = await resolveRasterSource(style, session.sessionToken);
-  const tileTemplate = normalizeTileTemplate(source?.tiles?.[0]);
+  const tileTemplate = normalizeTileTemplate(source?.tiles?.[0] || source?.tileUrl || source?.url);
   if (!tileTemplate) {
     throw new Error("ArcGIS imagery style did not include a usable raster tile source.");
   }
@@ -77,7 +78,7 @@ async function loadArcgisImageryLayer(session) {
     sessionToken: session.sessionToken,
     startTime: session.startTime,
     endTime: session.endTime,
-    tileTemplate,
+    tileTemplate: ensureTokenPlaceholder(tileTemplate),
     attribution: source.attribution || style?.metadata?.["arcgis:attribution"] || ARCGIS_ATTRIBUTION
   };
 }
@@ -90,23 +91,49 @@ async function resolveRasterSource(style, sessionToken) {
   }
 
   const linked = sources.find((source) => source?.type === "raster" && source.url);
-  if (!linked) {
-    return null;
+  if (linked) {
+    const tileJsonUrl = appendToken(linked.url, sessionToken);
+    return fetchJson(tileJsonUrl);
   }
 
-  const tileJsonUrl = linked.url.includes("?")
-    ? `${linked.url}&token=${encodeURIComponent(sessionToken)}`
-    : `${linked.url}?token=${encodeURIComponent(sessionToken)}`;
-  return fetchJson(tileJsonUrl);
+  const layerSourceId = Array.isArray(style?.layers)
+    ? style.layers.find((layer) => layer?.type === "raster" && layer.source)?.source
+    : "";
+  const layerSource = layerSourceId ? style?.sources?.[layerSourceId] : null;
+  if (layerSource?.type === "raster" && Array.isArray(layerSource.tiles) && layerSource.tiles.length) {
+    return layerSource;
+  }
+
+  return null;
+}
+
+function appendToken(url, token) {
+  const separator = String(url).includes("?") ? "&" : "?";
+  return `${url}${separator}token=${encodeURIComponent(token)}`;
 }
 
 async function fetchJson(url) {
-  const response = await fetch(url, { cache: "no-store" });
+  const response = await fetchWithTimeout(url, { cache: "no-store" }, ARCGIS_REQUEST_TIMEOUT_MS);
   const body = await response.json().catch(() => ({}));
   if (!response.ok || body?.error) {
-    throw new Error(body?.error?.message || body?.error || "ArcGIS imagery request failed.");
+    throw new Error(body?.error?.message || body?.error || `ArcGIS imagery request failed (${response.status}).`);
   }
   return body;
+}
+
+async function fetchWithTimeout(url, options, timeoutMs) {
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } catch (error) {
+    if (error?.name === "AbortError") {
+      throw new Error("ArcGIS imagery request timed out.");
+    }
+    throw error;
+  } finally {
+    window.clearTimeout(timeout);
+  }
 }
 
 function normalizeTileTemplate(value) {
@@ -117,4 +144,11 @@ function normalizeTileTemplate(value) {
     return "";
   }
   return template;
+}
+
+function ensureTokenPlaceholder(template) {
+  if (template.includes("{token}")) {
+    return template;
+  }
+  return `${template}${template.includes("?") ? "&" : "?"}token={token}`;
 }

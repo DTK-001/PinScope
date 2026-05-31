@@ -48,6 +48,7 @@ const ARCGIS_IMAGERY_QUERY_ENABLED = "arcgisMaps";
 const ARCGIS_TILE_SIZE = 256;
 const ARCGIS_ZOOM = 17;
 const SATELLITE_PRELOAD_CONCURRENCY = 2;
+const MAX_ARCGIS_TILES_PER_HOLE = 64;
 const SATELLITE_PANEL_RATIO = 13 / 9;
 const HANDICAP_MIN_HOLES = 54;
 const HANDICAP_SCORE_TABLE = [
@@ -104,6 +105,8 @@ let satellitePreloadCourseId = "";
 let satellitePreloadedUrls = new Set();
 let satellitePreloadingUrls = new Set();
 let arcgisImageryRetryAt = 0;
+let arcgisImageryRequestTimer = 0;
+let satellitePreloadTimer = 0;
 let notice = "";
 let scoreCardOpen = false;
 let roundScorecardOpen = false;
@@ -813,7 +816,7 @@ function renderPlay() {
   if (!hole) {
     return `<section class="empty-state"><h2>Hole data missing</h2><p>${escapeHtml(courseDisplayName(course))} needs hole data before a round can be played.</p><button class="primary-action" type="button" data-route="courses">Choose another course</button></section>`;
   }
-  queueCourseSatellitePreload(course, hole.number);
+  scheduleCourseSatellitePreload(course, hole.number);
   const players = getRoundPlayers(activeRound);
   const leadTotals = roundTotals(activeRound, course, players[0]?.id);
   const teeInfo = photoPlanningTee(hole);
@@ -1678,7 +1681,7 @@ function renderArcgisHoleVisual(hole, course) {
   }
   const imageryLayer = getArcgisImageryLayer();
   if (!imageryLayer) {
-    requestArcgisImageryLayer();
+    scheduleArcgisImageryLayerRequest();
   }
   const tee = { x: marker.tee[0], y: marker.tee[1] };
   const green = { x: marker.green[0], y: marker.green[1] };
@@ -1794,7 +1797,7 @@ function queueCourseSatellitePreload(course, currentHoleNumber = 1) {
     return;
   }
   if (!getArcgisImageryLayer()) {
-    requestArcgisImageryLayer();
+    scheduleArcgisImageryLayerRequest();
     return;
   }
   if (satellitePreloadCourseId !== course.id) {
@@ -2201,6 +2204,27 @@ function arcgisImageryStatusText() {
   return getArcgisImageryLayer() ? "Loading imagery" : "Starting ArcGIS imagery";
 }
 
+function scheduleArcgisImageryLayerRequest(delay = 0) {
+  if (!arcgisImageryEnabled || arcgisImageryRequestTimer) {
+    return;
+  }
+  arcgisImageryRequestTimer = window.setTimeout(() => {
+    arcgisImageryRequestTimer = 0;
+    requestArcgisImageryLayer();
+  }, delay);
+}
+
+function scheduleCourseSatellitePreload(course, currentHoleNumber = 1) {
+  if (!course?.holes?.length || !arcgisImageryEnabled) {
+    return;
+  }
+  window.clearTimeout(satellitePreloadTimer);
+  satellitePreloadTimer = window.setTimeout(() => {
+    satellitePreloadTimer = 0;
+    queueCourseSatellitePreload(course, currentHoleNumber);
+  }, 80);
+}
+
 function requestArcgisImageryLayer() {
   if (!arcgisImageryEnabled) {
     return;
@@ -2216,7 +2240,7 @@ function requestArcgisImageryLayer() {
         if (round) {
           const course = getCourse(state, round.courseId);
           if (course) {
-            queueCourseSatellitePreload(course, round.currentHole || 1);
+            scheduleCourseSatellitePreload(course, round.currentHole || 1);
           }
         }
         render();
@@ -2296,6 +2320,10 @@ function arcgisMapViewForHole(anchors, marker = photoTargetMarkers(4), panelRati
   const maxTileX = Math.floor(Math.max(...worldCorners.map((point) => point.x)) / ARCGIS_TILE_SIZE);
   const minTileY = Math.floor(Math.min(...worldCorners.map((point) => point.y)) / ARCGIS_TILE_SIZE);
   const maxTileY = Math.floor(Math.max(...worldCorners.map((point) => point.y)) / ARCGIS_TILE_SIZE);
+  const tileCount = (maxTileX - minTileX + 1) * (maxTileY - minTileY + 1);
+  if (!Number.isFinite(tileCount) || tileCount <= 0 || tileCount > MAX_ARCGIS_TILES_PER_HOLE) {
+    return null;
+  }
   const tiles = [];
   for (let x = minTileX; x <= maxTileX; x += 1) {
     for (let y = minTileY; y <= maxTileY; y += 1) {
@@ -5644,7 +5672,7 @@ function startRound(courseId, teeId = "") {
   roundSetupPlayerCount = 1;
   view = "play";
   window.location.hash = "play";
-  queueCourseSatellitePreload(course, round.currentHole);
+  scheduleCourseSatellitePreload(course, round.currentHole);
   scrollToTop();
   persist("Round started.");
 }
@@ -5657,7 +5685,7 @@ function resumeActiveRound(round = getActiveRound(state), message = "Continuing 
   state.activeRoundId = round.id;
   if (course) {
     state.selectedCourseId = course.id;
-    queueCourseSatellitePreload(course, round.currentHole || 1);
+    scheduleCourseSatellitePreload(course, round.currentHole || 1);
   }
   roundSetupPlayerCount = 1;
   view = "play";
@@ -5681,7 +5709,7 @@ function openRoundSetup(courseId) {
   roundSetupPlayerCount = 1;
   view = "play";
   window.location.hash = "play";
-  queueCourseSatellitePreload(course, 1);
+  scheduleCourseSatellitePreload(course, 1);
   scrollToTop();
   persist("Course ready.");
 }

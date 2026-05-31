@@ -159,9 +159,10 @@ function Send-ArcgisSession {
     return
   }
 
-  $uri = "https://basemapstyles-api.arcgis.com/arcgis/rest/services/styles/v2/sessions/start?styleFamily=arcgis&f=json"
+  $encodedKey = [System.Uri]::EscapeDataString($key)
+  $uri = "https://basemapstyles-api.arcgis.com/arcgis/rest/services/styles/v2/sessions/start?styleFamily=arcgis&durationSeconds=43200&f=json&token=$encodedKey"
   try {
-    $response = Invoke-WebRequest -UseBasicParsing -Uri $uri -Headers @{ Authorization = "Bearer $key"; Accept = "application/json" } -TimeoutSec 20
+    $response = Invoke-WebRequest -UseBasicParsing -Uri $uri -Headers @{ Accept = "application/json" } -TimeoutSec 20
     $body = $response.Content | ConvertFrom-Json
     if ($body.error) {
       $message = if ($body.error.message) { $body.error.message } else { "ArcGIS basemap session could not be started." }
@@ -173,7 +174,7 @@ function Send-ArcgisSession {
       sessionToken = $body.sessionToken
       startTime = $body.startTime
       endTime = $body.endTime
-      styleFamily = $body.styleFamily
+      styleFamily = if ($body.styleFamily) { $body.styleFamily } else { "arcgis" }
     } | ConvertTo-Json -Compress
     Send-Json $Stream 200 "OK" $payload $HeadOnly
   }

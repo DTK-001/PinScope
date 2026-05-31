@@ -1,5 +1,6 @@
 const ARCGIS_SESSION_ENDPOINT = "/api/arcgis/session";
 const SESSION_REFRESH_WINDOW_MS = 60 * 1000;
+const SESSION_REQUEST_TIMEOUT_MS = 10000;
 
 let currentSession = null;
 let pendingSession = null;
@@ -17,19 +18,19 @@ export async function ensureArcgisSession() {
     return pendingSession;
   }
 
-  pendingSession = fetch(ARCGIS_SESSION_ENDPOINT, {
+  pendingSession = fetchWithTimeout(ARCGIS_SESSION_ENDPOINT, {
     method: "GET",
     cache: "no-store",
     headers: { Accept: "application/json" }
-  })
+  }, SESSION_REQUEST_TIMEOUT_MS)
     .then(async (response) => {
       const body = await response.json().catch(() => ({}));
       if (!response.ok) {
-        throw new Error(body.error || "ArcGIS imagery session could not be started.");
+        throw new Error(sessionErrorMessage(response, body));
       }
       const session = normalizeArcgisSession(body);
       if (!validSession(session)) {
-        throw new Error("ArcGIS imagery session response was missing a valid session token.");
+        throw new Error("ArcGIS session endpoint returned no usable session token. Check the server route and ARCGIS_API_KEY secret.");
       }
       currentSession = session;
       return currentSession;
@@ -44,6 +45,34 @@ export async function ensureArcgisSession() {
 export function clearArcgisSession() {
   currentSession = null;
   pendingSession = null;
+}
+
+function sessionErrorMessage(response, body) {
+  if (body?.error) {
+    return String(body.error);
+  }
+  if (response.status === 404) {
+    return "ArcGIS session route was not found. Deploy the /api/arcgis/session backend route, or run the included dev server instead of opening the static files directly.";
+  }
+  if (response.status === 503) {
+    return "ArcGIS API key is missing on the server. Set ARCGIS_API_KEY in your local .env.local or deployment secrets.";
+  }
+  return `ArcGIS imagery session could not be started (${response.status}).`;
+}
+
+async function fetchWithTimeout(url, options, timeoutMs) {
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } catch (error) {
+    if (error?.name === "AbortError") {
+      throw new Error("ArcGIS session request timed out. Check that the backend route is running and can reach ArcGIS.");
+    }
+    throw error;
+  } finally {
+    window.clearTimeout(timeout);
+  }
 }
 
 function normalizeArcgisSession(value) {

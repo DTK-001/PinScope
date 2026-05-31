@@ -93,3 +93,10 @@ The intended workflow is:
 4. Run `node tools\build-course-pack.cjs`.
 5. Commit/deploy the updated `src/shared-course-defaults.js`.
 6. Configure `ARCGIS_API_KEY` in the server or serverless environment that serves `/api/arcgis/session`.
+
+
+## ArcGIS troubleshooting
+
+If the hole screen shows `ArcGIS session route was not found`, the app is being served as a static site without the backend API route. ArcGIS imagery needs `/api/arcgis/session` to be available because the real API key must stay server-side. For local testing, run `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\dev-server.ps1 -Port 5173` or `node tools/dev-server.cjs 5173` from the project folder with `ARCGIS_API_KEY` set in `.env.local`. For deployment, use a host that supports serverless API routes, such as Vercel, Netlify, or a Cloudflare Worker in front of the static app.
+
+If the endpoint returns a 401 or 403, regenerate/check the ArcGIS key and make sure it has the Location Services → Basemaps → Basemap styles service privilege.
