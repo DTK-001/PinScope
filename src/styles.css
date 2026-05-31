@@ -1137,18 +1137,10 @@ p {
     radial-gradient(circle at 50% 18%, rgba(134, 191, 98, 0.26), transparent 28%);
 }
 
-.previous-shot-map.has-image {
-  background: #07100f;
-}
-
 .previous-shot-map svg {
   display: block;
   width: 100%;
   height: 100%;
-}
-
-.previous-shot-map .snapshot-map-image {
-  opacity: 0.9;
 }
 
 .previous-shot-tee,
@@ -1598,7 +1590,7 @@ select option {
   height: 100%;
 }
 
-.azure-tile-layer {
+.arcgis-tile-layer {
   position: absolute;
   inset: 0;
   z-index: 0;
@@ -1608,7 +1600,7 @@ select option {
     #06100f;
 }
 
-.azure-tile-layer::after {
+.arcgis-tile-layer::after {
   content: "";
   position: absolute;
   inset: 0;
@@ -1620,9 +1612,8 @@ select option {
   mix-blend-mode: soft-light;
 }
 
-.azure-map-tile,
-.azure-map-image,
-.snapshot-map-image {
+.arcgis-map-tile,
+.arcgis-map-image {
   position: absolute;
   display: block;
   object-fit: fill;
@@ -1634,28 +1625,12 @@ select option {
   transition: opacity 180ms ease;
 }
 
-.snapshot-map-image {
-  position: static;
-  filter: saturate(1.2) contrast(1.085) brightness(1.055) hue-rotate(-5deg);
-}
-
-.snapshot-map-svg {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  display: block;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-}
-
-.azure-map-tile[data-loaded="1"],
-.azure-map-image[data-loaded="1"],
-.snapshot-map-image[data-loaded="1"] {
+.arcgis-map-tile[data-loaded="1"],
+.arcgis-map-image[data-loaded="1"] {
   opacity: 1;
 }
 
-.azure-map-status {
+.arcgis-map-status {
   position: absolute;
   inset: 0;
   z-index: 2;
@@ -1669,11 +1644,11 @@ select option {
   font-weight: 850;
 }
 
-.azure-tile-layer.loaded .azure-map-status {
+.arcgis-tile-layer.loaded .arcgis-map-status {
   display: none;
 }
 
-.azure-tile-layer.failed .azure-map-status {
+.arcgis-tile-layer.failed .arcgis-map-status {
   color: #fff;
   background: rgba(86, 12, 45, 0.76);
 }
@@ -3737,14 +3712,32 @@ select option {
 
   .round-scorecard-shell {
     width: min(100vw, 1180px);
-    height: min(100dvh, 680px);
+    height: 100dvh;
     margin: auto;
     padding: 12px;
   }
 
   .round-scorecard-table {
-    width: max(980px, 100%);
-    font-size: clamp(0.58rem, 1.45vw, 0.82rem);
+    width: 100%;
+    min-width: 0;
+    font-size: clamp(0.54rem, 1.25vw, 0.74rem);
+  }
+
+  .round-scorecard-table th,
+  .round-scorecard-table td {
+    min-width: 0;
+    height: 32px;
+    padding: 2px;
+  }
+
+  .round-scorecard-table th:first-child,
+  .round-scorecard-table td:first-child {
+    width: clamp(70px, 12vw, 96px);
+  }
+
+  .round-scorecard-table .initials-cell {
+    width: 24px;
+    font-size: 0.54rem;
   }
 
   .round-scorecard-sign {

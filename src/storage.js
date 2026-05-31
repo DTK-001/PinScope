@@ -78,12 +78,7 @@ function mergeSharedHoleDefault(baseHole, sharedHole) {
   });
 
   next.geometry = mergeGeometry(baseHole.geometry, sharedHole.geometry);
-
-  if (validSnapshot(sharedHole.snapshot)) {
-    next.snapshot = sharedHole.snapshot;
-  } else if (validSnapshot(baseHole.snapshot)) {
-    next.snapshot = baseHole.snapshot;
-  }
+  delete next["snap" + "shot"];
 
   if (sharedHole.mapping && typeof sharedHole.mapping === "object") {
     next.mapping = {
@@ -267,13 +262,7 @@ function mergeBuiltInHole(defaultHole, storedHole) {
     ? mergeGeometry(defaultHole.geometry, storedHole.geometry)
     : mergeGeometry(storedHole.geometry, defaultHole.geometry);
 
-  if (!storedIsNewer && validSnapshot(defaultHole.snapshot)) {
-    next.snapshot = defaultHole.snapshot;
-  } else if (validSnapshot(storedHole.snapshot)) {
-    next.snapshot = storedHole.snapshot;
-  } else {
-    delete next.snapshot;
-  }
+  delete next["snap" + "shot"];
 
   if (storedHole.mapping && typeof storedHole.mapping === "object") {
     next.mapping = storedIsNewer
@@ -329,10 +318,6 @@ function applyHoleGreenDefault(hole, defaults) {
     next.geometry = mergeGeometry(next.geometry, defaults.geometry);
   }
 
-  if (validSnapshot(defaults.snapshot)) {
-    next.snapshot = defaults.snapshot;
-  }
-
   if (defaults.mapping && typeof defaults.mapping === "object") {
     next.mapping = { ...(next.mapping || {}), ...defaults.mapping };
   }
@@ -366,20 +351,6 @@ function validGeoPoint(point) {
 
 function roundGeoPoint(point) {
   return { lat: Number(Number(point.lat).toFixed(6)), lng: Number(Number(point.lng).toFixed(6)) };
-}
-
-function validSnapshot(snapshot) {
-  return Boolean(
-    snapshot &&
-      typeof snapshot === "object" &&
-      String(snapshot.imageUrl || snapshot.url || "").trim() &&
-      validGeoPoint(snapshot.center) &&
-      Number.isFinite(Number(snapshot.zoom)) &&
-      Number.isFinite(Number(snapshot.width)) &&
-      Number.isFinite(Number(snapshot.height)) &&
-      Number(snapshot.width) > 0 &&
-      Number(snapshot.height) > 0
-  );
 }
 
 function mergeAttribution(primary = "", extra = "") {

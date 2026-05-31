@@ -19,7 +19,7 @@
         "lat": 51.555764,
         "lng": 0.282267
       },
-      "attribution": "Identity from Cranham Golf Course official website. Hole geometry from OpenStreetMap contributors under ODbL. Identity from Cranham Golf Course official website. Hole geometry from OpenStreetMap contributors under ODbL. Identity from Cranham Golf Course official website. Hole geometry from OpenStreetMap contributors under ODbL. OpenStreetMap contributors. Imagery: Azure Maps.",
+      "attribution": "Identity from Cranham Golf Course official website. Hole geometry from OpenStreetMap contributors under ODbL. Identity from Cranham Golf Course official website. Hole geometry from OpenStreetMap contributors under ODbL. Identity from Cranham Golf Course official website. Hole geometry from OpenStreetMap contributors under ODbL. OpenStreetMap contributors.",
       "geometrySource": "OpenStreetMap",
       "verification": {
         "status": "verified",
@@ -279,23 +279,6 @@
               "courseArea": "way/23454278"
             },
             "satelliteAligned": false
-          },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/osm-way-23454278/hole-01-a5bf8c5d57.jpg",
-            "storageKey": "assets/snapshots/osm-way-23454278/hole-01-a5bf8c5d57.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.557343,
-              "lng": 0.282471
-            },
-            "zoom": 17,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:08.104Z",
-            "fingerprint": "a5bf8c5d57",
-            "geometrySignature": "70ce17a9"
           },
           "visual": {
             "ref": 1,
@@ -1378,23 +1361,6 @@
             },
             "satelliteAligned": false
           },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/osm-way-23454278/hole-02-6cb490288f.jpg",
-            "storageKey": "assets/snapshots/osm-way-23454278/hole-02-6cb490288f.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.554725,
-              "lng": 0.281185
-            },
-            "zoom": 17,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:08.469Z",
-            "fingerprint": "6cb490288f",
-            "geometrySignature": "7cd20427"
-          },
           "visual": {
             "ref": 2,
             "osmWay": 1082469607,
@@ -2305,23 +2271,6 @@
             },
             "satelliteAligned": false
           },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/osm-way-23454278/hole-03-4e3db2c221.jpg",
-            "storageKey": "assets/snapshots/osm-way-23454278/hole-03-4e3db2c221.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.553443,
-              "lng": 0.280391
-            },
-            "zoom": 18,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:08.613Z",
-            "fingerprint": "4e3db2c221",
-            "geometrySignature": "5176fedd"
-          },
           "visual": {
             "ref": 3,
             "osmWay": 1082469611,
@@ -2958,23 +2907,6 @@
               "courseArea": "way/23454278"
             },
             "satelliteAligned": false
-          },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/osm-way-23454278/hole-04-316696c756.jpg",
-            "storageKey": "assets/snapshots/osm-way-23454278/hole-04-316696c756.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.554946,
-              "lng": 0.28007
-            },
-            "zoom": 17,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:08.741Z",
-            "fingerprint": "316696c756",
-            "geometrySignature": "ed7e6670"
           },
           "visual": {
             "ref": 4,
@@ -4588,23 +4520,6 @@
             },
             "satelliteAligned": false
           },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/osm-way-23454278/hole-05-f779c589b0.jpg",
-            "storageKey": "assets/snapshots/osm-way-23454278/hole-05-f779c589b0.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.555953,
-              "lng": 0.282934
-            },
-            "zoom": 17,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:08.847Z",
-            "fingerprint": "f779c589b0",
-            "geometrySignature": "5b22e3be"
-          },
           "visual": {
             "ref": 5,
             "osmWay": 1082470257,
@@ -5124,23 +5039,6 @@
               "courseArea": "way/23454278"
             },
             "satelliteAligned": false
-          },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/osm-way-23454278/hole-06-b97e0a2c47.jpg",
-            "storageKey": "assets/snapshots/osm-way-23454278/hole-06-b97e0a2c47.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.557662,
-              "lng": 0.285499
-            },
-            "zoom": 16,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:09.026Z",
-            "fingerprint": "b97e0a2c47",
-            "geometrySignature": "b42966f1"
           },
           "visual": {
             "ref": 6,
@@ -6302,23 +6200,6 @@
               "courseArea": "way/23454278"
             },
             "satelliteAligned": false
-          },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/osm-way-23454278/hole-07-724f2d10d5.jpg",
-            "storageKey": "assets/snapshots/osm-way-23454278/hole-07-724f2d10d5.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.557446,
-              "lng": 0.286841
-            },
-            "zoom": 16,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:09.180Z",
-            "fingerprint": "724f2d10d5",
-            "geometrySignature": "76d7f447"
           },
           "visual": {
             "ref": 7,
@@ -7581,23 +7462,6 @@
             },
             "satelliteAligned": false
           },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/osm-way-23454278/hole-08-9685a8c258.jpg",
-            "storageKey": "assets/snapshots/osm-way-23454278/hole-08-9685a8c258.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.555787,
-              "lng": 0.285151
-            },
-            "zoom": 17,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:09.338Z",
-            "fingerprint": "9685a8c258",
-            "geometrySignature": "20bec123"
-          },
           "visual": {
             "ref": 8,
             "osmWay": 1082473157,
@@ -8387,23 +8251,6 @@
               "courseArea": "way/23454278"
             },
             "satelliteAligned": false
-          },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/osm-way-23454278/hole-09-c187f27b44.jpg",
-            "storageKey": "assets/snapshots/osm-way-23454278/hole-09-c187f27b44.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.557663,
-              "lng": 0.284628
-            },
-            "zoom": 17,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:09.423Z",
-            "fingerprint": "c187f27b44",
-            "geometrySignature": "52b261c0"
           },
           "visual": {
             "ref": 9,
@@ -9541,23 +9388,6 @@
               "courseArea": "way/23454278"
             },
             "satelliteAligned": false
-          },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/osm-way-23454278/hole-10-46fd9d260d.jpg",
-            "storageKey": "assets/snapshots/osm-way-23454278/hole-10-46fd9d260d.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.557658,
-              "lng": 0.283583
-            },
-            "zoom": 16,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:09.626Z",
-            "fingerprint": "46fd9d260d",
-            "geometrySignature": "17c692a0"
           },
           "visual": {
             "ref": 10,
@@ -10760,23 +10590,6 @@
             },
             "satelliteAligned": false
           },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/osm-way-23454278/hole-11-cd19847f37.jpg",
-            "storageKey": "assets/snapshots/osm-way-23454278/hole-11-cd19847f37.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.556715,
-              "lng": 0.281429
-            },
-            "zoom": 18,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:09.742Z",
-            "fingerprint": "cd19847f37",
-            "geometrySignature": "9e539cdc"
-          },
           "visual": {
             "ref": 11,
             "osmWay": 1082475651,
@@ -11338,23 +11151,6 @@
               "courseArea": "way/23454278"
             },
             "satelliteAligned": false
-          },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/osm-way-23454278/hole-12-6a307b5045.jpg",
-            "storageKey": "assets/snapshots/osm-way-23454278/hole-12-6a307b5045.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.55567,
-              "lng": 0.279369
-            },
-            "zoom": 16,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:09.867Z",
-            "fingerprint": "6a307b5045",
-            "geometrySignature": "173bf84b"
           },
           "visual": {
             "ref": 12,
@@ -13955,23 +13751,6 @@
             },
             "satelliteAligned": false
           },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/osm-way-23454278/hole-13-d9c6371146.jpg",
-            "storageKey": "assets/snapshots/osm-way-23454278/hole-13-d9c6371146.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.553097,
-              "lng": 0.279367
-            },
-            "zoom": 17,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:09.954Z",
-            "fingerprint": "d9c6371146",
-            "geometrySignature": "7fc53a62"
-          },
           "visual": {
             "ref": 13,
             "osmWay": 1082477202,
@@ -14778,23 +14557,6 @@
               "courseArea": "way/23454278"
             },
             "satelliteAligned": false
-          },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/osm-way-23454278/hole-14-d353aa9013.jpg",
-            "storageKey": "assets/snapshots/osm-way-23454278/hole-14-d353aa9013.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.553025,
-              "lng": 0.279007
-            },
-            "zoom": 17,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:10.056Z",
-            "fingerprint": "d353aa9013",
-            "geometrySignature": "784ee8c3"
           },
           "visual": {
             "ref": 14,
@@ -16327,23 +16089,6 @@
             },
             "satelliteAligned": false
           },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/osm-way-23454278/hole-15-deb85f45d1.jpg",
-            "storageKey": "assets/snapshots/osm-way-23454278/hole-15-deb85f45d1.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.555898,
-              "lng": 0.277761
-            },
-            "zoom": 16,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:10.167Z",
-            "fingerprint": "deb85f45d1",
-            "geometrySignature": "8ece6545"
-          },
           "visual": {
             "ref": 15,
             "osmWay": 1082479412,
@@ -16995,23 +16740,6 @@
             },
             "satelliteAligned": false
           },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/osm-way-23454278/hole-16-b0faa4b282.jpg",
-            "storageKey": "assets/snapshots/osm-way-23454278/hole-16-b0faa4b282.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.557277,
-              "lng": 0.278857
-            },
-            "zoom": 18,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:10.284Z",
-            "fingerprint": "b0faa4b282",
-            "geometrySignature": "dbc48dfc"
-          },
           "visual": {
             "ref": 16,
             "osmWay": 1082479416,
@@ -17476,23 +17204,6 @@
               "courseArea": "way/23454278"
             },
             "satelliteAligned": false
-          },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/osm-way-23454278/hole-17-d281d054f0.jpg",
-            "storageKey": "assets/snapshots/osm-way-23454278/hole-17-d281d054f0.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.556821,
-              "lng": 0.279421
-            },
-            "zoom": 17,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:10.398Z",
-            "fingerprint": "d281d054f0",
-            "geometrySignature": "37d929a0"
           },
           "visual": {
             "ref": 17,
@@ -18464,23 +18175,6 @@
             },
             "satelliteAligned": false
           },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/osm-way-23454278/hole-18-3e729f8f09.jpg",
-            "storageKey": "assets/snapshots/osm-way-23454278/hole-18-3e729f8f09.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.557801,
-              "lng": 0.280983
-            },
-            "zoom": 17,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:10.545Z",
-            "fingerprint": "3e729f8f09",
-            "geometrySignature": "6ce6da0f"
-          },
           "visual": {
             "ref": 18,
             "osmWay": 1082479603,
@@ -18984,7 +18678,7 @@
         "lat": 51.507331,
         "lng": 0.263364
       },
-      "attribution": "Scorecard from Golfify and Belhus Park Golf Club scorecard page. Available tee and green geometry from OpenStreetMap contributors under ODbL. Scorecard from Golfify and Belhus Park Golf Club scorecard page. Available tee and green geometry from OpenStreetMap contributors under ODbL. Scorecard from Golfify and Belhus Park Golf Club scorecard page. Available tee and green geometry from OpenStreetMap contributors under ODbL. OpenStreetMap contributors. Imagery: Azure Maps. Scorecard from Golfify and Belhus Park Golf Club scorecard page. Available tee and green geometry from OpenStreetMap contributors under ODbL. OpenStreetMap contributors. Imagery: Azure Maps. Scorecard from Golfify and Belhus Park Golf Club scorecard page. Available tee and green geometry from OpenStreetMap contributors under ODbL. OpenStreetMap contributors. Imagery: Azure Maps. Scorecard from Golfify and Belhus Park Golf Club scorecard page. Available tee and green geometry from OpenStreetMap contributors under ODbL. OpenStreetMap contributors. Imagery: Azure Maps. Hole geometry from OpenStreetMap contributors under ODbL.",
+      "attribution": "Scorecard from Golfify and Belhus Park Golf Club scorecard page. Available tee and green geometry from OpenStreetMap contributors under ODbL. Scorecard from Golfify and Belhus Park Golf Club scorecard page. Available tee and green geometry from OpenStreetMap contributors under ODbL. Scorecard from Golfify and Belhus Park Golf Club scorecard page. Available tee and green geometry from OpenStreetMap contributors under ODbL. OpenStreetMap contributors. Scorecard from Golfify and Belhus Park Golf Club scorecard page. Available tee and green geometry from OpenStreetMap contributors under ODbL. OpenStreetMap contributors. Scorecard from Golfify and Belhus Park Golf Club scorecard page. Available tee and green geometry from OpenStreetMap contributors under ODbL. OpenStreetMap contributors. Scorecard from Golfify and Belhus Park Golf Club scorecard page. Available tee and green geometry from OpenStreetMap contributors under ODbL. OpenStreetMap contributors. Hole geometry from OpenStreetMap contributors under ODbL.",
       "geometrySource": "PinScope course pack: data\\course-pack\\local-osm-map.json",
       "verification": {
         "status": "verified",
@@ -19295,23 +18989,6 @@
             },
             "satelliteAligned": false
           },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-belhus-park/hole-01-2d96d9d1bd.jpg",
-            "storageKey": "assets/snapshots/verified-belhus-park/hole-01-2d96d9d1bd.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.507344,
-              "lng": 0.261856
-            },
-            "zoom": 16,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:10.661Z",
-            "fingerprint": "2d96d9d1bd",
-            "geometrySignature": "8b45f730"
-          },
           "visual": {
             "tee": [
               71.86,
@@ -19540,23 +19217,6 @@
               "courseArea": "way/1263547041"
             },
             "satelliteAligned": false
-          },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-belhus-park/hole-02-5c21781114.jpg",
-            "storageKey": "assets/snapshots/verified-belhus-park/hole-02-5c21781114.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.507521,
-              "lng": 0.259332
-            },
-            "zoom": 17,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:10.780Z",
-            "fingerprint": "5c21781114",
-            "geometrySignature": "ddc88e23"
           },
           "visual": {
             "tee": [
@@ -19807,23 +19467,6 @@
             },
             "satelliteAligned": false
           },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-belhus-park/hole-03-3c59e10fc5.jpg",
-            "storageKey": "assets/snapshots/verified-belhus-park/hole-03-3c59e10fc5.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.507868,
-              "lng": 0.258893
-            },
-            "zoom": 16,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:10.895Z",
-            "fingerprint": "3c59e10fc5",
-            "geometrySignature": "da554e8d"
-          },
           "visual": {
             "tee": [
               31.681,
@@ -20004,23 +19647,6 @@
               "courseArea": "way/1263547041"
             },
             "satelliteAligned": false
-          },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-belhus-park/hole-04-f1c0c471f1.jpg",
-            "storageKey": "assets/snapshots/verified-belhus-park/hole-04-f1c0c471f1.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.507934,
-              "lng": 0.258139
-            },
-            "zoom": 16,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:11.005Z",
-            "fingerprint": "f1c0c471f1",
-            "geometrySignature": "30a7ac95"
           },
           "visual": {
             "tee": [
@@ -20234,23 +19860,6 @@
               "courseArea": "way/1263547041"
             },
             "satelliteAligned": false
-          },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-belhus-park/hole-05-73ce46f659.jpg",
-            "storageKey": "assets/snapshots/verified-belhus-park/hole-05-73ce46f659.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.507945,
-              "lng": 0.257053
-            },
-            "zoom": 16,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:11.126Z",
-            "fingerprint": "73ce46f659",
-            "geometrySignature": "5d2e1873"
           },
           "visual": {
             "tee": [
@@ -20485,23 +20094,6 @@
             },
             "satelliteAligned": false
           },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-belhus-park/hole-06-fe94194b42.jpg",
-            "storageKey": "assets/snapshots/verified-belhus-park/hole-06-fe94194b42.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.508014,
-              "lng": 0.256848
-            },
-            "zoom": 17,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:11.264Z",
-            "fingerprint": "fe94194b42",
-            "geometrySignature": "0595ca24"
-          },
           "visual": {
             "tee": [
               16.694,
@@ -20710,23 +20302,6 @@
               "courseArea": "way/1263547041"
             },
             "satelliteAligned": false
-          },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-belhus-park/hole-07-54cfe5164b.jpg",
-            "storageKey": "assets/snapshots/verified-belhus-park/hole-07-54cfe5164b.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.508403,
-              "lng": 0.255738
-            },
-            "zoom": 17,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:11.350Z",
-            "fingerprint": "54cfe5164b",
-            "geometrySignature": "077a27c8"
           },
           "visual": {
             "tee": [
@@ -20957,23 +20532,6 @@
             },
             "satelliteAligned": false
           },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-belhus-park/hole-08-11c1834e78.jpg",
-            "storageKey": "assets/snapshots/verified-belhus-park/hole-08-11c1834e78.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.509673,
-              "lng": 0.257039
-            },
-            "zoom": 17,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:11.479Z",
-            "fingerprint": "11c1834e78",
-            "geometrySignature": "a8ad1014"
-          },
           "visual": {
             "tee": [
               12.212,
@@ -21194,23 +20752,6 @@
               "courseArea": "way/1263547041"
             },
             "satelliteAligned": false
-          },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-belhus-park/hole-09-50a6f15615.jpg",
-            "storageKey": "assets/snapshots/verified-belhus-park/hole-09-50a6f15615.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.508379,
-              "lng": 0.261374
-            },
-            "zoom": 16,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:11.562Z",
-            "fingerprint": "50a6f15615",
-            "geometrySignature": "fe8442dd"
           },
           "visual": {
             "tee": [
@@ -21461,23 +21002,6 @@
             },
             "satelliteAligned": false
           },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-belhus-park/hole-10-f85b18b655.jpg",
-            "storageKey": "assets/snapshots/verified-belhus-park/hole-10-f85b18b655.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.508482,
-              "lng": 0.261979
-            },
-            "zoom": 16,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:11.669Z",
-            "fingerprint": "f85b18b655",
-            "geometrySignature": "963204ae"
-          },
           "visual": {
             "tee": [
               72.964,
@@ -21675,23 +21199,6 @@
             },
             "satelliteAligned": false
           },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-belhus-park/hole-11-42a4ef930e.jpg",
-            "storageKey": "assets/snapshots/verified-belhus-park/hole-11-42a4ef930e.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.509753,
-              "lng": 0.261014
-            },
-            "zoom": 17,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:11.814Z",
-            "fingerprint": "42a4ef930e",
-            "geometrySignature": "a31fa4f5"
-          },
           "visual": {
             "tee": [
               53.021,
@@ -21876,23 +21383,6 @@
               "courseArea": "way/1263547041"
             },
             "satelliteAligned": false
-          },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-belhus-park/hole-12-4850a2dace.jpg",
-            "storageKey": "assets/snapshots/verified-belhus-park/hole-12-4850a2dace.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.509119,
-              "lng": 0.262795
-            },
-            "zoom": 17,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:11.940Z",
-            "fingerprint": "4850a2dace",
-            "geometrySignature": "a88274b6"
           },
           "visual": {
             "tee": [
@@ -22115,23 +21605,6 @@
             },
             "satelliteAligned": false
           },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-belhus-park/hole-13-9fd0f47d78.jpg",
-            "storageKey": "assets/snapshots/verified-belhus-park/hole-13-9fd0f47d78.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.509316,
-              "lng": 0.263411
-            },
-            "zoom": 17,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:12.048Z",
-            "fingerprint": "9fd0f47d78",
-            "geometrySignature": "1a4817f6"
-          },
           "visual": {
             "tee": [
               79.163,
@@ -22353,23 +21826,6 @@
             },
             "satelliteAligned": false
           },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-belhus-park/hole-14-38fc53f7eb.jpg",
-            "storageKey": "assets/snapshots/verified-belhus-park/hole-14-38fc53f7eb.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.509255,
-              "lng": 0.264155
-            },
-            "zoom": 17,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:12.153Z",
-            "fingerprint": "38fc53f7eb",
-            "geometrySignature": "67141b91"
-          },
           "visual": {
             "tee": [
               67.994,
@@ -22590,23 +22046,6 @@
               "courseArea": "way/1263547041"
             },
             "satelliteAligned": false
-          },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-belhus-park/hole-15-2c4c1e6586.jpg",
-            "storageKey": "assets/snapshots/verified-belhus-park/hole-15-2c4c1e6586.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.509978,
-              "lng": 0.263187
-            },
-            "zoom": 16,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:12.263Z",
-            "fingerprint": "2c4c1e6586",
-            "geometrySignature": "f4a70bfe"
           },
           "visual": {
             "tee": [
@@ -22849,23 +22288,6 @@
             },
             "satelliteAligned": false
           },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-belhus-park/hole-16-43f7b015ac.jpg",
-            "storageKey": "assets/snapshots/verified-belhus-park/hole-16-43f7b015ac.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.510761,
-              "lng": 0.26322
-            },
-            "zoom": 15,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:12.370Z",
-            "fingerprint": "43f7b015ac",
-            "geometrySignature": "a3c04e18"
-          },
           "visual": {
             "tee": [
               44.695,
@@ -23107,23 +22529,6 @@
             },
             "satelliteAligned": false
           },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-belhus-park/hole-17-ff0fc624c4.jpg",
-            "storageKey": "assets/snapshots/verified-belhus-park/hole-17-ff0fc624c4.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.510168,
-              "lng": 0.265372
-            },
-            "zoom": 17,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:12.509Z",
-            "fingerprint": "ff0fc624c4",
-            "geometrySignature": "b940b69d"
-          },
           "visual": {
             "tee": [
               91.524,
@@ -23340,23 +22745,6 @@
               "courseArea": "way/1263547041"
             },
             "satelliteAligned": false
-          },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-belhus-park/hole-18-e24f71818f.jpg",
-            "storageKey": "assets/snapshots/verified-belhus-park/hole-18-e24f71818f.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.509006,
-              "lng": 0.265263
-            },
-            "zoom": 16,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:12.626Z",
-            "fingerprint": "e24f71818f",
-            "geometrySignature": "18cace76"
           },
           "visual": {
             "tee": [
@@ -23598,23 +22986,6 @@
             },
             "satelliteAligned": false
           },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-basildon/hole-01-c2be2006a3.jpg",
-            "storageKey": "assets/snapshots/verified-basildon/hole-01-c2be2006a3.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.559147,
-              "lng": 0.463599
-            },
-            "zoom": 16,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:15.295Z",
-            "fingerprint": "c2be2006a3",
-            "geometrySignature": "db95af13"
-          },
           "visual": {
             "path": [
               [
@@ -23758,23 +23129,6 @@
               "courseArea": "way/909368323"
             },
             "satelliteAligned": false
-          },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-basildon/hole-02-df1ac94849.jpg",
-            "storageKey": "assets/snapshots/verified-basildon/hole-02-df1ac94849.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.559982,
-              "lng": 0.465112
-            },
-            "zoom": 17,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:15.440Z",
-            "fingerprint": "df1ac94849",
-            "geometrySignature": "78e41e4d"
           },
           "visual": {
             "path": [
@@ -23960,23 +23314,6 @@
             },
             "satelliteAligned": false
           },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-basildon/hole-03-a1f02eaff3.jpg",
-            "storageKey": "assets/snapshots/verified-basildon/hole-03-a1f02eaff3.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.561542,
-              "lng": 0.466417
-            },
-            "zoom": 16,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:15.547Z",
-            "fingerprint": "a1f02eaff3",
-            "geometrySignature": "6e0360dc"
-          },
           "visual": {
             "path": [
               [
@@ -24152,23 +23489,6 @@
               "courseArea": "way/909368323"
             },
             "satelliteAligned": false
-          },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-basildon/hole-04-472bb3677e.jpg",
-            "storageKey": "assets/snapshots/verified-basildon/hole-04-472bb3677e.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.563209,
-              "lng": 0.469777
-            },
-            "zoom": 18,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:15.650Z",
-            "fingerprint": "472bb3677e",
-            "geometrySignature": "e0118a98"
           },
           "visual": {
             "path": [
@@ -24470,23 +23790,6 @@
             },
             "satelliteAligned": false
           },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-basildon/hole-05-c70b1024b2.jpg",
-            "storageKey": "assets/snapshots/verified-basildon/hole-05-c70b1024b2.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.562802,
-              "lng": 0.470063
-            },
-            "zoom": 17,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:15.761Z",
-            "fingerprint": "c70b1024b2",
-            "geometrySignature": "d5f5bc2f"
-          },
           "visual": {
             "path": [
               [
@@ -24755,23 +24058,6 @@
             },
             "satelliteAligned": false
           },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-basildon/hole-06-15ba62b7f1.jpg",
-            "storageKey": "assets/snapshots/verified-basildon/hole-06-15ba62b7f1.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.561728,
-              "lng": 0.471989
-            },
-            "zoom": 16,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:15.869Z",
-            "fingerprint": "15ba62b7f1",
-            "geometrySignature": "fb050309"
-          },
           "visual": {
             "path": [
               [
@@ -24915,23 +24201,6 @@
               "courseArea": "way/909368323"
             },
             "satelliteAligned": false
-          },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-basildon/hole-07-c209b4d1be.jpg",
-            "storageKey": "assets/snapshots/verified-basildon/hole-07-c209b4d1be.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.561157,
-              "lng": 0.472121
-            },
-            "zoom": 16,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:15.995Z",
-            "fingerprint": "c209b4d1be",
-            "geometrySignature": "ef34567b"
           },
           "visual": {
             "path": [
@@ -25160,23 +24429,6 @@
               "courseArea": "way/909368323"
             },
             "satelliteAligned": false
-          },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-basildon/hole-08-2be4714ebe.jpg",
-            "storageKey": "assets/snapshots/verified-basildon/hole-08-2be4714ebe.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.559745,
-              "lng": 0.467527
-            },
-            "zoom": 16,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:16.103Z",
-            "fingerprint": "2be4714ebe",
-            "geometrySignature": "f82d1266"
           },
           "visual": {
             "path": [
@@ -25470,23 +24722,6 @@
             },
             "satelliteAligned": false
           },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-basildon/hole-09-4fc45b5650.jpg",
-            "storageKey": "assets/snapshots/verified-basildon/hole-09-4fc45b5650.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.558325,
-              "lng": 0.462973
-            },
-            "zoom": 16,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:16.276Z",
-            "fingerprint": "4fc45b5650",
-            "geometrySignature": "c0945675"
-          },
           "visual": {
             "path": [
               [
@@ -25747,23 +24982,6 @@
             },
             "satelliteAligned": false
           },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-basildon/hole-10-7262c786fa.jpg",
-            "storageKey": "assets/snapshots/verified-basildon/hole-10-7262c786fa.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.55832,
-              "lng": 0.464075
-            },
-            "zoom": 16,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:16.383Z",
-            "fingerprint": "7262c786fa",
-            "geometrySignature": "0f9cf4bd"
-          },
           "visual": {
             "path": [
               [
@@ -25967,23 +25185,6 @@
               "courseArea": "way/909368323"
             },
             "satelliteAligned": false
-          },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-basildon/hole-11-5855c933f7.jpg",
-            "storageKey": "assets/snapshots/verified-basildon/hole-11-5855c933f7.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.559992,
-              "lng": 0.46973
-            },
-            "zoom": 16,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:16.499Z",
-            "fingerprint": "5855c933f7",
-            "geometrySignature": "01a84797"
           },
           "visual": {
             "path": [
@@ -26197,23 +25398,6 @@
             },
             "satelliteAligned": false
           },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-basildon/hole-12-f00a2c7d8d.jpg",
-            "storageKey": "assets/snapshots/verified-basildon/hole-12-f00a2c7d8d.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.560873,
-              "lng": 0.474037
-            },
-            "zoom": 17,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:16.645Z",
-            "fingerprint": "f00a2c7d8d",
-            "geometrySignature": "16d4ab51"
-          },
           "visual": {
             "path": [
               [
@@ -26405,23 +25589,6 @@
               "courseArea": "way/909368323"
             },
             "satelliteAligned": false
-          },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-basildon/hole-13-05d3db69df.jpg",
-            "storageKey": "assets/snapshots/verified-basildon/hole-13-05d3db69df.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.559557,
-              "lng": 0.476868
-            },
-            "zoom": 17,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:16.760Z",
-            "fingerprint": "05d3db69df",
-            "geometrySignature": "e71cbd03"
           },
           "visual": {
             "path": [
@@ -26655,23 +25822,6 @@
             },
             "satelliteAligned": false
           },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-basildon/hole-14-039b09237b.jpg",
-            "storageKey": "assets/snapshots/verified-basildon/hole-14-039b09237b.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.558854,
-              "lng": 0.475493
-            },
-            "zoom": 18,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:16.863Z",
-            "fingerprint": "039b09237b",
-            "geometrySignature": "52391d8f"
-          },
           "visual": {
             "path": [
               [
@@ -26875,23 +26025,6 @@
               "courseArea": "way/909368323"
             },
             "satelliteAligned": false
-          },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-basildon/hole-15-11797644ef.jpg",
-            "storageKey": "assets/snapshots/verified-basildon/hole-15-11797644ef.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.559477,
-              "lng": 0.474594
-            },
-            "zoom": 17,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:17.009Z",
-            "fingerprint": "11797644ef",
-            "geometrySignature": "f2c59d8f"
           },
           "visual": {
             "path": [
@@ -27108,23 +26241,6 @@
               "courseArea": "way/909368323"
             },
             "satelliteAligned": false
-          },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-basildon/hole-16-81b365dd43.jpg",
-            "storageKey": "assets/snapshots/verified-basildon/hole-16-81b365dd43.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.55984,
-              "lng": 0.471206
-            },
-            "zoom": 16,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:17.155Z",
-            "fingerprint": "81b365dd43",
-            "geometrySignature": "d3869e08"
           },
           "visual": {
             "path": [
@@ -27357,23 +26473,6 @@
               "courseArea": "way/909368323"
             },
             "satelliteAligned": false
-          },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-basildon/hole-17-74940ccb84.jpg",
-            "storageKey": "assets/snapshots/verified-basildon/hole-17-74940ccb84.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.558031,
-              "lng": 0.466934
-            },
-            "zoom": 16,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:17.258Z",
-            "fingerprint": "74940ccb84",
-            "geometrySignature": "577c6381"
           },
           "visual": {
             "path": [
@@ -27654,23 +26753,6 @@
               "courseArea": "way/909368323"
             },
             "satelliteAligned": false
-          },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-basildon/hole-18-034a4c2a96.jpg",
-            "storageKey": "assets/snapshots/verified-basildon/hole-18-034a4c2a96.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.557591,
-              "lng": 0.461859
-            },
-            "zoom": 16,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:17.372Z",
-            "fingerprint": "034a4c2a96",
-            "geometrySignature": "533365b6"
           },
           "visual": {
             "path": [
@@ -28118,23 +27200,6 @@
               "courseArea": "way/350806648"
             },
             "satelliteAligned": false
-          },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-mardyke-valley/hole-01-c615bbd421.jpg",
-            "storageKey": "assets/snapshots/verified-mardyke-valley/hole-01-c615bbd421.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.503689,
-              "lng": 0.30146
-            },
-            "zoom": 16,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:17.502Z",
-            "fingerprint": "c615bbd421",
-            "geometrySignature": "b176c4fa"
           },
           "visual": {
             "path": [
@@ -28652,23 +27717,6 @@
             },
             "satelliteAligned": false
           },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-mardyke-valley/hole-02-5b826c2dff.jpg",
-            "storageKey": "assets/snapshots/verified-mardyke-valley/hole-02-5b826c2dff.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.503084,
-              "lng": 0.304134
-            },
-            "zoom": 16,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:17.629Z",
-            "fingerprint": "5b826c2dff",
-            "geometrySignature": "df3f5972"
-          },
           "visual": {
             "path": [
               [
@@ -29048,23 +28096,6 @@
               "courseArea": "way/350806648"
             },
             "satelliteAligned": false
-          },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-mardyke-valley/hole-03-383debc7d6.jpg",
-            "storageKey": "assets/snapshots/verified-mardyke-valley/hole-03-383debc7d6.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.502879,
-              "lng": 0.302888
-            },
-            "zoom": 16,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:17.730Z",
-            "fingerprint": "383debc7d6",
-            "geometrySignature": "9bba7406"
           },
           "visual": {
             "path": [
@@ -29462,23 +28493,6 @@
             },
             "satelliteAligned": false
           },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-mardyke-valley/hole-04-b2463298d1.jpg",
-            "storageKey": "assets/snapshots/verified-mardyke-valley/hole-04-b2463298d1.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.502285,
-              "lng": 0.302233
-            },
-            "zoom": 16,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:17.838Z",
-            "fingerprint": "b2463298d1",
-            "geometrySignature": "f7923363"
-          },
           "visual": {
             "path": [
               [
@@ -29859,23 +28873,6 @@
             },
             "satelliteAligned": false
           },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-mardyke-valley/hole-05-c9d930d06e.jpg",
-            "storageKey": "assets/snapshots/verified-mardyke-valley/hole-05-c9d930d06e.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.50235,
-              "lng": 0.305986
-            },
-            "zoom": 17,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:17.948Z",
-            "fingerprint": "c9d930d06e",
-            "geometrySignature": "487015c7"
-          },
           "visual": {
             "path": [
               [
@@ -30228,23 +29225,6 @@
             },
             "satelliteAligned": false
           },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-mardyke-valley/hole-06-316d7eec49.jpg",
-            "storageKey": "assets/snapshots/verified-mardyke-valley/hole-06-316d7eec49.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.501671,
-              "lng": 0.300826
-            },
-            "zoom": 15,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:18.061Z",
-            "fingerprint": "316d7eec49",
-            "geometrySignature": "679e50f9"
-          },
           "visual": {
             "path": [
               [
@@ -30593,23 +29573,6 @@
             },
             "satelliteAligned": false
           },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-mardyke-valley/hole-07-34c3f714e3.jpg",
-            "storageKey": "assets/snapshots/verified-mardyke-valley/hole-07-34c3f714e3.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.501409,
-              "lng": 0.296432
-            },
-            "zoom": 16,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:18.224Z",
-            "fingerprint": "34c3f714e3",
-            "geometrySignature": "fdccbbc6"
-          },
           "visual": {
             "path": [
               [
@@ -30937,23 +29900,6 @@
               "courseArea": "way/350806648"
             },
             "satelliteAligned": false
-          },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-mardyke-valley/hole-08-c882c5822d.jpg",
-            "storageKey": "assets/snapshots/verified-mardyke-valley/hole-08-c882c5822d.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.502176,
-              "lng": 0.296567
-            },
-            "zoom": 16,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:18.357Z",
-            "fingerprint": "c882c5822d",
-            "geometrySignature": "1858d0cb"
           },
           "visual": {
             "path": [
@@ -31415,23 +30361,6 @@
             },
             "satelliteAligned": false
           },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-mardyke-valley/hole-09-7e9d0c5ebd.jpg",
-            "storageKey": "assets/snapshots/verified-mardyke-valley/hole-09-7e9d0c5ebd.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.503173,
-              "lng": 0.299211
-            },
-            "zoom": 18,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:18.441Z",
-            "fingerprint": "7e9d0c5ebd",
-            "geometrySignature": "93caf91d"
-          },
           "visual": {
             "path": [
               [
@@ -31767,23 +30696,6 @@
               "courseArea": "way/350806648"
             },
             "satelliteAligned": false
-          },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-mardyke-valley/hole-10-1a14c10ef8.jpg",
-            "storageKey": "assets/snapshots/verified-mardyke-valley/hole-10-1a14c10ef8.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.504656,
-              "lng": 0.302821
-            },
-            "zoom": 16,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:18.614Z",
-            "fingerprint": "1a14c10ef8",
-            "geometrySignature": "b8cf42b4"
           },
           "visual": {
             "path": [
@@ -32153,23 +31065,6 @@
             },
             "satelliteAligned": false
           },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-mardyke-valley/hole-11-861e09f04c.jpg",
-            "storageKey": "assets/snapshots/verified-mardyke-valley/hole-11-861e09f04c.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.505122,
-              "lng": 0.306805
-            },
-            "zoom": 16,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:18.735Z",
-            "fingerprint": "861e09f04c",
-            "geometrySignature": "dd1b29e2"
-          },
           "visual": {
             "path": [
               [
@@ -32521,23 +31416,6 @@
               "courseArea": "way/350806648"
             },
             "satelliteAligned": false
-          },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-mardyke-valley/hole-12-72e269031b.jpg",
-            "storageKey": "assets/snapshots/verified-mardyke-valley/hole-12-72e269031b.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.505147,
-              "lng": 0.31022
-            },
-            "zoom": 17,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:18.859Z",
-            "fingerprint": "72e269031b",
-            "geometrySignature": "ac5baf77"
           },
           "visual": {
             "path": [
@@ -33011,23 +31889,6 @@
             },
             "satelliteAligned": false
           },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-mardyke-valley/hole-13-7aeb246b85.jpg",
-            "storageKey": "assets/snapshots/verified-mardyke-valley/hole-13-7aeb246b85.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.503411,
-              "lng": 0.309661
-            },
-            "zoom": 16,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:18.951Z",
-            "fingerprint": "7aeb246b85",
-            "geometrySignature": "32168290"
-          },
           "visual": {
             "path": [
               [
@@ -33403,23 +32264,6 @@
               "courseArea": "way/350806648"
             },
             "satelliteAligned": false
-          },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-mardyke-valley/hole-14-fd97112456.jpg",
-            "storageKey": "assets/snapshots/verified-mardyke-valley/hole-14-fd97112456.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.50284,
-              "lng": 0.310149
-            },
-            "zoom": 16,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:19.073Z",
-            "fingerprint": "fd97112456",
-            "geometrySignature": "376f5cc6"
           },
           "visual": {
             "path": [
@@ -33805,23 +32649,6 @@
             },
             "satelliteAligned": false
           },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-mardyke-valley/hole-15-28dc12f72d.jpg",
-            "storageKey": "assets/snapshots/verified-mardyke-valley/hole-15-28dc12f72d.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.503526,
-              "lng": 0.310388
-            },
-            "zoom": 17,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:19.165Z",
-            "fingerprint": "28dc12f72d",
-            "geometrySignature": "27c2e620"
-          },
           "visual": {
             "path": [
               [
@@ -34141,23 +32968,6 @@
               "courseArea": "way/350806648"
             },
             "satelliteAligned": false
-          },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-mardyke-valley/hole-16-155828c6a4.jpg",
-            "storageKey": "assets/snapshots/verified-mardyke-valley/hole-16-155828c6a4.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.503822,
-              "lng": 0.308409
-            },
-            "zoom": 17,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:19.339Z",
-            "fingerprint": "155828c6a4",
-            "geometrySignature": "d6466cbb"
           },
           "visual": {
             "path": [
@@ -34506,23 +33316,6 @@
               "courseArea": "way/350806648"
             },
             "satelliteAligned": false
-          },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-mardyke-valley/hole-17-710ac151e4.jpg",
-            "storageKey": "assets/snapshots/verified-mardyke-valley/hole-17-710ac151e4.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.503954,
-              "lng": 0.307106
-            },
-            "zoom": 18,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:19.430Z",
-            "fingerprint": "710ac151e4",
-            "geometrySignature": "b74058d2"
           },
           "visual": {
             "path": [
@@ -34908,23 +33701,6 @@
             },
             "satelliteAligned": false
           },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-mardyke-valley/hole-18-cf1df27d57.jpg",
-            "storageKey": "assets/snapshots/verified-mardyke-valley/hole-18-cf1df27d57.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.503987,
-              "lng": 0.303176
-            },
-            "zoom": 16,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:19.603Z",
-            "fingerprint": "cf1df27d57",
-            "geometrySignature": "323a43d5"
-          },
           "visual": {
             "path": [
               [
@@ -35181,23 +33957,6 @@
             },
             "satelliteAligned": false
           },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-orsett/hole-01-4f109199c4.jpg",
-            "storageKey": "assets/snapshots/verified-orsett/hole-01-4f109199c4.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.501661,
-              "lng": 0.386476
-            },
-            "zoom": 15,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:19.774Z",
-            "fingerprint": "4f109199c4",
-            "geometrySignature": "f75cbb0a"
-          },
           "visual": {
             "path": [
               [
@@ -35419,23 +34178,6 @@
             },
             "satelliteAligned": false
           },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-orsett/hole-02-c73dcb141f.jpg",
-            "storageKey": "assets/snapshots/verified-orsett/hole-02-c73dcb141f.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.500445,
-              "lng": 0.385609
-            },
-            "zoom": 16,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:19.889Z",
-            "fingerprint": "c73dcb141f",
-            "geometrySignature": "7f1d8ae8"
-          },
           "visual": {
             "path": [
               [
@@ -35624,23 +34366,6 @@
               "courseArea": "way/94530219"
             },
             "satelliteAligned": false
-          },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-orsett/hole-03-eb057dd4ed.jpg",
-            "storageKey": "assets/snapshots/verified-orsett/hole-03-eb057dd4ed.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.499328,
-              "lng": 0.389127
-            },
-            "zoom": 17,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:19.984Z",
-            "fingerprint": "eb057dd4ed",
-            "geometrySignature": "2fa2a708"
           },
           "visual": {
             "path": [
@@ -35862,23 +34587,6 @@
               "courseArea": "way/94530219"
             },
             "satelliteAligned": false
-          },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-orsett/hole-04-36e258849b.jpg",
-            "storageKey": "assets/snapshots/verified-orsett/hole-04-36e258849b.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.50007,
-              "lng": 0.388077
-            },
-            "zoom": 16,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:20.122Z",
-            "fingerprint": "36e258849b",
-            "geometrySignature": "f3d23598"
           },
           "visual": {
             "path": [
@@ -36109,23 +34817,6 @@
             },
             "satelliteAligned": false
           },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-orsett/hole-05-8f16cd06ba.jpg",
-            "storageKey": "assets/snapshots/verified-orsett/hole-05-8f16cd06ba.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.500655,
-              "lng": 0.389578
-            },
-            "zoom": 15,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:20.220Z",
-            "fingerprint": "8f16cd06ba",
-            "geometrySignature": "84e4154b"
-          },
           "visual": {
             "path": [
               [
@@ -36330,23 +35021,6 @@
               "courseArea": "way/94530219"
             },
             "satelliteAligned": false
-          },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-orsett/hole-06-fcfe0c72db.jpg",
-            "storageKey": "assets/snapshots/verified-orsett/hole-06-fcfe0c72db.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.499543,
-              "lng": 0.391947
-            },
-            "zoom": 17,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:20.334Z",
-            "fingerprint": "fcfe0c72db",
-            "geometrySignature": "f1569a22"
           },
           "visual": {
             "path": [
@@ -36557,23 +35231,6 @@
             },
             "satelliteAligned": false
           },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-orsett/hole-07-02be00aa30.jpg",
-            "storageKey": "assets/snapshots/verified-orsett/hole-07-02be00aa30.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.499207,
-              "lng": 0.386192
-            },
-            "zoom": 15,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:20.438Z",
-            "fingerprint": "02be00aa30",
-            "geometrySignature": "2a34fef4"
-          },
           "visual": {
             "path": [
               [
@@ -36758,23 +35415,6 @@
               "courseArea": "way/94530219"
             },
             "satelliteAligned": false
-          },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-orsett/hole-08-dbcd81c9b1.jpg",
-            "storageKey": "assets/snapshots/verified-orsett/hole-08-dbcd81c9b1.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.499101,
-              "lng": 0.382608
-            },
-            "zoom": 17,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:20.546Z",
-            "fingerprint": "dbcd81c9b1",
-            "geometrySignature": "65de17ae"
           },
           "visual": {
             "path": [
@@ -36997,23 +35637,6 @@
             },
             "satelliteAligned": false
           },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-orsett/hole-09-341320d734.jpg",
-            "storageKey": "assets/snapshots/verified-orsett/hole-09-341320d734.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.497033,
-              "lng": 0.383895
-            },
-            "zoom": 16,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:20.713Z",
-            "fingerprint": "341320d734",
-            "geometrySignature": "a0a8ff7a"
-          },
           "visual": {
             "path": [
               [
@@ -37191,23 +35814,6 @@
             },
             "satelliteAligned": false
           },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-orsett/hole-10-0e87170bad.jpg",
-            "storageKey": "assets/snapshots/verified-orsett/hole-10-0e87170bad.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.497132,
-              "lng": 0.38453
-            },
-            "zoom": 16,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:20.817Z",
-            "fingerprint": "0e87170bad",
-            "geometrySignature": "9aca8114"
-          },
           "visual": {
             "path": [
               [
@@ -37272,23 +35878,6 @@
               "courseArea": "way/94530219"
             },
             "satelliteAligned": false
-          },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-orsett/hole-11-4dff1ed357.jpg",
-            "storageKey": "assets/snapshots/verified-orsett/hole-11-4dff1ed357.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.498232,
-              "lng": 0.38636
-            },
-            "zoom": 15,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:20.984Z",
-            "fingerprint": "4dff1ed357",
-            "geometrySignature": "8c25da35"
           },
           "visual": {
             "path": [
@@ -37355,23 +35944,6 @@
             },
             "satelliteAligned": false
           },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-orsett/hole-12-937686a857.jpg",
-            "storageKey": "assets/snapshots/verified-orsett/hole-12-937686a857.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.498227,
-              "lng": 0.391014
-            },
-            "zoom": 17,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:21.133Z",
-            "fingerprint": "937686a857",
-            "geometrySignature": "1fdc0f78"
-          },
           "visual": {
             "path": [
               [
@@ -37436,23 +36008,6 @@
               "courseArea": "way/94530219"
             },
             "satelliteAligned": false
-          },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-orsett/hole-13-040111ab38.jpg",
-            "storageKey": "assets/snapshots/verified-orsett/hole-13-040111ab38.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.499428,
-              "lng": 0.393408
-            },
-            "zoom": 17,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:21.225Z",
-            "fingerprint": "040111ab38",
-            "geometrySignature": "519b8e39"
           },
           "visual": {
             "path": [
@@ -37519,23 +36074,6 @@
             },
             "satelliteAligned": false
           },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-orsett/hole-14-c7b8606f35.jpg",
-            "storageKey": "assets/snapshots/verified-orsett/hole-14-c7b8606f35.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.499034,
-              "lng": 0.394226
-            },
-            "zoom": 16,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:21.358Z",
-            "fingerprint": "c7b8606f35",
-            "geometrySignature": "e4ac4324"
-          },
           "visual": {
             "path": [
               [
@@ -37600,23 +36138,6 @@
               "courseArea": "way/94530219"
             },
             "satelliteAligned": false
-          },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-orsett/hole-15-0edbc3fa34.jpg",
-            "storageKey": "assets/snapshots/verified-orsett/hole-15-0edbc3fa34.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.498527,
-              "lng": 0.39482
-            },
-            "zoom": 17,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:21.493Z",
-            "fingerprint": "0edbc3fa34",
-            "geometrySignature": "c5516219"
           },
           "visual": {
             "path": [
@@ -37683,23 +36204,6 @@
             },
             "satelliteAligned": false
           },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-orsett/hole-16-6b60a2546b.jpg",
-            "storageKey": "assets/snapshots/verified-orsett/hole-16-6b60a2546b.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.498227,
-              "lng": 0.397684
-            },
-            "zoom": 16,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:21.609Z",
-            "fingerprint": "6b60a2546b",
-            "geometrySignature": "e85ed055"
-          },
           "visual": {
             "path": [
               [
@@ -37765,23 +36269,6 @@
             },
             "satelliteAligned": false
           },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-orsett/hole-17-f8eef0afaa.jpg",
-            "storageKey": "assets/snapshots/verified-orsett/hole-17-f8eef0afaa.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.498682,
-              "lng": 0.398139
-            },
-            "zoom": 16,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:21.753Z",
-            "fingerprint": "f8eef0afaa",
-            "geometrySignature": "8c7c41c6"
-          },
           "visual": {
             "path": [
               [
@@ -37846,23 +36333,6 @@
               "courseArea": "way/94530219"
             },
             "satelliteAligned": false
-          },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-orsett/hole-18-55a010f9de.jpg",
-            "storageKey": "assets/snapshots/verified-orsett/hole-18-55a010f9de.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.500954,
-              "lng": 0.394312
-            },
-            "zoom": 16,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:21.887Z",
-            "fingerprint": "55a010f9de",
-            "geometrySignature": "c6d4f80a"
           },
           "visual": {
             "path": [
@@ -38196,23 +36666,6 @@
               "courseArea": "way/127582078"
             },
             "satelliteAligned": false
-          },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-warley-park/hole-01-9373495740.jpg",
-            "storageKey": "assets/snapshots/verified-warley-park/hole-01-9373495740.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.589087,
-              "lng": 0.309499
-            },
-            "zoom": 16,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:21.991Z",
-            "fingerprint": "9373495740",
-            "geometrySignature": "7198ce20"
           },
           "visual": {
             "path": [
@@ -38569,23 +37022,6 @@
               "courseArea": "way/127582078"
             },
             "satelliteAligned": false
-          },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-warley-park/hole-02-62c0d28b6f.jpg",
-            "storageKey": "assets/snapshots/verified-warley-park/hole-02-62c0d28b6f.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.587395,
-              "lng": 0.310949
-            },
-            "zoom": 16,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:22.098Z",
-            "fingerprint": "62c0d28b6f",
-            "geometrySignature": "721711da"
           },
           "visual": {
             "path": [
@@ -39042,23 +37478,6 @@
               "courseArea": "way/127582078"
             },
             "satelliteAligned": false
-          },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-warley-park/hole-03-de2889d9ab.jpg",
-            "storageKey": "assets/snapshots/verified-warley-park/hole-03-de2889d9ab.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.585587,
-              "lng": 0.310793
-            },
-            "zoom": 18,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:22.223Z",
-            "fingerprint": "de2889d9ab",
-            "geometrySignature": "648e0357"
           },
           "visual": {
             "path": [
@@ -39572,23 +37991,6 @@
             },
             "satelliteAligned": false
           },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-warley-park/hole-04-5cbdab57ac.jpg",
-            "storageKey": "assets/snapshots/verified-warley-park/hole-04-5cbdab57ac.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.586909,
-              "lng": 0.308998
-            },
-            "zoom": 16,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:22.406Z",
-            "fingerprint": "5cbdab57ac",
-            "geometrySignature": "8809bdb5"
-          },
           "visual": {
             "path": [
               [
@@ -40009,23 +38411,6 @@
             },
             "satelliteAligned": false
           },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-warley-park/hole-05-875a5e6bd9.jpg",
-            "storageKey": "assets/snapshots/verified-warley-park/hole-05-875a5e6bd9.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.586155,
-              "lng": 0.307631
-            },
-            "zoom": 16,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:22.502Z",
-            "fingerprint": "875a5e6bd9",
-            "geometrySignature": "67e0c09d"
-          },
           "visual": {
             "path": [
               [
@@ -40418,23 +38803,6 @@
             },
             "satelliteAligned": false
           },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-warley-park/hole-06-f867c6fa02.jpg",
-            "storageKey": "assets/snapshots/verified-warley-park/hole-06-f867c6fa02.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.584089,
-              "lng": 0.3051
-            },
-            "zoom": 16,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:22.629Z",
-            "fingerprint": "f867c6fa02",
-            "geometrySignature": "cd23bafa"
-          },
           "visual": {
             "path": [
               [
@@ -40778,23 +39146,6 @@
               "courseArea": "way/127582078"
             },
             "satelliteAligned": false
-          },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-warley-park/hole-07-76d662f290.jpg",
-            "storageKey": "assets/snapshots/verified-warley-park/hole-07-76d662f290.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.586075,
-              "lng": 0.304994
-            },
-            "zoom": 16,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:22.727Z",
-            "fingerprint": "76d662f290",
-            "geometrySignature": "112795e6"
           },
           "visual": {
             "path": [
@@ -41219,23 +39570,6 @@
               "courseArea": "way/127582078"
             },
             "satelliteAligned": false
-          },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-warley-park/hole-08-2da965fa2f.jpg",
-            "storageKey": "assets/snapshots/verified-warley-park/hole-08-2da965fa2f.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.58628,
-              "lng": 0.304777
-            },
-            "zoom": 17,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:22.829Z",
-            "fingerprint": "2da965fa2f",
-            "geometrySignature": "d0fbec7a"
           },
           "visual": {
             "path": [
@@ -41721,23 +40055,6 @@
             },
             "satelliteAligned": false
           },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-warley-park/hole-09-8f32722dc4.jpg",
-            "storageKey": "assets/snapshots/verified-warley-park/hole-09-8f32722dc4.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.58835,
-              "lng": 0.305685
-            },
-            "zoom": 16,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:22.950Z",
-            "fingerprint": "8f32722dc4",
-            "geometrySignature": "89ca8e00"
-          },
           "visual": {
             "path": [
               [
@@ -42074,23 +40391,6 @@
             },
             "satelliteAligned": false
           },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-warley-park/hole-10-249c88c912.jpg",
-            "storageKey": "assets/snapshots/verified-warley-park/hole-10-249c88c912.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.588085,
-              "lng": 0.304816
-            },
-            "zoom": 17,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:23.049Z",
-            "fingerprint": "249c88c912",
-            "geometrySignature": "1499ceeb"
-          },
           "visual": {
             "path": [
               [
@@ -42398,23 +40698,6 @@
               "courseArea": "way/127582078"
             },
             "satelliteAligned": false
-          },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-warley-park/hole-11-341b68ac55.jpg",
-            "storageKey": "assets/snapshots/verified-warley-park/hole-11-341b68ac55.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.587774,
-              "lng": 0.303774
-            },
-            "zoom": 17,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:23.188Z",
-            "fingerprint": "341b68ac55",
-            "geometrySignature": "2bf755e3"
           },
           "visual": {
             "path": [
@@ -42804,23 +41087,6 @@
             },
             "satelliteAligned": false
           },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-warley-park/hole-12-3163165dec.jpg",
-            "storageKey": "assets/snapshots/verified-warley-park/hole-12-3163165dec.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.587269,
-              "lng": 0.303185
-            },
-            "zoom": 16,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:23.298Z",
-            "fingerprint": "3163165dec",
-            "geometrySignature": "2b4bb67c"
-          },
           "visual": {
             "path": [
               [
@@ -43169,23 +41435,6 @@
             },
             "satelliteAligned": false
           },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-warley-park/hole-13-87109b18a4.jpg",
-            "storageKey": "assets/snapshots/verified-warley-park/hole-13-87109b18a4.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.587523,
-              "lng": 0.301919
-            },
-            "zoom": 16,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:23.404Z",
-            "fingerprint": "87109b18a4",
-            "geometrySignature": "9905132e"
-          },
           "visual": {
             "path": [
               [
@@ -43510,23 +41759,6 @@
             },
             "satelliteAligned": false
           },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-warley-park/hole-14-56ffb3dfbb.jpg",
-            "storageKey": "assets/snapshots/verified-warley-park/hole-14-56ffb3dfbb.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.588536,
-              "lng": 0.301263
-            },
-            "zoom": 17,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:23.523Z",
-            "fingerprint": "56ffb3dfbb",
-            "geometrySignature": "9bf861a2"
-          },
           "visual": {
             "path": [
               [
@@ -43843,23 +42075,6 @@
             },
             "satelliteAligned": false
           },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-warley-park/hole-15-d6e0a04019.jpg",
-            "storageKey": "assets/snapshots/verified-warley-park/hole-15-d6e0a04019.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.58642,
-              "lng": 0.301718
-            },
-            "zoom": 17,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:23.634Z",
-            "fingerprint": "d6e0a04019",
-            "geometrySignature": "d52a7dcb"
-          },
           "visual": {
             "path": [
               [
@@ -44163,23 +42378,6 @@
               "courseArea": "way/127582078"
             },
             "satelliteAligned": false
-          },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-warley-park/hole-16-4e196f08d7.jpg",
-            "storageKey": "assets/snapshots/verified-warley-park/hole-16-4e196f08d7.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.584832,
-              "lng": 0.304716
-            },
-            "zoom": 16,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:23.737Z",
-            "fingerprint": "4e196f08d7",
-            "geometrySignature": "5559acf5"
           },
           "visual": {
             "path": [
@@ -44504,23 +42702,6 @@
               "courseArea": "way/127582078"
             },
             "satelliteAligned": false
-          },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-warley-park/hole-17-e853dbc288.jpg",
-            "storageKey": "assets/snapshots/verified-warley-park/hole-17-e853dbc288.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.585519,
-              "lng": 0.307253
-            },
-            "zoom": 17,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:23.853Z",
-            "fingerprint": "e853dbc288",
-            "geometrySignature": "5faea602"
           },
           "visual": {
             "path": [
@@ -44910,23 +43091,6 @@
             },
             "satelliteAligned": false
           },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-warley-park/hole-18-14760a6ed0.jpg",
-            "storageKey": "assets/snapshots/verified-warley-park/hole-18-14760a6ed0.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.587483,
-              "lng": 0.307432
-            },
-            "zoom": 17,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:24.028Z",
-            "fingerprint": "14760a6ed0",
-            "geometrySignature": "ac962129"
-          },
           "visual": {
             "path": [
               [
@@ -44973,7 +43137,7 @@
         "lat": 51.5354,
         "lng": 0.5844
       },
-      "attribution": "Castle Point / Canvey scorecard seeded from My Online Golf Club and cross-checked against Golfshake and Grassy. Available tee and green geometry from OpenStreetMap contributors under ODbL. Castle Point / Canvey scorecard seeded from My Online Golf Club and cross-checked against Golfshake and Grassy. Available tee and green geometry from OpenStreetMap contributors under ODbL. Castle Point / Canvey scorecard seeded from My Online Golf Club and cross-checked against Golfshake and Grassy. Available tee and green geometry from OpenStreetMap contributors under ODbL. OpenStreetMap contributors. Imagery: Azure Maps. Hole geometry from OpenStreetMap contributors under ODbL.",
+      "attribution": "Castle Point / Canvey scorecard seeded from My Online Golf Club and cross-checked against Golfshake and Grassy. Available tee and green geometry from OpenStreetMap contributors under ODbL. Castle Point / Canvey scorecard seeded from My Online Golf Club and cross-checked against Golfshake and Grassy. Available tee and green geometry from OpenStreetMap contributors under ODbL. Castle Point / Canvey scorecard seeded from My Online Golf Club and cross-checked against Golfshake and Grassy. Available tee and green geometry from OpenStreetMap contributors under ODbL. OpenStreetMap contributors. Hole geometry from OpenStreetMap contributors under ODbL.",
       "geometrySource": "OpenStreetMap",
       "verification": {
         "status": "verified",
@@ -45179,23 +43343,6 @@
             },
             "satelliteAligned": false
           },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-castle-point-canvey/hole-01-4f71b53150.jpg",
-            "storageKey": "assets/snapshots/verified-castle-point-canvey/hole-01-4f71b53150.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.535045,
-              "lng": 0.574614
-            },
-            "zoom": 17,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:12.787Z",
-            "fingerprint": "4f71b53150",
-            "geometrySignature": "224cd41e"
-          },
           "visual": {
             "path": [
               [
@@ -45330,23 +43477,6 @@
               "courseArea": "way/100876758"
             },
             "satelliteAligned": false
-          },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-castle-point-canvey/hole-02-36049a63b0.jpg",
-            "storageKey": "assets/snapshots/verified-castle-point-canvey/hole-02-36049a63b0.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.537703,
-              "lng": 0.571022
-            },
-            "zoom": 16,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:12.898Z",
-            "fingerprint": "36049a63b0",
-            "geometrySignature": "1b806557"
           },
           "visual": {
             "path": [
@@ -45590,23 +43720,6 @@
               "courseArea": "way/100876758"
             },
             "satelliteAligned": false
-          },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-castle-point-canvey/hole-03-6931da53b4.jpg",
-            "storageKey": "assets/snapshots/verified-castle-point-canvey/hole-03-6931da53b4.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.537314,
-              "lng": 0.570046
-            },
-            "zoom": 16,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:13.022Z",
-            "fingerprint": "6931da53b4",
-            "geometrySignature": "1797176b"
           },
           "visual": {
             "path": [
@@ -45858,23 +43971,6 @@
               "courseArea": "way/100876758"
             },
             "satelliteAligned": false
-          },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-castle-point-canvey/hole-04-39da3bb02e.jpg",
-            "storageKey": "assets/snapshots/verified-castle-point-canvey/hole-04-39da3bb02e.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.535296,
-              "lng": 0.571507
-            },
-            "zoom": 17,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:13.133Z",
-            "fingerprint": "39da3bb02e",
-            "geometrySignature": "53375f99"
           },
           "visual": {
             "path": [
@@ -46155,23 +44251,6 @@
             },
             "satelliteAligned": false
           },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-castle-point-canvey/hole-05-6b845bbf73.jpg",
-            "storageKey": "assets/snapshots/verified-castle-point-canvey/hole-05-6b845bbf73.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.535055,
-              "lng": 0.568802
-            },
-            "zoom": 16,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:13.286Z",
-            "fingerprint": "6b845bbf73",
-            "geometrySignature": "2c2e01a5"
-          },
           "visual": {
             "path": [
               [
@@ -46375,23 +44454,6 @@
             },
             "satelliteAligned": false
           },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-castle-point-canvey/hole-06-c719fad088.jpg",
-            "storageKey": "assets/snapshots/verified-castle-point-canvey/hole-06-c719fad088.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.536473,
-              "lng": 0.566129
-            },
-            "zoom": 17,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:13.419Z",
-            "fingerprint": "c719fad088",
-            "geometrySignature": "fddc2db2"
-          },
           "visual": {
             "path": [
               [
@@ -46594,23 +44656,6 @@
               "courseArea": "way/100876758"
             },
             "satelliteAligned": false
-          },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-castle-point-canvey/hole-07-e9e76519dc.jpg",
-            "storageKey": "assets/snapshots/verified-castle-point-canvey/hole-07-e9e76519dc.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.536598,
-              "lng": 0.569186
-            },
-            "zoom": 16,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:13.529Z",
-            "fingerprint": "e9e76519dc",
-            "geometrySignature": "e020be25"
           },
           "visual": {
             "path": [
@@ -46887,23 +44932,6 @@
             },
             "satelliteAligned": false
           },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-castle-point-canvey/hole-08-901b85a13e.jpg",
-            "storageKey": "assets/snapshots/verified-castle-point-canvey/hole-08-901b85a13e.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.536163,
-              "lng": 0.573439
-            },
-            "zoom": 18,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:13.632Z",
-            "fingerprint": "901b85a13e",
-            "geometrySignature": "4e358436"
-          },
           "visual": {
             "path": [
               [
@@ -47122,23 +45150,6 @@
               "courseArea": "way/100876758"
             },
             "satelliteAligned": false
-          },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-castle-point-canvey/hole-09-11ea693429.jpg",
-            "storageKey": "assets/snapshots/verified-castle-point-canvey/hole-09-11ea693429.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.535347,
-              "lng": 0.574987
-            },
-            "zoom": 17,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:13.739Z",
-            "fingerprint": "11ea693429",
-            "geometrySignature": "8cd1e289"
           },
           "visual": {
             "path": [
@@ -47375,23 +45386,6 @@
             },
             "satelliteAligned": false
           },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-castle-point-canvey/hole-10-fc02b22eb7.jpg",
-            "storageKey": "assets/snapshots/verified-castle-point-canvey/hole-10-fc02b22eb7.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.534082,
-              "lng": 0.577258
-            },
-            "zoom": 16,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:13.889Z",
-            "fingerprint": "fc02b22eb7",
-            "geometrySignature": "5e3a640b"
-          },
           "visual": {
             "path": [
               [
@@ -47606,23 +45600,6 @@
               "courseArea": "way/100876758"
             },
             "satelliteAligned": false
-          },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-castle-point-canvey/hole-11-bfdb15f1f6.jpg",
-            "storageKey": "assets/snapshots/verified-castle-point-canvey/hole-11-bfdb15f1f6.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.534354,
-              "lng": 0.580861
-            },
-            "zoom": 17,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:13.998Z",
-            "fingerprint": "bfdb15f1f6",
-            "geometrySignature": "0f479508"
           },
           "visual": {
             "path": [
@@ -47883,23 +45860,6 @@
             },
             "satelliteAligned": false
           },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-castle-point-canvey/hole-12-5946cb9b97.jpg",
-            "storageKey": "assets/snapshots/verified-castle-point-canvey/hole-12-5946cb9b97.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.533881,
-              "lng": 0.585819
-            },
-            "zoom": 16,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:14.127Z",
-            "fingerprint": "5946cb9b97",
-            "geometrySignature": "20086c52"
-          },
           "visual": {
             "path": [
               [
@@ -48082,23 +46042,6 @@
               "courseArea": "way/100876758"
             },
             "satelliteAligned": false
-          },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-castle-point-canvey/hole-13-4acccfc396.jpg",
-            "storageKey": "assets/snapshots/verified-castle-point-canvey/hole-13-4acccfc396.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.532301,
-              "lng": 0.590827
-            },
-            "zoom": 16,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:14.456Z",
-            "fingerprint": "4acccfc396",
-            "geometrySignature": "ac9171c7"
           },
           "visual": {
             "path": [
@@ -48347,23 +46290,6 @@
             },
             "satelliteAligned": false
           },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-castle-point-canvey/hole-14-70ff87fb0e.jpg",
-            "storageKey": "assets/snapshots/verified-castle-point-canvey/hole-14-70ff87fb0e.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.532031,
-              "lng": 0.593819
-            },
-            "zoom": 17,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:14.638Z",
-            "fingerprint": "70ff87fb0e",
-            "geometrySignature": "d1836e54"
-          },
           "visual": {
             "path": [
               [
@@ -48546,23 +46472,6 @@
               "courseArea": "way/100876758"
             },
             "satelliteAligned": false
-          },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-castle-point-canvey/hole-15-aae7ddd8d9.jpg",
-            "storageKey": "assets/snapshots/verified-castle-point-canvey/hole-15-aae7ddd8d9.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.533816,
-              "lng": 0.591481
-            },
-            "zoom": 16,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:14.746Z",
-            "fingerprint": "aae7ddd8d9",
-            "geometrySignature": "33d71e83"
           },
           "visual": {
             "path": [
@@ -48795,23 +46704,6 @@
             },
             "satelliteAligned": false
           },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-castle-point-canvey/hole-16-cdf332a4db.jpg",
-            "storageKey": "assets/snapshots/verified-castle-point-canvey/hole-16-cdf332a4db.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.534036,
-              "lng": 0.586429
-            },
-            "zoom": 15,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:14.883Z",
-            "fingerprint": "cdf332a4db",
-            "geometrySignature": "a6a75585"
-          },
           "visual": {
             "path": [
               [
@@ -48990,23 +46882,6 @@
               "courseArea": "way/100876758"
             },
             "satelliteAligned": false
-          },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-castle-point-canvey/hole-17-19e908c332.jpg",
-            "storageKey": "assets/snapshots/verified-castle-point-canvey/hole-17-19e908c332.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.534879,
-              "lng": 0.581381
-            },
-            "zoom": 17,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:14.996Z",
-            "fingerprint": "19e908c332",
-            "geometrySignature": "535a0f44"
           },
           "visual": {
             "path": [
@@ -49202,23 +47077,6 @@
               "courseArea": "way/100876758"
             },
             "satelliteAligned": false
-          },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-castle-point-canvey/hole-18-7627d34fcd.jpg",
-            "storageKey": "assets/snapshots/verified-castle-point-canvey/hole-18-7627d34fcd.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.534535,
-              "lng": 0.578107
-            },
-            "zoom": 16,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-07T19:08:15.162Z",
-            "fingerprint": "7627d34fcd",
-            "geometrySignature": "d945f21c"
           },
           "visual": {
             "path": [
