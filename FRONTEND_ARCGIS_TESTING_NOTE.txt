@@ -1,0 +1,8 @@
+This ZIP temporarily starts ArcGIS basemap sessions directly from frontend JavaScript so the GitHub Pages build can be tested without a backend.
+
+Important:
+- The ArcGIS key is public in src/arcgisSession.js in this test build.
+- Use this only for short testing.
+- Regenerate/revoke this ArcGIS key after testing.
+- Before production, restore the backend flow: frontend -> /api/arcgis/session -> ArcGIS.
+- The missing sortArcGISPlanPoints crash has also been patched in src/app.js.

@@ -2479,24 +2479,45 @@ function arcgisShotPlanKey(courseId, holeNumber) {
   return `${courseId || "course"}:${String(holeNumber || "")}`;
 }
 
-function sortArcGISPlanPoints(points = []) {
-  if (!Array.isArray(points)) return [];
+function sortArcGISPlanPoints(anchors, points = []) {
+  if (!anchors?.tee || !anchors?.green || !Array.isArray(points)) {
+    return [];
+  }
 
-  return [...points].sort((a, b) => {
-    const aOrder = Number.isFinite(a?.order)
-      ? a.order
-      : Number.isFinite(a?.index)
-        ? a.index
-        : 0;
+  const tee = geoToLocalMeters(anchors.tee, anchors.tee);
+  const green = geoToLocalMeters(anchors.tee, anchors.green);
+  const fairway = { x: green.x - tee.x, y: green.y - tee.y };
+  const lengthSquared = Math.max(1, fairway.x * fairway.x + fairway.y * fairway.y);
 
-    const bOrder = Number.isFinite(b?.order)
-      ? b.order
-      : Number.isFinite(b?.index)
-        ? b.index
-        : 0;
+  return points
+    .map((point) => {
+      const normalized = normalizeArcGISPlanPoint(point);
+      if (!normalized) {
+        return null;
+      }
+      const local = geoToLocalMeters(anchors.tee, normalized);
+      const progress = ((local.x - tee.x) * fairway.x + (local.y - tee.y) * fairway.y) / lengthSquared;
+      return { point: normalized, progress };
+    })
+    .filter((item) => item && item.progress > -0.08 && item.progress < 1.08)
+    .sort((a, b) => a.progress - b.progress)
+    .map((item) => item.point);
+}
 
-    return aOrder - bOrder;
-  });
+function normalizeArcGISPlanPoint(point) {
+  if (!point) {
+    return null;
+  }
+
+  const lat = Number(point.lat ?? point.latitude ?? point[0]);
+  const lng = Number(point.lng ?? point.lon ?? point.longitude ?? point[1]);
+  if (![lat, lng].every(Number.isFinite)) {
+    return null;
+  }
+  return {
+    lat: Number(lat.toFixed(6)),
+    lng: Number(lng.toFixed(6))
+  };
 }
 
 function resolveArcgisShotPlan(courseId, hole, anchors, marker, panelRatio = satellitePanelRatio()) {
