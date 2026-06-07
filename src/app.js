@@ -5018,7 +5018,7 @@ function handleArcgisPlanningClick(event) {
   if (photoEditMode || gpsTestMoveMode || event.defaultPrevented) {
     return;
   }
-  if (event.target.closest("[data-action], [data-gps-test-marker], button, input, label, .photo-hole-badge, .photo-align-toolbar, .photo-yardage-card, .photo-tap-hint, .photo-club-panel, .photo-zoom-toolbar")) {
+  if (event.target.closest("[data-action], [data-gps-test-marker], button, input, label, .photo-hole-badge, .photo-align-toolbar, .photo-yardage-card, .photo-tap-hint, .photo-club-panel, .photo-zoom-toolbar, .play-distance-hud, .play-bottom-hud")) {
     return;
   }
   const panel = event.target.closest(".arcgis-hole");
@@ -5171,7 +5171,7 @@ function beginPhotoPlanOrPanDrag(event) {
   if (event.defaultPrevented) {
     return;
   }
-  const panel = event.target.closest(".photo-hole");
+  const panel = photoPanelFromEvent(event);
   const canvas = panel?.querySelector(".photo-hole-canvas");
   if (!panel || !canvas || !coursePhotoSource(canvas.dataset.photoCourseId)) {
     return;
@@ -5194,7 +5194,7 @@ function beginPhotoPlanOrPanDrag(event) {
     beginPhotoShotDrag(event, panel, canvas, courseId, holeNumber, hole, shotPlan, hit);
     return;
   }
-  if (event.target.closest("[data-action], [data-gps-test-marker], button, input, label, .photo-hole-badge, .photo-align-toolbar, .photo-yardage-card, .photo-tap-hint, .photo-club-panel, .photo-zoom-toolbar")) {
+  if (event.target.closest("[data-action], [data-gps-test-marker], button, input, label, .photo-hole-badge, .photo-align-toolbar, .photo-yardage-card, .photo-tap-hint, .photo-club-panel, .photo-zoom-toolbar, .play-distance-hud, .play-bottom-hud")) {
     return;
   }
   if (gpsTestEnabled() && gpsTestMoveMode) {
@@ -5207,9 +5207,6 @@ function beginPhotoPlanOrPanDrag(event) {
 
 function beginSatellitePlanOrPanDrag(event) {
   if (event.defaultPrevented) {
-    return false;
-  }
-  if (event.target.closest("[data-action], [data-gps-test-marker], button, input, label, .photo-hole-badge, .photo-align-toolbar, .photo-yardage-card, .photo-tap-hint, .photo-club-panel, .photo-zoom-toolbar")) {
     return false;
   }
   const panel = arcgisPanelFromEvent(event);
@@ -5235,7 +5232,7 @@ function beginSatellitePlanOrPanDrag(event) {
     beginArcGISShotDrag(event, panel, courseId, holeNumber, hole, anchors, marker, shotPlan, hit);
     return true;
   }
-  if (event.target.closest("[data-action], [data-gps-test-marker], button, input, label, .photo-hole-badge, .photo-align-toolbar, .photo-yardage-card, .photo-tap-hint, .photo-club-panel, .photo-zoom-toolbar")) {
+  if (event.target.closest("[data-action], [data-gps-test-marker], button, input, label, .photo-hole-badge, .photo-align-toolbar, .photo-yardage-card, .photo-tap-hint, .photo-club-panel, .photo-zoom-toolbar, .play-distance-hud, .play-bottom-hud")) {
     return false;
   }
   if (photoZoomLevel(courseId, holeNumber) > 1) {
@@ -5323,6 +5320,7 @@ function beginGpsTestDragOnHole(event, panel, canvas, courseId, holeNumber, hole
 function beginPhotoShotDrag(event, panel, canvas, courseId, holeNumber, hole, shotPlan, hit) {
   event.preventDefault();
   event.stopPropagation();
+  event.stopImmediatePropagation?.();
   capturePhotoPointer(panel, event.pointerId);
   suppressPhotoPlanningClick = true;
   photoDrag = {
@@ -5343,6 +5341,7 @@ function beginPhotoShotDrag(event, panel, canvas, courseId, holeNumber, hole, sh
 function beginArcGISShotDrag(event, panel, courseId, holeNumber, hole, anchors, marker, shotPlan, hit) {
   event.preventDefault();
   event.stopPropagation();
+  event.stopImmediatePropagation?.();
   capturePhotoPointer(panel, event.pointerId);
   suppressPhotoPlanningClick = true;
   photoDrag = {

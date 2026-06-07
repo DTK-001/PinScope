@@ -1,4 +1,4 @@
-const CACHE_NAME = "local-loop-golf-v121-shot-drag-swipe";
+const CACHE_NAME = "local-loop-golf-v122-overlay-shot-drag";
 
 const APP_SHELL = [
   "./",
