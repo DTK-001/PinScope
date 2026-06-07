@@ -1,4 +1,4 @@
-const CACHE_NAME = "local-loop-golf-v110-frontend-arcgis-test";
+const CACHE_NAME = "local-loop-golf-v111-live-play-screen";
 
 const APP_SHELL = [
   "./",

@@ -2754,7 +2754,10 @@ function clearArcgisShotPlan(courseId, holeNumber) {
   const next = { ...arcgisShotPlans };
   delete next[key];
   arcgisShotPlans = next;
-  render();
+  const course = getCourse(state, courseId);
+  const hole = course?.holes?.find((item) => item.number === Number(holeNumber));
+  const panel = document.querySelector(`[data-arcgis-course-id="${cssEscape(courseId)}"][data-arcgis-hole="${cssEscape(String(holeNumber))}"]`);
+  updateArcgisShotPlanLive(panel, course, hole) || render();
 }
 
 function setSatelliteAnchorEdit(courseId, holeNumber, field, position, anchors) {
@@ -4905,7 +4908,7 @@ function handleArcgisPlanningClick(event) {
       points: sortArcGISPlanPoints(anchors, [...existing, point]).slice(0, 4)
     }
   };
-  render();
+  updateArcgisShotPlanLive(panel, course, hole) || render();
 }
 
 function handlePhotoPlanningClick(event) {
@@ -6846,6 +6849,7 @@ function updatePlayGpsLiveNow() {
   updateGpsChrome();
   updatePlayDistanceHud(context.hole);
   updatePlayGpsMarker(context.course, context.hole);
+  updateVisibleShotPlanLive(context.course, context.hole);
   updateShotTrackerStatus(context.round, context.hole);
   return true;
 }
@@ -6946,6 +6950,113 @@ function updateShotTrackerStatus(round, hole) {
   }
   if (status.textContent !== shotState.status) {
     status.textContent = shotState.status;
+  }
+}
+
+function updateVisibleShotPlanLive(course, hole) {
+  const arcgisPanel = document.querySelector(`[data-arcgis-course-id="${cssEscape(course?.id || "")}"][data-arcgis-hole="${cssEscape(String(hole?.number || ""))}"]`);
+  if (arcgisPanel) {
+    updateArcgisShotPlanLive(arcgisPanel, course, hole);
+    return;
+  }
+  if (hole?.visual?.photo) {
+    updatePhotoShotPlanLive(photoCourseId(hole), hole.number, hole);
+  }
+}
+
+function updateArcgisShotPlanLive(panel, course, hole) {
+  if (!panel?.isConnected || !course || !hole || photoEditMode) {
+    return false;
+  }
+  const courseId = panel.dataset.arcgisCourseId || course.id || "";
+  const anchors = arcgisHoleAnchors(hole, course);
+  const marker = photoTargetMarkers(hole.par);
+  const panelRatio = satellitePanelRatio();
+  const shotPlan = anchors ? resolveArcgisShotPlan(courseId, hole, anchors, marker, panelRatio) : null;
+  if (!anchors) {
+    return false;
+  }
+
+  panel.classList.toggle("planning", Boolean(shotPlan));
+  const overlay = panel.querySelector(".photo-hole-overlay");
+  if (overlay) {
+    const gpsPoint = gps.status === "ready" && gps.position
+      ? arcgisGeoToTargetPoint(anchors, gps.position, marker, panelRatio)
+      : null;
+    const start = gpsPoint || { x: marker.tee[0], y: marker.tee[1] };
+    const green = { x: marker.green[0], y: marker.green[1] };
+    const routePoints = shotPlan
+      ? [start, ...shotPlan.viewPoints, green].map((point) => `${point.x},${point.y}`).join(" ")
+      : "";
+    overlay.innerHTML = `
+      <defs>
+        <linearGradient id="arcgis-shot-gradient-${hole.number}" x1="0" y1="1" x2="0" y2="0">
+          <stop offset="0" stop-color="#ff4fd8"></stop>
+          <stop offset="1" stop-color="#8d5cff"></stop>
+        </linearGradient>
+      </defs>
+      ${shotPlan ? "" : `<line class="photo-guide-route" x1="${start.x}" y1="${start.y}" x2="${green.x}" y2="${green.y}"></line>`}
+      ${renderTrackedShotOverlay(hole, anchors, marker, panelRatio)}
+      ${shotPlan ? `<polyline class="photo-plan-route" points="${routePoints}" stroke="url(#arcgis-shot-gradient-${hole.number})"></polyline>` : ""}
+      ${shotPlan?.viewPoints.map((point, index) => `
+        <circle class="photo-plan-point" data-photo-plan-point="${index}" cx="${point.x}" cy="${point.y}" r="1.9"></circle>
+        <path class="photo-plan-cross" data-photo-plan-cross="${index}" d="M ${point.x - 1.4} ${point.y} L ${point.x + 1.4} ${point.y} M ${point.x} ${point.y - 1.4} L ${point.x} ${point.y + 1.4}"></path>
+      `).join("") || ""}
+    `;
+  }
+  replaceShotInfo(panel, renderArcgisShotInfo(courseId, hole, shotPlan));
+  replaceClubPanel(panel, hole, shotPlan);
+  return true;
+}
+
+function updatePhotoShotPlanLive(courseId, holeNumber, hole) {
+  if (!courseId || !hole || photoEditMode) {
+    return false;
+  }
+  const canvas = document.querySelector(`[data-photo-course-id="${cssEscape(courseId)}"][data-photo-hole="${cssEscape(String(holeNumber))}"]`);
+  const panel = canvas?.closest(".photo-hole");
+  if (!panel?.isConnected) {
+    return false;
+  }
+  const marker = photoTargetMarkers(hole.par);
+  const teeInfo = photoPlanningTee(hole);
+  const shotPlan = resolvePhotoShotPlan(hole, teeInfo);
+  const gpsMarker = photoGpsMarker(hole, courseId);
+  const shotStartMarker = gpsMarker || { x: marker.tee[0], y: marker.tee[1] };
+  panel.classList.toggle("planning", Boolean(shotPlan));
+
+  const overlay = panel.querySelector(".photo-hole-overlay");
+  if (overlay) {
+    overlay.innerHTML = `
+      <defs>
+        <linearGradient id="photo-shot-gradient-${hole.number}" x1="0" y1="1" x2="0" y2="0">
+          <stop offset="0" stop-color="#ff4fd8"></stop>
+          <stop offset="1" stop-color="#8d5cff"></stop>
+        </linearGradient>
+      </defs>
+      ${shotPlan ? "" : renderPhotoGuideRoute(marker, shotStartMarker)}
+      ${renderPhotoPlanRoute(marker, shotPlan, hole.number)}
+    `;
+  }
+  replaceShotInfo(panel, renderPhotoShotInfo(shotPlan, teeInfo, courseId, holeNumber));
+  replaceClubPanel(panel, hole, shotPlan);
+  return true;
+}
+
+function replaceShotInfo(panel, html) {
+  const current = Array.from(panel.querySelectorAll(".photo-tap-hint, .photo-yardage-card"))
+    .find((element) => element.closest(".photo-info-stack"));
+  if (current) {
+    current.outerHTML = html;
+    return;
+  }
+  panel.querySelector(".photo-hole-badge")?.insertAdjacentHTML("afterend", html);
+}
+
+function replaceClubPanel(panel, hole, shotPlan) {
+  const clubPanel = panel.querySelector(".photo-club-panel");
+  if (clubPanel) {
+    clubPanel.outerHTML = renderPhotoClubPanel(hole, shotPlan);
   }
 }
 
@@ -7496,7 +7607,9 @@ function clearPhotoShotPlan(courseId, holeNumber) {
   const next = { ...photoShotPlans };
   delete next[key];
   photoShotPlans = next;
-  render();
+  const course = getCourse(state, courseId);
+  const hole = course?.holes?.find((item) => item.number === Number(holeNumber));
+  updatePhotoShotPlanLive(courseId, holeNumber, hole) || render();
 }
 
 function photoPanTransform(pan) {
@@ -7542,7 +7655,7 @@ function setPhotoShotPoints(courseId, holeNumber, hole, sourcePoints, fallbackVi
       view: fallbackViewPoint
     }
   };
-  render();
+  updatePhotoShotPlanLive(courseId, holeNumber, hole) || render();
 }
 
 function photoZoomKey(courseId, holeNumber) {
