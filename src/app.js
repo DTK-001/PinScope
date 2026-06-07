@@ -1793,7 +1793,7 @@ function renderArcgisHoleVisual(hole, course) {
           ${renderPhotoPlanPointMarkers(shotPlan?.viewPoints)}
           ${renderCarryLimitMarkers(shotPlan, { tee, green })}
           ${renderPhotoGreenMarkerElement(green, hole.par)}
-          ${renderPhotoTeeMarkerElement(tee, Boolean(gpsPoint))}
+          ${renderPhotoTeeMarkerElement(tee, gps.status === "ready")}
           ${renderPhotoGpsMarker(gpsPoint)}
           ${photoEditMode ? `
             <button class="photo-drag-handle tee" type="button" style="left:${tee.x}%; top:${tee.y}%;" data-arcgis-handle="tee" data-course-id="${courseId}" data-hole="${hole.number}" aria-label="Drag satellite tee anchor">T</button>
@@ -7126,13 +7126,13 @@ function updateArcgisShotPlanLive(panel, course, hole) {
   }
 
   panel.classList.toggle("planning", Boolean(shotPlan));
+  const green = { x: marker.green[0], y: marker.green[1] };
   const overlay = panel.querySelector(".photo-hole-overlay");
   if (overlay) {
     const gpsPoint = arcgisGpsPositionUsableForHole(anchors, gps.position)
       ? arcgisGeoToTargetPoint(anchors, gps.position, marker, panelRatio)
       : null;
     const start = gpsPoint || { x: marker.tee[0], y: marker.tee[1] };
-    const green = { x: marker.green[0], y: marker.green[1] };
     const routePoints = shotPlan
       ? [start, ...shotPlan.viewPoints, green].map((point) => `${point.x},${point.y}`).join(" ")
       : "";

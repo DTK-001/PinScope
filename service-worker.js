@@ -1,4 +1,4 @@
-const CACHE_NAME = "local-loop-golf-v117-unreachable-yardages";
+const CACHE_NAME = "local-loop-golf-v118-live-yardage-fix";
 
 const APP_SHELL = [
   "./",
