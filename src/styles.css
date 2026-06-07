@@ -3938,10 +3938,10 @@ select option {
     position: relative;
     display: inline-grid;
     place-items: center;
-    min-width: 1.9em;
-    min-height: 1.9em;
+    min-width: 1.72em;
+    min-height: 1.72em;
     line-height: 1;
-    font-weight: 800;
+    font-weight: 760;
     z-index: 0;
   }
 
@@ -3957,8 +3957,8 @@ select option {
   .scorecard-double-bogey::after {
     content: "";
     position: absolute;
-    inset: 0.18em;
-    border: 2px solid currentColor;
+    inset: 0.2em;
+    border: 1px solid currentColor;
     z-index: -1;
   }
 
@@ -3969,7 +3969,7 @@ select option {
   }
 
   .scorecard-eagle::after {
-    inset: -0.05em;
+    inset: 0.03em;
   }
 
   .scorecard-bogey::before,
@@ -3979,7 +3979,7 @@ select option {
   }
 
   .scorecard-double-bogey::after {
-    inset: -0.05em;
+    inset: 0.03em;
   }
 
   .scorecard-shots {
