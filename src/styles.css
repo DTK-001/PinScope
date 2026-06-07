@@ -3825,6 +3825,7 @@ select option {
   margin-top: 12px;
 }
 
+.course-actions .primary-action,
 .course-actions .secondary-action,
 .course-actions .file-action {
   min-width: 0;

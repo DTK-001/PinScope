@@ -814,7 +814,7 @@ function renderSelectedCourseActions(course) {
   const activeRound = getActiveRound(state);
   return `
     <div class="course-actions">
-      <button class="secondary-action" type="button" data-action="quick-start" data-course-id="${course.id}">${activeRound ? "Continue Round" : "Start Round"}</button>
+      <button class="primary-action" type="button" data-action="quick-start" data-course-id="${course.id}">${activeRound ? "Continue Round" : "Start Round"}</button>
     </div>
   `;
 }
