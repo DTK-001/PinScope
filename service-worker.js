@@ -1,4 +1,4 @@
-const CACHE_NAME = "local-loop-golf-v114-scorecard-markers";
+const CACHE_NAME = "local-loop-golf-v115-bag-draft-sync";
 
 const APP_SHELL = [
   "./",

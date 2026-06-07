@@ -4683,12 +4683,7 @@ function handleSubmit(event) {
     if (!bag) {
       return;
     }
-    bag.name = String(data.get("bagName") || bag.name || "My Bag").trim() || "My Bag";
-    bag.clubs = bag.clubs.map((club) => ({
-      ...club,
-      name: String(data.get(`clubName-${club.id}`) || club.name || "Club").trim() || "Club",
-      carryYards: clamp(Math.round(Number(data.get(`clubYards-${club.id}`) || 0)), 0, 400)
-    }));
+    applyBagFormData(bag, data);
     syncActiveBagClubs();
     persist("Bag saved.");
   }
@@ -4716,6 +4711,15 @@ function parseHandicapInput(value) {
   return Number.isFinite(handicap) ? clamp(handicap, -10, 54) : null;
 }
 
+function applyBagFormData(bag, data) {
+  bag.name = String(data.get("bagName") || bag.name || "My Bag").trim() || "My Bag";
+  bag.clubs = (bag.clubs || []).map((club) => ({
+    ...club,
+    name: String(data.get(`clubName-${club.id}`) || club.name || "Club").trim() || "Club",
+    carryYards: clamp(Math.round(Number(data.get(`clubYards-${club.id}`) || 0)), 0, 400)
+  }));
+}
+
 function handicapSettings() {
   state.settings = state.settings || {};
   state.settings.handicap = {
@@ -4727,6 +4731,7 @@ function handicapSettings() {
 }
 
 function setActiveBag(bagId) {
+  syncBagEditorDraft();
   if (!Array.isArray(state.bags) || !state.bags.some((bag) => bag.id === bagId)) {
     return;
   }
@@ -4736,6 +4741,7 @@ function setActiveBag(bagId) {
 }
 
 function addBag() {
+  syncBagEditorDraft();
   const source = activeBag();
   const id = `bag-${Date.now()}-${Math.random().toString(16).slice(2)}`;
   const bags = Array.isArray(state.bags) ? state.bags : [];
@@ -4755,6 +4761,7 @@ function addBag() {
 }
 
 function addClubToActiveBag() {
+  syncBagEditorDraft();
   const bag = activeBag();
   if (!bag) {
     return;
@@ -4770,6 +4777,7 @@ function addClubToActiveBag() {
 }
 
 function removeClubFromActiveBag(clubId) {
+  syncBagEditorDraft();
   const bag = activeBag();
   if (!bag || !Array.isArray(bag.clubs) || bag.clubs.length <= 1) {
     flash("Keep at least one club in the active bag.");
@@ -4778,6 +4786,19 @@ function removeClubFromActiveBag(clubId) {
   bag.clubs = bag.clubs.filter((club) => club.id !== clubId);
   syncActiveBagClubs();
   persist("Club removed.");
+}
+
+function syncBagEditorDraft() {
+  const form = document.querySelector("[data-form='bag']");
+  const bag = activeBag();
+  if (!form || !bag) {
+    return false;
+  }
+  const data = new FormData(form);
+  applyBagFormData(bag, data);
+  syncActiveBagClubs();
+  saveState(state);
+  return true;
 }
 
 function handleInput(event) {
