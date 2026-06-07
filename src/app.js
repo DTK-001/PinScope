@@ -5322,6 +5322,7 @@ function beginGpsTestDragOnHole(event, panel, canvas, courseId, holeNumber, hole
 
 function beginPhotoShotDrag(event, panel, canvas, courseId, holeNumber, hole, shotPlan, hit) {
   event.preventDefault();
+  event.stopPropagation();
   capturePhotoPointer(panel, event.pointerId);
   suppressPhotoPlanningClick = true;
   photoDrag = {
@@ -5341,6 +5342,7 @@ function beginPhotoShotDrag(event, panel, canvas, courseId, holeNumber, hole, sh
 
 function beginArcGISShotDrag(event, panel, courseId, holeNumber, hole, anchors, marker, shotPlan, hit) {
   event.preventDefault();
+  event.stopPropagation();
   capturePhotoPointer(panel, event.pointerId);
   suppressPhotoPlanningClick = true;
   photoDrag = {
@@ -5490,7 +5492,7 @@ function handlePhotoWheel(event) {
 }
 
 function handleHoleSwipePointerDown(event) {
-  if (!isActiveRoundView() || scoreCardOpen || photoEditMode || event.isPrimary === false) {
+  if (!isActiveRoundView() || scoreCardOpen || photoEditMode || photoDrag || event.isPrimary === false) {
     return;
   }
   if (Number(event.button || 0) !== 0) {
@@ -5499,7 +5501,7 @@ function handleHoleSwipePointerDown(event) {
   if (!event.target.closest("[data-play-round]")) {
     return;
   }
-  if (event.target.closest("[data-action], [data-gps-test-marker], button, input, select, label, a, summary, .score-card-backdrop, .photo-align-toolbar, .photo-zoom-toolbar, .photo-yardage-card, .photo-clear-shot, .photo-club-panel")) {
+  if (event.target.closest("[data-action], [data-gps-test-marker], [data-photo-plan-point], .photo-plan-point, .photo-carry-limit-marker, button, input, select, label, a, summary, .score-card-backdrop, .photo-align-toolbar, .photo-zoom-toolbar, .photo-yardage-card, .photo-clear-shot, .photo-club-panel")) {
     return;
   }
 
@@ -5518,13 +5520,19 @@ function handleHoleSwipePointerDown(event) {
     startX: event.clientX,
     startY: event.clientY,
     latestX: event.clientX,
-    latestY: event.clientY
+    latestY: event.clientY,
+    blockedByPhotoDrag: false
   };
   resetHoleSwipePreview();
 }
 
 function handleHoleSwipePointerMove(event) {
   if (!holeSwipe || event.pointerId !== holeSwipe.pointerId) {
+    return;
+  }
+  if (photoDrag) {
+    holeSwipe.blockedByPhotoDrag = true;
+    resetHoleSwipePreview();
     return;
   }
   holeSwipe.latestX = event.clientX;
@@ -5544,7 +5552,7 @@ function handleHoleSwipePointerEnd(event) {
   const swipe = holeSwipe;
   holeSwipe = null;
 
-  if (event.defaultPrevented || photoDrag) {
+  if (event.defaultPrevented || photoDrag || swipe.blockedByPhotoDrag) {
     return;
   }
 
