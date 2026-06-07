@@ -1756,7 +1756,9 @@ function renderArcgisHoleVisual(hole, course) {
   }
   const tee = { x: marker.tee[0], y: marker.tee[1] };
   const green = { x: marker.green[0], y: marker.green[1] };
-  const gpsPoint = gps.status === "ready" && gps.position ? arcgisGeoToTargetPoint(anchors, gps.position, marker, panelRatio) : null;
+  const gpsPoint = arcgisGpsPositionUsableForHole(anchors, gps.position)
+    ? arcgisGeoToTargetPoint(anchors, gps.position, marker, panelRatio)
+    : null;
   const start = gpsPoint || tee;
   const shotPlan = resolveArcgisShotPlan(courseId, hole, anchors, marker, panelRatio);
   const trackedShotOverlay = renderTrackedShotOverlay(hole, anchors, marker, panelRatio);
@@ -2223,7 +2225,7 @@ function clubPanelRows(hole, shotPlan) {
       const recommendation = clubRecommendation(segment.yards);
       return {
         label: segment.label,
-        yards: recommendation.unreachable ? 0 : segment.yards,
+        yards: segment.yards,
         club: recommendation.unreachable ? "Unreachable" : recommendation.club?.name || "-",
         note: recommendation.unreachable ? `${recommendation.maxCarry} yd max` : ""
       };
@@ -2235,7 +2237,7 @@ function clubPanelRows(hole, shotPlan) {
     const recommendation = clubRecommendation(gpsDistance);
     return [{
       label: "Now",
-      yards: recommendation.unreachable ? 0 : gpsDistance,
+      yards: gpsDistance,
       club: recommendation.unreachable ? "Unreachable" : recommendation.club?.name || "-",
       note: recommendation.unreachable ? `${recommendation.maxCarry} yd max` : ""
     }];
@@ -2746,7 +2748,7 @@ function resolveArcgisShotPlan(courseId, hole, anchors, marker, panelRatio = sat
   if (!points.length) {
     return null;
   }
-  const start = gps.status === "ready" && gps.position ? gps.position : anchors.tee;
+  const start = arcgisShotStartPosition(anchors);
   const route = [start, ...points, anchors.green];
   const segments = route.slice(0, -1).map((point, index) => {
     const last = index === route.length - 2;
@@ -2762,6 +2764,27 @@ function resolveArcgisShotPlan(courseId, hole, anchors, marker, panelRatio = sat
     greenViewPoint: { x: marker.green[0], y: marker.green[1] },
     segments
   };
+}
+
+function arcgisShotStartPosition(anchors) {
+  if (gps.status !== "ready" || !gps.position || !arcgisGpsPositionUsableForHole(anchors, gps.position)) {
+    return anchors.tee;
+  }
+  return gps.position;
+}
+
+function arcgisGpsPositionUsableForHole(anchors, position) {
+  if (!anchors?.tee || !anchors?.green || !position) {
+    return false;
+  }
+  const teeToGreen = yardsBetween(anchors.tee, anchors.green);
+  const teeDistance = yardsBetween(position, anchors.tee);
+  const greenDistance = yardsBetween(position, anchors.green);
+  if (![teeToGreen, teeDistance, greenDistance].every(Number.isFinite)) {
+    return false;
+  }
+  const holeBuffer = Math.max(180, teeToGreen + 120);
+  return Math.min(teeDistance, greenDistance) <= holeBuffer;
 }
 
 function arcgisGeoToTargetPoint(anchors, position, marker = photoTargetMarkers(4), panelRatio = SATELLITE_PANEL_RATIO) {
@@ -7040,8 +7063,12 @@ function updatePlayGpsMarker(course, hole) {
 
 function liveGpsMarkerForHole(course, hole) {
   if (arcgisImageryActiveForHole(hole, course)) {
+    const anchors = arcgisHoleAnchors(hole, course);
+    if (!arcgisGpsPositionUsableForHole(anchors, gps.position)) {
+      return null;
+    }
     return arcgisGeoToTargetPoint(
-      arcgisHoleAnchors(hole, course),
+      anchors,
       gps.position,
       photoTargetMarkers(hole.par),
       satellitePanelRatio()
@@ -7101,7 +7128,7 @@ function updateArcgisShotPlanLive(panel, course, hole) {
   panel.classList.toggle("planning", Boolean(shotPlan));
   const overlay = panel.querySelector(".photo-hole-overlay");
   if (overlay) {
-    const gpsPoint = gps.status === "ready" && gps.position
+    const gpsPoint = arcgisGpsPositionUsableForHole(anchors, gps.position)
       ? arcgisGeoToTargetPoint(anchors, gps.position, marker, panelRatio)
       : null;
     const start = gpsPoint || { x: marker.tee[0], y: marker.tee[1] };

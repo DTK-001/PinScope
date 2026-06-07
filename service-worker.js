@@ -1,4 +1,4 @@
-const CACHE_NAME = "local-loop-golf-v116-unreachable-shots";
+const CACHE_NAME = "local-loop-golf-v117-unreachable-yardages";
 
 const APP_SHELL = [
   "./",
