@@ -1787,11 +1787,8 @@ function renderArcgisHoleVisual(hole, course) {
             ${guide}
             ${trackedShotOverlay}
             ${shotPlan ? `<polyline class="photo-plan-route" points="${routePoints}" stroke="url(#arcgis-shot-gradient-${hole.number})"></polyline>` : ""}
-            ${shotPlan?.viewPoints.map((point, index) => `
-              <circle class="photo-plan-point" data-photo-plan-point="${index}" cx="${point.x}" cy="${point.y}" r="1.9"></circle>
-              <path class="photo-plan-cross" data-photo-plan-cross="${index}" d="M ${point.x - 1.4} ${point.y} L ${point.x + 1.4} ${point.y} M ${point.x} ${point.y - 1.4} L ${point.x} ${point.y + 1.4}"></path>
-            `).join("") || ""}
           </svg>
+          ${renderPhotoPlanPointMarkers(shotPlan?.viewPoints)}
           ${renderPhotoGreenMarkerElement(green, hole.par)}
           ${renderPhotoTeeMarkerElement(tee, Boolean(gpsPoint))}
           ${renderPhotoGpsMarker(gpsPoint)}
@@ -2028,6 +2025,7 @@ function renderPhotoHoleVisual(hole) {
             ${shotPlan ? "" : renderPhotoGuideRoute(marker, shotStartMarker)}
             ${renderPhotoPlanRoute(marker, shotPlan, hole.number)}
           </svg>
+          ${renderPhotoPlanPointMarkers(shotPlan?.viewPoints)}
           ${renderPhotoGreenMarkerElement({ x: marker.green[0], y: marker.green[1] }, hole.par)}
           ${renderPhotoTeeMarkerElement({ x: marker.tee[0], y: marker.tee[1] }, Boolean(gpsMarker))}
           ${renderPhotoGpsMarker(gpsMarker)}
@@ -2084,11 +2082,15 @@ function renderPhotoPlanRoute(marker, shotPlan, holeNumber) {
   ].join(" ");
   return `
     <polyline class="photo-plan-route" points="${points}" stroke="url(#photo-shot-gradient-${holeNumber})"></polyline>
-    ${viewPoints.map((point, index) => `
-      <circle class="photo-plan-point" data-photo-plan-point="${index}" cx="${point.x}" cy="${point.y}" r="1.9"></circle>
-      <path class="photo-plan-cross" data-photo-plan-cross="${index}" d="M ${point.x - 1.4} ${point.y} L ${point.x + 1.4} ${point.y} M ${point.x} ${point.y - 1.4} L ${point.x} ${point.y + 1.4}"></path>
-    `).join("")}
   `;
+}
+
+function renderPhotoPlanPointMarkers(viewPoints = []) {
+  return viewPoints.map((point, index) => `
+    <span class="photo-plan-point" data-photo-plan-point="${index}" style="left:${point.x}%; top:${point.y}%;" aria-hidden="true">
+      <span></span>
+    </span>
+  `).join("");
 }
 
 function renderPhotoGpsMarker(marker) {
@@ -5837,17 +5839,18 @@ function hitTestPlanViewPoint(pointer, shotPlan) {
 function updatePhotoPlanRouteDom(panel, index, point) {
   const route = panel.querySelector(".photo-plan-route");
   const marker = panel.querySelector(`[data-photo-plan-point="${index}"]`);
-  const cross = panel.querySelector(`[data-photo-plan-cross="${index}"]`);
   if (route?.points?.[index + 1]) {
     route.points[index + 1].x = point.x;
     route.points[index + 1].y = point.y;
   }
   if (marker) {
-    marker.setAttribute("cx", point.x);
-    marker.setAttribute("cy", point.y);
-  }
-  if (cross) {
-    cross.setAttribute("d", `M ${point.x - 1.4} ${point.y} L ${point.x + 1.4} ${point.y} M ${point.x} ${point.y - 1.4} L ${point.x} ${point.y + 1.4}`);
+    if (typeof SVGElement !== "undefined" && marker instanceof SVGElement) {
+      marker.setAttribute("cx", point.x);
+      marker.setAttribute("cy", point.y);
+    } else {
+      marker.style.left = `${point.x}%`;
+      marker.style.top = `${point.y}%`;
+    }
   }
 }
 
@@ -7024,12 +7027,9 @@ function updateArcgisShotPlanLive(panel, course, hole) {
       ${shotPlan ? "" : `<line class="photo-guide-route" x1="${start.x}" y1="${start.y}" x2="${green.x}" y2="${green.y}"></line>`}
       ${renderTrackedShotOverlay(hole, anchors, marker, panelRatio)}
       ${shotPlan ? `<polyline class="photo-plan-route" points="${routePoints}" stroke="url(#arcgis-shot-gradient-${hole.number})"></polyline>` : ""}
-      ${shotPlan?.viewPoints.map((point, index) => `
-        <circle class="photo-plan-point" data-photo-plan-point="${index}" cx="${point.x}" cy="${point.y}" r="1.9"></circle>
-        <path class="photo-plan-cross" data-photo-plan-cross="${index}" d="M ${point.x - 1.4} ${point.y} L ${point.x + 1.4} ${point.y} M ${point.x} ${point.y - 1.4} L ${point.x} ${point.y + 1.4}"></path>
-      `).join("") || ""}
     `;
   }
+  replacePhotoPlanPointMarkers(panel, shotPlan?.viewPoints);
   replaceShotInfo(panel, renderArcgisShotInfo(courseId, hole, shotPlan));
   replaceClubPanel(panel, hole, shotPlan);
   return true;
@@ -7064,9 +7064,18 @@ function updatePhotoShotPlanLive(courseId, holeNumber, hole) {
       ${renderPhotoPlanRoute(marker, shotPlan, hole.number)}
     `;
   }
+  replacePhotoPlanPointMarkers(panel, shotPlan?.viewPoints);
   replaceShotInfo(panel, renderPhotoShotInfo(shotPlan, teeInfo, courseId, holeNumber));
   replaceClubPanel(panel, hole, shotPlan);
   return true;
+}
+
+function replacePhotoPlanPointMarkers(panel, viewPoints = []) {
+  panel.querySelectorAll(".photo-plan-point").forEach((marker) => marker.remove());
+  if (!viewPoints?.length) {
+    return;
+  }
+  panel.querySelector(".photo-zoom-layer")?.insertAdjacentHTML("beforeend", renderPhotoPlanPointMarkers(viewPoints));
 }
 
 function replaceShotInfo(panel, html) {

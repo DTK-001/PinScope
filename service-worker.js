@@ -1,4 +1,4 @@
-const CACHE_NAME = "local-loop-golf-v112-no-toasts";
+const CACHE_NAME = "local-loop-golf-v113-round-plan-markers";
 
 const APP_SHELL = [
   "./",
