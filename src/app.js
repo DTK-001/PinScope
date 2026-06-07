@@ -58,6 +58,8 @@ const ARCGIS_IMAGERY_QUALITY_ORDER = ["balanced", "high", "ultra"];
 const ARCGIS_DEFAULT_IMAGERY_QUALITY = "ultra";
 const SATELLITE_PRELOAD_CONCURRENCY = 2;
 const SATELLITE_PANEL_RATIO = 13 / 9;
+const GPS_JITTER_YARDS = 2;
+const GPS_DISTANCE_UPDATE_YARDS = 2;
 const HANDICAP_MIN_HOLES = 54;
 const HANDICAP_SCORE_TABLE = [
   { min: 3, max: 3, count: 1, adjustment: -2 },
@@ -116,6 +118,8 @@ let satellitePreloadingUrls = new Set();
 let arcgisImageryRetryAt = 0;
 let arcgisImageryRequestTimer = 0;
 let satellitePreloadTimer = 0;
+let playGpsPatchFrame = 0;
+let playDistanceDisplay = null;
 let notice = "";
 let scoreCardOpen = false;
 let roundScorecardOpen = false;
@@ -898,24 +902,49 @@ function renderPlayGpsButton() {
 }
 
 function renderPlayDistanceHud(hole) {
-  const values = gps.status === "ready"
-    ? [
-        yardsBetween(gps.position, hole.greenFront),
-        yardsBetween(gps.position, hole.greenCenter),
-        yardsBetween(gps.position, hole.greenBack)
-      ]
-    : ["-", "-", "-"];
+  const values = stablePlayDistanceValues(hole);
   const labels = ["Front", "Mid", "Back"];
   return `
     <div class="play-distance-hud" aria-label="Green distances">
       ${labels.map((label, index) => `
-        <div>
+        <div data-play-distance="${label.toLowerCase()}">
           <span>${label}</span>
           <strong>${values[index] ?? "-"}</strong>
         </div>
       `).join("")}
     </div>
   `;
+}
+
+function stablePlayDistanceValues(hole) {
+  if (gps.status !== "ready" || !gps.position) {
+    playDistanceDisplay = null;
+    return ["-", "-", "-"];
+  }
+  const key = playDistanceKey(hole);
+  const raw = [
+    yardsBetween(gps.position, hole.greenFront),
+    yardsBetween(gps.position, hole.greenCenter),
+    yardsBetween(gps.position, hole.greenBack)
+  ].map((value) => Number.isFinite(value) ? value : "-");
+  if (!playDistanceDisplay || playDistanceDisplay.key !== key) {
+    playDistanceDisplay = { key, values: raw };
+    return raw;
+  }
+  const values = raw.map((value, index) => {
+    const current = playDistanceDisplay.values[index];
+    if (!Number.isFinite(value) || !Number.isFinite(current)) {
+      return value;
+    }
+    return Math.abs(value - current) >= GPS_DISTANCE_UPDATE_YARDS ? value : current;
+  });
+  playDistanceDisplay = { key, values };
+  return values;
+}
+
+function playDistanceKey(hole) {
+  const round = getActiveRound(state);
+  return `${round?.id || "round"}:${hole?.number || ""}`;
 }
 
 function renderShotTracker(round, hole) {
@@ -6764,6 +6793,17 @@ function startGps() {
 }
 
 function applyGpsPosition(position, accuracy = 0, spoofed = false, sourcePoint = null, sourceCourseId = "", sourceHoleNumber = "") {
+  const previousStatus = gps.status;
+  const previousPosition = gps.position;
+  if (!spoofed && previousStatus === "ready" && previousPosition) {
+    const movedYards = yardsBetween(previousPosition, position);
+    const previousAccuracy = Number(previousPosition.accuracy || 0);
+    const nextAccuracy = Number(accuracy || 0);
+    const accuracyImproved = previousAccuracy > 0 && nextAccuracy > 0 && nextAccuracy + 3 < previousAccuracy;
+    if (Number.isFinite(movedYards) && movedYards <= GPS_JITTER_YARDS && !accuracyImproved) {
+      return;
+    }
+  }
   gps.status = "ready";
   gps.position = {
     lat: position.lat,
@@ -6774,7 +6814,139 @@ function applyGpsPosition(position, accuracy = 0, spoofed = false, sourcePoint =
     sourceCourseId,
     sourceHoleNumber
   };
+  if (updatePlayGpsLive()) {
+    return;
+  }
   render();
+}
+
+function schedulePlayGpsPatch() {
+  if (playGpsPatchFrame) {
+    return true;
+  }
+  playGpsPatchFrame = window.requestAnimationFrame(() => {
+    playGpsPatchFrame = 0;
+    updatePlayGpsLiveNow();
+  });
+  return true;
+}
+
+function updatePlayGpsLive() {
+  if (!currentPlayContext() || !document.querySelector("[data-play-round]")) {
+    return false;
+  }
+  return schedulePlayGpsPatch();
+}
+
+function updatePlayGpsLiveNow() {
+  const context = currentPlayContext();
+  if (!context) {
+    return false;
+  }
+  updateGpsChrome();
+  updatePlayDistanceHud(context.hole);
+  updatePlayGpsMarker(context.course, context.hole);
+  updateShotTrackerStatus(context.round, context.hole);
+  return true;
+}
+
+function currentPlayContext() {
+  if (view !== "play" || gps.status !== "ready" || !gps.position) {
+    return null;
+  }
+  const round = getActiveRound(state);
+  const course = round ? getCourse(state, round.courseId) : null;
+  const hole = course?.holes?.find((item) => item.number === round.currentHole) || course?.holes?.[0];
+  return round && course && hole ? { round, course, hole } : null;
+}
+
+function updatePlayDistanceHud(hole) {
+  const values = stablePlayDistanceValues(hole);
+  ["front", "mid", "back"].forEach((label, index) => {
+    const value = values[index] ?? "-";
+    const element = document.querySelector(`[data-play-distance="${label}"] strong`);
+    if (element && element.textContent !== String(value)) {
+      element.textContent = String(value);
+    }
+  });
+}
+
+function updateGpsChrome() {
+  const pill = document.querySelector(".gps-pill");
+  if (pill) {
+    pill.className = `gps-pill ${gps.status}`;
+    const label = pill.querySelector("span:last-child");
+    if (label) {
+      label.textContent = gpsLabel();
+    }
+  }
+  const playButton = document.querySelector(".play-gps-button");
+  if (playButton) {
+    const connected = gps.status === "ready" || gps.status === "watching";
+    playButton.classList.toggle("connected", connected);
+    playButton.setAttribute("aria-label", connected ? "Stop GPS" : "Start GPS");
+    const image = playButton.querySelector("img");
+    if (image) {
+      image.src = connected ? GPS_PINK_IMAGE_SRC : GPS_GREY_IMAGE_SRC;
+    }
+  }
+}
+
+function updatePlayGpsMarker(course, hole) {
+  const marker = liveGpsMarkerForHole(course, hole);
+  const arcgisPanel = document.querySelector(`[data-arcgis-hole="${cssEscape(String(hole.number))}"]`);
+  const photoPanel = document.querySelector(`[data-photo-hole="${cssEscape(String(hole.number))}"]`)?.closest(".photo-hole");
+  const panel = arcgisPanel || photoPanel;
+  if (!panel) {
+    return;
+  }
+  const existing = panel.querySelector(".photo-gps-marker");
+  if (!marker) {
+    existing?.remove();
+    return;
+  }
+  if (existing) {
+    existing.style.left = `${marker.x}%`;
+    existing.style.top = `${marker.y}%`;
+    return;
+  }
+  panel.querySelector(".photo-zoom-layer")?.insertAdjacentHTML("beforeend", renderPhotoGpsMarker(marker));
+}
+
+function liveGpsMarkerForHole(course, hole) {
+  if (arcgisImageryActiveForHole(hole, course)) {
+    return arcgisGeoToTargetPoint(
+      arcgisHoleAnchors(hole, course),
+      gps.position,
+      photoTargetMarkers(hole.par),
+      satellitePanelRatio()
+    );
+  }
+  if (hole.visual?.photo && coursePhotoSource(photoCourseId(hole))) {
+    return photoGpsMarker(hole, photoCourseId(hole));
+  }
+  return null;
+}
+
+function updateShotTrackerStatus(round, hole) {
+  const tracker = document.querySelector(".shot-tracker");
+  if (!tracker) {
+    return;
+  }
+  const shotState = shotTrackingState(round, hole.number);
+  tracker.classList.toggle("tracking", shotState.active);
+  let status = tracker.querySelector("p");
+  if (!shotState.status) {
+    status?.remove();
+    return;
+  }
+  if (!status) {
+    status = document.createElement("p");
+    tracker.prepend(status);
+  }
+  if (status.textContent !== shotState.status) {
+    status.textContent = shotState.status;
+  }
 }
 
 function gpsTestEnabled() {
