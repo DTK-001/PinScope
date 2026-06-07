@@ -120,7 +120,6 @@ let arcgisImageryRequestTimer = 0;
 let satellitePreloadTimer = 0;
 let playGpsPatchFrame = 0;
 let playDistanceDisplay = null;
-let notice = "";
 let scoreCardOpen = false;
 let roundScorecardOpen = false;
 let finishRoundPrompt = null;
@@ -221,7 +220,6 @@ function render() {
     ${scoreCardOpen ? renderScoreCardOverlay() : ""}
     ${roundScorecardOpen ? renderRoundScorecardOverlay() : ""}
     ${finishRoundPrompt ? renderFinishRoundOverlay(finishRoundPrompt) : ""}
-    ${notice ? `<aside class="toast" role="status">${escapeHtml(notice)}</aside>` : ""}
     <nav class="bottom-nav" aria-label="Primary">
       ${navItem("courses", "Courses", "C")}
       ${navItem("play", "Play", "P")}
@@ -1650,23 +1648,33 @@ function darkTextForColor(color) {
 function renderFinishRoundOverlay(prompt) {
   const missing = prompt.missing || [];
   const hasMissing = missing.length > 0;
+  const confirmingDiscard = prompt.mode === "discard";
   return `
-    <section class="score-card-backdrop finish-round-backdrop" role="dialog" aria-modal="true" aria-label="Finish round">
+    <section class="score-card-backdrop finish-round-backdrop" role="dialog" aria-modal="true" aria-label="${confirmingDiscard ? "Discard round" : "Finish round"}">
       <div class="finish-round-sheet">
         <header class="score-card-head">
           <div>
-            <p class="eyebrow">${hasMissing ? "Score Check" : "Finish Round"}</p>
-            <h2>${hasMissing ? "Some holes need scores" : "Save this round?"}</h2>
-            <p>${hasMissing
-              ? `Missing score entry for hole${missing.length === 1 ? "" : "s"} ${missing.join(", ")}.`
-              : "Your scorecard is complete. Save it to stats or discard it."}</p>
+            <p class="eyebrow">${confirmingDiscard ? "Discard Round" : hasMissing ? "Score Check" : "Finish Round"}</p>
+            <h2>${confirmingDiscard ? "Discard this round?" : hasMissing ? "Some holes need scores" : "Save this round?"}</h2>
+            <p>${confirmingDiscard
+              ? "This will remove the current round and its scores."
+              : hasMissing
+                ? `Missing score entry for hole${missing.length === 1 ? "" : "s"} ${missing.join(", ")}.`
+                : "Your scorecard is complete. Save it to stats or discard it."}</p>
           </div>
           <button class="icon-action" type="button" data-action="close-finish-round" aria-label="Close finish round">X</button>
         </header>
         <div class="finish-round-actions">
-          ${hasMissing ? `<button class="secondary-action" type="button" data-action="review-missing-scores">Add Missing Scores</button>` : ""}
-          <button class="primary-action" type="button" data-action="confirm-save-round">Save Round</button>
-          <button class="finish-action" type="button" data-action="discard-round">Discard Round</button>
+          ${confirmingDiscard
+            ? `
+              <button class="secondary-action" type="button" data-action="cancel-discard-round">Keep Playing</button>
+              <button class="finish-action" type="button" data-action="confirm-discard-round">Discard Round</button>
+            `
+            : `
+              ${hasMissing ? `<button class="secondary-action" type="button" data-action="review-missing-scores">Add Missing Scores</button>` : ""}
+              <button class="primary-action" type="button" data-action="confirm-save-round">Save Round</button>
+              <button class="finish-action" type="button" data-action="discard-round">Discard Round</button>
+            `}
         </div>
       </div>
     </section>
@@ -4555,6 +4563,15 @@ function handleClick(event) {
   }
 
   if (action === "discard-round") {
+    requestDiscardRound();
+  }
+
+  if (action === "cancel-discard-round") {
+    finishRoundPrompt = null;
+    render();
+  }
+
+  if (action === "confirm-discard-round") {
     discardActiveRound();
   }
 
@@ -6251,9 +6268,18 @@ function requestFinishRound() {
     missing,
     requestedAt: Date.now()
   };
-  if (missing.length) {
-    flash(`Missing scores on hole${missing.length === 1 ? "" : "s"} ${missing.join(", ")}.`);
-  }
+  render();
+}
+
+function requestDiscardRound() {
+  const round = getActiveRound(state);
+  const course = round ? getCourse(state, round.courseId) : null;
+  const missing = round && course ? missingScoreHoles(round, course) : [];
+  finishRoundPrompt = {
+    mode: "discard",
+    missing,
+    requestedAt: Date.now()
+  };
   render();
 }
 
@@ -7768,11 +7794,7 @@ function imageFileToDataUrl(file, maxEdge, quality) {
 
 function persist(message = "") {
   saveState(state);
-  if (message) {
-    flash(message);
-  } else {
-    render();
-  }
+  render();
 }
 
 function persistScoreEntry() {
@@ -7790,14 +7812,8 @@ function persistScoreEntry() {
   });
 }
 
-function flash(message) {
-  notice = message;
+function flash() {
   render();
-  window.clearTimeout(flash.timeoutId);
-  flash.timeoutId = window.setTimeout(() => {
-    notice = "";
-    render();
-  }, 2200);
 }
 
 function registerServiceWorker() {

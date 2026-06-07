@@ -1,4 +1,4 @@
-const CACHE_NAME = "local-loop-golf-v111-live-play-screen";
+const CACHE_NAME = "local-loop-golf-v112-no-toasts";
 
 const APP_SHELL = [
   "./",

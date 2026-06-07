@@ -3624,24 +3624,6 @@ select option {
   background: linear-gradient(135deg, var(--accent), var(--accent-2));
 }
 
-.toast {
-  position: fixed;
-  right: 14px;
-  bottom: calc(86px + env(safe-area-inset-bottom));
-  left: 14px;
-  z-index: 30;
-  width: min(440px, calc(100% - 28px));
-  margin: 0 auto;
-  padding: 12px 14px;
-  border-radius: var(--radius);
-  color: #fff;
-  background: linear-gradient(135deg, #171827, #0b0b13);
-  border: 1px solid rgba(255, 79, 216, 0.3);
-  box-shadow: var(--shadow);
-  text-align: center;
-  font-weight: 750;
-}
-
 .empty-state {
   display: grid;
   gap: 8px;
