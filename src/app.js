@@ -1684,6 +1684,9 @@ function renderFinishRoundOverlay(prompt) {
 function renderPlayerScoreCard(round, course, hole, player) {
   const entry = getPlayerEntry(round, hole.number, player.id) || getRoundEntry(round, hole.number);
   const yardage = hole.yards?.[player.teeId] || "-";
+  const girChecked = entry.scoreEntered
+    ? Boolean(entry.gir)
+    : inferredGirFromScore(course, hole.number, entry);
   return `
     <article class="player-score-card">
       <header>
@@ -1708,7 +1711,7 @@ function renderPlayerScoreCard(round, course, hole, player) {
         </div>
       </div>
       <label class="check-row">
-        <input type="checkbox" data-action="entry-check" data-player-id="${player.id}" data-hole="${hole.number}" data-field="gir" ${entry.gir ? "checked" : ""} />
+        <input type="checkbox" data-action="entry-check" data-player-id="${player.id}" data-hole="${hole.number}" data-field="gir" ${girChecked ? "checked" : ""} />
         <span>Green in regulation</span>
       </label>
     </article>
@@ -6112,17 +6115,27 @@ function markCurrentScorecardHoleEntered(round, course) {
 }
 
 function syncEntryGirFromScore(course, holeNumber, playerEntry) {
-  const hole = course?.holes?.find((item) => Number(item.number) === Number(holeNumber));
-  if (!hole || !playerEntry?.scoreEntered) {
+  if (!playerEntry?.scoreEntered) {
     return;
+  }
+  const gir = inferredGirFromScore(course, holeNumber, playerEntry);
+  if (gir !== null) {
+    playerEntry.gir = gir;
+  }
+}
+
+function inferredGirFromScore(course, holeNumber, playerEntry) {
+  const hole = course?.holes?.find((item) => Number(item.number) === Number(holeNumber));
+  if (!hole || !playerEntry) {
+    return null;
   }
   const score = Number(playerEntry.score);
   const putts = Number(playerEntry.putts);
   const par = Number(hole.par);
   if (!Number.isFinite(score) || !Number.isFinite(putts) || !Number.isFinite(par) || score <= 0 || putts < 0 || par <= 0) {
-    return;
+    return null;
   }
-  playerEntry.gir = score - putts <= par - 2;
+  return score - putts <= par - 2;
 }
 
 function updateEntryCheck(input) {
@@ -6135,6 +6148,9 @@ function updateEntryCheck(input) {
     ? getPlayerEntry(round, Number(input.dataset.hole), input.dataset.playerId)
     : entry;
   playerEntry[input.dataset.field] = input.checked;
+  if (input.dataset.field === "gir") {
+    playerEntry.scoreEntered = true;
+  }
   persistScoreEntry();
 }
 

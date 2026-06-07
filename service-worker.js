@@ -1,4 +1,4 @@
-const CACHE_NAME = "local-loop-golf-v118-live-yardage-fix";
+const CACHE_NAME = "local-loop-golf-v119-gir-defaults";
 
 const APP_SHELL = [
   "./",
