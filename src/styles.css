@@ -1741,6 +1741,29 @@ select option {
   background: #f8f3ff;
 }
 
+.photo-carry-limit-marker {
+  position: absolute;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(232, 236, 240, 0.86);
+  border-radius: 50%;
+  background: rgba(73, 78, 86, 0.72);
+  box-shadow: 0 0 0 1px rgba(7, 8, 10, 0.84), 0 0 8px rgba(0, 0, 0, 0.42);
+  transform: translate(-50%, -50%) scale(var(--photo-marker-scale, 1));
+  transform-origin: center center;
+  pointer-events: none;
+}
+
+.photo-carry-limit-marker span {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: rgba(248, 251, 255, 0.92);
+}
+
 .tracked-shot-route {
   stroke: #35f0c1;
   stroke-width: 0.86;

@@ -1789,6 +1789,7 @@ function renderArcgisHoleVisual(hole, course) {
             ${shotPlan ? `<polyline class="photo-plan-route" points="${routePoints}" stroke="url(#arcgis-shot-gradient-${hole.number})"></polyline>` : ""}
           </svg>
           ${renderPhotoPlanPointMarkers(shotPlan?.viewPoints)}
+          ${renderCarryLimitMarkers(shotPlan, { tee, green })}
           ${renderPhotoGreenMarkerElement(green, hole.par)}
           ${renderPhotoTeeMarkerElement(tee, Boolean(gpsPoint))}
           ${renderPhotoGpsMarker(gpsPoint)}
@@ -2026,6 +2027,10 @@ function renderPhotoHoleVisual(hole) {
             ${renderPhotoPlanRoute(marker, shotPlan, hole.number)}
           </svg>
           ${renderPhotoPlanPointMarkers(shotPlan?.viewPoints)}
+          ${renderCarryLimitMarkers(shotPlan, {
+            tee: { x: marker.tee[0], y: marker.tee[1] },
+            green: { x: marker.green[0], y: marker.green[1] }
+          })}
           ${renderPhotoGreenMarkerElement({ x: marker.green[0], y: marker.green[1] }, hole.par)}
           ${renderPhotoTeeMarkerElement({ x: marker.tee[0], y: marker.tee[1] }, Boolean(gpsMarker))}
           ${renderPhotoGpsMarker(gpsMarker)}
@@ -2091,6 +2096,45 @@ function renderPhotoPlanPointMarkers(viewPoints = []) {
       <span></span>
     </span>
   `).join("");
+}
+
+function renderCarryLimitMarkers(shotPlan, markers = {}) {
+  const maxCarry = longestClubCarry();
+  if (!shotPlan || !Number.isFinite(maxCarry) || maxCarry <= 0) {
+    return "";
+  }
+  const route = shotPlanRouteViewPoints(shotPlan, markers);
+  if (route.length < 2) {
+    return "";
+  }
+  return (shotPlan.segments || []).map((segment, index) => {
+    const yards = Number(segment.yards || 0);
+    const start = route[index];
+    const end = route[index + 1];
+    if (!start || !end || yards <= maxCarry) {
+      return "";
+    }
+    const ratio = clamp(maxCarry / yards, 0, 1);
+    const point = {
+      x: Number((start.x + (end.x - start.x) * ratio).toFixed(2)),
+      y: Number((start.y + (end.y - start.y) * ratio).toFixed(2))
+    };
+    return `
+      <span class="photo-carry-limit-marker" style="left:${point.x}%; top:${point.y}%;" aria-hidden="true">
+        <span></span>
+      </span>
+    `;
+  }).join("");
+}
+
+function shotPlanRouteViewPoints(shotPlan, markers = {}) {
+  const start = shotPlan.startViewPoint || markers.tee;
+  const green = shotPlan.greenViewPoint || markers.green;
+  return [
+    start,
+    ...(shotPlan.viewPoints || []),
+    green
+  ].filter(Boolean);
 }
 
 function renderPhotoGpsMarker(marker) {
@@ -2175,19 +2219,25 @@ function renderPhotoClubPanel(hole, shotPlan) {
 function clubPanelRows(hole, shotPlan) {
   const plannedSegments = shotPlan?.segments || [];
   if (plannedSegments.length) {
-    return plannedSegments.map((segment) => ({
-      label: segment.label,
-      yards: segment.yards,
-      club: recommendClub(segment.yards)?.name || "-"
-    }));
+    return plannedSegments.map((segment) => {
+      const recommendation = clubRecommendation(segment.yards);
+      return {
+        label: segment.label,
+        yards: recommendation.unreachable ? 0 : segment.yards,
+        club: recommendation.unreachable ? "Unreachable" : recommendation.club?.name || "-",
+        note: recommendation.unreachable ? `${recommendation.maxCarry} yd max` : ""
+      };
+    });
   }
 
   const gpsDistance = gpsDistanceToGreen(hole);
   if (gpsDistance !== null) {
+    const recommendation = clubRecommendation(gpsDistance);
     return [{
       label: "Now",
-      yards: gpsDistance,
-      club: recommendClub(gpsDistance)?.name || "-"
+      yards: recommendation.unreachable ? 0 : gpsDistance,
+      club: recommendation.unreachable ? "Unreachable" : recommendation.club?.name || "-",
+      note: recommendation.unreachable ? `${recommendation.maxCarry} yd max` : ""
     }];
   }
 
@@ -2200,14 +2250,30 @@ function clubPanelRows(hole, shotPlan) {
 }
 
 function recommendClub(distance) {
+  return clubRecommendation(distance).club;
+}
+
+function clubRecommendation(distance) {
   const target = Number(distance);
   if (!Number.isFinite(target) || target <= 0) {
-    return null;
+    return { club: null, unreachable: false, maxCarry: 0 };
   }
   const clubs = activeBagClubs()
     .filter((club) => Number(club.carryYards) > 0)
     .sort((a, b) => Math.abs(Number(a.carryYards) - target) - Math.abs(Number(b.carryYards) - target));
-  return clubs[0] || null;
+  const maxCarry = longestClubCarry(clubs);
+  return {
+    club: clubs[0] || null,
+    unreachable: Number.isFinite(maxCarry) && maxCarry > 0 && target > maxCarry,
+    maxCarry
+  };
+}
+
+function longestClubCarry(clubs = activeBagClubs()) {
+  const carries = clubs
+    .map((club) => Number(club.carryYards || 0))
+    .filter((carry) => Number.isFinite(carry) && carry > 0);
+  return carries.length ? Math.max(...carries) : 0;
 }
 
 function activeBag() {
@@ -2691,7 +2757,9 @@ function resolveArcgisShotPlan(courseId, hole, anchors, marker, panelRatio = sat
   });
   return {
     points,
+    startViewPoint: arcgisGeoToTargetPoint(anchors, start, marker, panelRatio),
     viewPoints: points.map((point) => arcgisGeoToTargetPoint(anchors, point, marker, panelRatio)),
+    greenViewPoint: { x: marker.green[0], y: marker.green[1] },
     segments
   };
 }
@@ -3079,7 +3147,8 @@ function resolvePhotoShotPlan(hole, teeInfo) {
     points: orderedPoints,
     viewPoints,
     startPoint,
-    startViewPoint: photoSourceToTargetPoint(hole, startPoint)
+    startViewPoint: photoSourceToTargetPoint(hole, startPoint),
+    greenViewPoint: { x: photoTargetMarkers(hole.par).green[0], y: photoTargetMarkers(hole.par).green[1] }
   };
 }
 
@@ -5545,6 +5614,8 @@ function finishArcgisPlanDrag(event) {
   const geoPoint = arcgisDragEventToPosition(photoDrag, event) || photoDrag.latestGeoPoint;
   const courseId = photoDrag.courseId;
   const holeNumber = photoDrag.holeNumber;
+  const hole = photoDrag.hole;
+  const panel = photoDrag.panel;
   const index = photoDrag.index;
   const points = [...photoDrag.points];
   const anchors = photoDrag.anchors;
@@ -5566,7 +5637,7 @@ function finishArcgisPlanDrag(event) {
       points: sortArcGISPlanPoints(anchors, points).slice(0, 4)
     }
   };
-  render();
+  updateArcgisShotPlanLive(panel, getCourse(state, courseId), hole) || render();
 }
 
 function moveGpsTestMarker(event) {
@@ -7051,6 +7122,10 @@ function updateArcgisShotPlanLive(panel, course, hole) {
     `;
   }
   replacePhotoPlanPointMarkers(panel, shotPlan?.viewPoints);
+  replaceCarryLimitMarkers(panel, shotPlan, {
+    tee: { x: marker.tee[0], y: marker.tee[1] },
+    green
+  });
   replaceShotInfo(panel, renderArcgisShotInfo(courseId, hole, shotPlan));
   replaceClubPanel(panel, hole, shotPlan);
   return true;
@@ -7086,6 +7161,10 @@ function updatePhotoShotPlanLive(courseId, holeNumber, hole) {
     `;
   }
   replacePhotoPlanPointMarkers(panel, shotPlan?.viewPoints);
+  replaceCarryLimitMarkers(panel, shotPlan, {
+    tee: { x: marker.tee[0], y: marker.tee[1] },
+    green: { x: marker.green[0], y: marker.green[1] }
+  });
   replaceShotInfo(panel, renderPhotoShotInfo(shotPlan, teeInfo, courseId, holeNumber));
   replaceClubPanel(panel, hole, shotPlan);
   return true;
@@ -7097,6 +7176,14 @@ function replacePhotoPlanPointMarkers(panel, viewPoints = []) {
     return;
   }
   panel.querySelector(".photo-zoom-layer")?.insertAdjacentHTML("beforeend", renderPhotoPlanPointMarkers(viewPoints));
+}
+
+function replaceCarryLimitMarkers(panel, shotPlan, markers = {}) {
+  panel.querySelectorAll(".photo-carry-limit-marker").forEach((marker) => marker.remove());
+  const html = renderCarryLimitMarkers(shotPlan, markers);
+  if (html) {
+    panel.querySelector(".photo-zoom-layer")?.insertAdjacentHTML("beforeend", html);
+  }
 }
 
 function replaceShotInfo(panel, html) {
