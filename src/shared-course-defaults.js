@@ -51365,6 +51365,2261 @@ export const sharedCourseDefaults = [
     ]
   },
   {
+    "id": "verified-royal-troon-old",
+    "geometrySource": "OpenStreetMap golf=hole ways matched to the complete published card and checked 2026-06-21.",
+    "attribution": "Hole geometry from OpenStreetMap contributors under ODbL.",
+    "holes": [
+      {
+        "number": 1,
+        "tee": {
+          "lat": 55.5330472,
+          "lng": -4.6528955
+        },
+        "greenCenter": {
+          "lat": 55.5302342,
+          "lng": -4.6509617
+        }
+      },
+      {
+        "number": 2,
+        "tee": {
+          "lat": 55.5304448,
+          "lng": -4.6517739
+        },
+        "greenCenter": {
+          "lat": 55.5277462,
+          "lng": -4.6486333
+        }
+      },
+      {
+        "number": 3,
+        "tee": {
+          "lat": 55.5277055,
+          "lng": -4.6496064
+        },
+        "greenCenter": {
+          "lat": 55.5263834,
+          "lng": -4.6445746
+        }
+      },
+      {
+        "number": 4,
+        "tee": {
+          "lat": 55.5262879,
+          "lng": -4.6456259
+        },
+        "greenCenter": {
+          "lat": 55.5241305,
+          "lng": -4.6387055
+        }
+      },
+      {
+        "number": 5,
+        "tee": {
+          "lat": 55.5240037,
+          "lng": -4.6394557
+        },
+        "greenCenter": {
+          "lat": 55.522668,
+          "lng": -4.6374822
+        }
+      },
+      {
+        "number": 6,
+        "tee": {
+          "lat": 55.5235636,
+          "lng": -4.6376134
+        },
+        "greenCenter": {
+          "lat": 55.5199659,
+          "lng": -4.6316369
+        }
+      },
+      {
+        "number": 7,
+        "tee": {
+          "lat": 55.5201459,
+          "lng": -4.631137
+        },
+        "greenCenter": {
+          "lat": 55.5203298,
+          "lng": -4.6254634
+        }
+      },
+      {
+        "number": 8,
+        "tee": {
+          "lat": 55.5199601,
+          "lng": -4.6253104
+        },
+        "greenCenter": {
+          "lat": 55.5199952,
+          "lng": -4.6270841
+        }
+      },
+      {
+        "number": 9,
+        "tee": {
+          "lat": 55.5195772,
+          "lng": -4.6286293
+        },
+        "greenCenter": {
+          "lat": 55.5179005,
+          "lng": -4.6235223
+        }
+      },
+      {
+        "number": 10,
+        "tee": {
+          "lat": 55.5190459,
+          "lng": -4.6218688
+        },
+        "greenCenter": {
+          "lat": 55.5212498,
+          "lng": -4.6258454
+        }
+      },
+      {
+        "number": 11,
+        "tee": {
+          "lat": 55.5209756,
+          "lng": -4.6265009
+        },
+        "greenCenter": {
+          "lat": 55.5240134,
+          "lng": -4.629218
+        }
+      },
+      {
+        "number": 12,
+        "tee": {
+          "lat": 55.5243253,
+          "lng": -4.6297431
+        },
+        "greenCenter": {
+          "lat": 55.5208308,
+          "lng": -4.6293925
+        }
+      },
+      {
+        "number": 13,
+        "tee": {
+          "lat": 55.5205957,
+          "lng": -4.6296557
+        },
+        "greenCenter": {
+          "lat": 55.5231639,
+          "lng": -4.6346383
+        }
+      },
+      {
+        "number": 14,
+        "tee": {
+          "lat": 55.5233192,
+          "lng": -4.633796
+        },
+        "greenCenter": {
+          "lat": 55.5241329,
+          "lng": -4.6359145
+        }
+      },
+      {
+        "number": 15,
+        "tee": {
+          "lat": 55.5234382,
+          "lng": -4.6357261
+        },
+        "greenCenter": {
+          "lat": 55.5262217,
+          "lng": -4.641044
+        }
+      },
+      {
+        "number": 16,
+        "tee": {
+          "lat": 55.5263819,
+          "lng": -4.6407022
+        },
+        "greenCenter": {
+          "lat": 55.5287682,
+          "lng": -4.6475067
+        }
+      },
+      {
+        "number": 17,
+        "tee": {
+          "lat": 55.5290177,
+          "lng": -4.6464975
+        },
+        "greenCenter": {
+          "lat": 55.5303008,
+          "lng": -4.6488193
+        }
+      },
+      {
+        "number": 18,
+        "tee": {
+          "lat": 55.5287943,
+          "lng": -4.6486463
+        },
+        "greenCenter": {
+          "lat": 55.5323056,
+          "lng": -4.6508987
+        }
+      }
+    ]
+  },
+  {
+    "id": "verified-turnberry-ailsa",
+    "geometrySource": "OpenStreetMap golf=hole ways matched to the complete published card and checked 2026-06-21.",
+    "attribution": "Hole geometry from OpenStreetMap contributors under ODbL.",
+    "holes": [
+      {
+        "number": 1,
+        "tee": {
+          "lat": 55.314798,
+          "lng": -4.8344247
+        },
+        "greenCenter": {
+          "lat": 55.3114272,
+          "lng": -4.8345718
+        }
+      },
+      {
+        "number": 2,
+        "tee": {
+          "lat": 55.3112165,
+          "lng": -4.8351582
+        },
+        "greenCenter": {
+          "lat": 55.3146395,
+          "lng": -4.8352457
+        }
+      },
+      {
+        "number": 3,
+        "tee": {
+          "lat": 55.315391,
+          "lng": -4.8361459
+        },
+        "greenCenter": {
+          "lat": 55.3113574,
+          "lng": -4.8359604
+        }
+      },
+      {
+        "number": 4,
+        "tee": {
+          "lat": 55.3112999,
+          "lng": -4.8366007
+        },
+        "greenCenter": {
+          "lat": 55.3128127,
+          "lng": -4.8372021
+        }
+      },
+      {
+        "number": 5,
+        "tee": {
+          "lat": 55.3118534,
+          "lng": -4.8362398
+        },
+        "greenCenter": {
+          "lat": 55.3160805,
+          "lng": -4.8380212
+        }
+      },
+      {
+        "number": 6,
+        "tee": {
+          "lat": 55.316925,
+          "lng": -4.8385969
+        },
+        "greenCenter": {
+          "lat": 55.3182928,
+          "lng": -4.8389098
+        }
+      },
+      {
+        "number": 7,
+        "tee": {
+          "lat": 55.3175459,
+          "lng": -4.8393483
+        },
+        "greenCenter": {
+          "lat": 55.322012,
+          "lng": -4.840839
+        }
+      },
+      {
+        "number": 8,
+        "tee": {
+          "lat": 55.3209072,
+          "lng": -4.840325
+        },
+        "greenCenter": {
+          "lat": 55.3235294,
+          "lng": -4.845426
+        }
+      },
+      {
+        "number": 9,
+        "tee": {
+          "lat": 55.3237606,
+          "lng": -4.8466154
+        },
+        "greenCenter": {
+          "lat": 55.3250575,
+          "lng": -4.8439328
+        }
+      },
+      {
+        "number": 10,
+        "tee": {
+          "lat": 55.325021,
+          "lng": -4.8429923
+        },
+        "greenCenter": {
+          "lat": 55.3288398,
+          "lng": -4.8391532
+        }
+      },
+      {
+        "number": 11,
+        "tee": {
+          "lat": 55.3292165,
+          "lng": -4.8388226
+        },
+        "greenCenter": {
+          "lat": 55.3299746,
+          "lng": -4.8361626
+        }
+      },
+      {
+        "number": 12,
+        "tee": {
+          "lat": 55.3295904,
+          "lng": -4.8359715
+        },
+        "greenCenter": {
+          "lat": 55.32608,
+          "lng": -4.8390678
+        }
+      },
+      {
+        "number": 13,
+        "tee": {
+          "lat": 55.3259842,
+          "lng": -4.8404842
+        },
+        "greenCenter": {
+          "lat": 55.3238881,
+          "lng": -4.8363636
+        }
+      },
+      {
+        "number": 14,
+        "tee": {
+          "lat": 55.3233715,
+          "lng": -4.8357703
+        },
+        "greenCenter": {
+          "lat": 55.3247058,
+          "lng": -4.843045
+        }
+      },
+      {
+        "number": 15,
+        "tee": {
+          "lat": 55.3238872,
+          "lng": -4.8439452
+        },
+        "greenCenter": {
+          "lat": 55.3225309,
+          "lng": -4.8414357
+        }
+      },
+      {
+        "number": 16,
+        "tee": {
+          "lat": 55.3235299,
+          "lng": -4.8416565
+        },
+        "greenCenter": {
+          "lat": 55.3202092,
+          "lng": -4.8380303
+        }
+      },
+      {
+        "number": 17,
+        "tee": {
+          "lat": 55.3207427,
+          "lng": -4.8387413
+        },
+        "greenCenter": {
+          "lat": 55.3167199,
+          "lng": -4.8368478
+        }
+      },
+      {
+        "number": 18,
+        "tee": {
+          "lat": 55.3173041,
+          "lng": -4.8390487
+        },
+        "greenCenter": {
+          "lat": 55.3146601,
+          "lng": -4.8329239
+        }
+      }
+    ]
+  },
+  {
+    "id": "verified-celtic-manor-twenty-ten",
+    "geometrySource": "OpenStreetMap golf=hole ways matched to the complete published card and checked 2026-06-21.",
+    "attribution": "Hole geometry from OpenStreetMap contributors under ODbL.",
+    "holes": [
+      {
+        "number": 1,
+        "tee": {
+          "lat": 51.6180438,
+          "lng": -2.9356627
+        },
+        "greenCenter": {
+          "lat": 51.6187061,
+          "lng": -2.9299075
+        }
+      },
+      {
+        "number": 2,
+        "tee": {
+          "lat": 51.6192053,
+          "lng": -2.9299134
+        },
+        "greenCenter": {
+          "lat": 51.6232284,
+          "lng": -2.9251708
+        }
+      },
+      {
+        "number": 3,
+        "tee": {
+          "lat": 51.6231325,
+          "lng": -2.923779
+        },
+        "greenCenter": {
+          "lat": 51.6217202,
+          "lng": -2.9248827
+        }
+      },
+      {
+        "number": 4,
+        "tee": {
+          "lat": 51.6213353,
+          "lng": -2.9242356
+        },
+        "greenCenter": {
+          "lat": 51.6191055,
+          "lng": -2.9291022
+        }
+      },
+      {
+        "number": 5,
+        "tee": {
+          "lat": 51.6192631,
+          "lng": -2.9279106
+        },
+        "greenCenter": {
+          "lat": 51.6201294,
+          "lng": -2.9224356
+        }
+      },
+      {
+        "number": 6,
+        "tee": {
+          "lat": 51.6201412,
+          "lng": -2.9212285
+        },
+        "greenCenter": {
+          "lat": 51.6233862,
+          "lng": -2.921994
+        }
+      },
+      {
+        "number": 7,
+        "tee": {
+          "lat": 51.62406,
+          "lng": -2.9209841
+        },
+        "greenCenter": {
+          "lat": 51.6237951,
+          "lng": -2.9237617
+        }
+      },
+      {
+        "number": 8,
+        "tee": {
+          "lat": 51.6240057,
+          "lng": -2.9246079
+        },
+        "greenCenter": {
+          "lat": 51.6262084,
+          "lng": -2.9200324
+        }
+      },
+      {
+        "number": 9,
+        "tee": {
+          "lat": 51.6251461,
+          "lng": -2.9184799
+        },
+        "greenCenter": {
+          "lat": 51.6223388,
+          "lng": -2.9119575
+        }
+      },
+      {
+        "number": 10,
+        "tee": {
+          "lat": 51.6221574,
+          "lng": -2.9107577
+        },
+        "greenCenter": {
+          "lat": 51.6215283,
+          "lng": -2.9133804
+        }
+      },
+      {
+        "number": 11,
+        "tee": {
+          "lat": 51.6210538,
+          "lng": -2.9138326
+        },
+        "greenCenter": {
+          "lat": 51.6244209,
+          "lng": -2.9187142
+        }
+      },
+      {
+        "number": 12,
+        "tee": {
+          "lat": 51.6256593,
+          "lng": -2.9193294
+        },
+        "greenCenter": {
+          "lat": 51.6219582,
+          "lng": -2.9197652
+        }
+      },
+      {
+        "number": 13,
+        "tee": {
+          "lat": 51.6223033,
+          "lng": -2.9215342
+        },
+        "greenCenter": {
+          "lat": 51.6208054,
+          "lng": -2.9208481
+        }
+      },
+      {
+        "number": 14,
+        "tee": {
+          "lat": 51.620178,
+          "lng": -2.9209048
+        },
+        "greenCenter": {
+          "lat": 51.6210176,
+          "lng": -2.9149567
+        }
+      },
+      {
+        "number": 15,
+        "tee": {
+          "lat": 51.6211714,
+          "lng": -2.9118023
+        },
+        "greenCenter": {
+          "lat": 51.6188701,
+          "lng": -2.9114938
+        }
+      },
+      {
+        "number": 16,
+        "tee": {
+          "lat": 51.6197964,
+          "lng": -2.9126555
+        },
+        "greenCenter": {
+          "lat": 51.6197288,
+          "lng": -2.9193274
+        }
+      },
+      {
+        "number": 17,
+        "tee": {
+          "lat": 51.6192858,
+          "lng": -2.919854
+        },
+        "greenCenter": {
+          "lat": 51.6188951,
+          "lng": -2.9225776
+        }
+      },
+      {
+        "number": 18,
+        "tee": {
+          "lat": 51.6180844,
+          "lng": -2.9231029
+        },
+        "greenCenter": {
+          "lat": 51.6161751,
+          "lng": -2.9304529
+        }
+      }
+    ]
+  },
+  {
+    "id": "verified-wentworth-west",
+    "geometrySource": "OpenStreetMap golf=hole ways matched to the complete published card and checked 2026-06-21.",
+    "attribution": "Hole geometry from OpenStreetMap contributors under ODbL.",
+    "holes": [
+      {
+        "number": 1,
+        "tee": {
+          "lat": 51.3999843,
+          "lng": -0.5903418
+        },
+        "greenCenter": {
+          "lat": 51.4005976,
+          "lng": -0.5963912
+        }
+      },
+      {
+        "number": 2,
+        "tee": {
+          "lat": 51.4006108,
+          "lng": -0.5967877
+        },
+        "greenCenter": {
+          "lat": 51.3993447,
+          "lng": -0.5965686
+        }
+      },
+      {
+        "number": 3,
+        "tee": {
+          "lat": 51.3995866,
+          "lng": -0.597045
+        },
+        "greenCenter": {
+          "lat": 51.3978381,
+          "lng": -0.6023847
+        }
+      },
+      {
+        "number": 4,
+        "tee": {
+          "lat": 51.39748,
+          "lng": -0.6027891
+        },
+        "greenCenter": {
+          "lat": 51.3932142,
+          "lng": -0.6037137
+        }
+      },
+      {
+        "number": 5,
+        "tee": {
+          "lat": 51.3930234,
+          "lng": -0.6028298
+        },
+        "greenCenter": {
+          "lat": 51.3915548,
+          "lng": -0.6041935
+        }
+      },
+      {
+        "number": 6,
+        "tee": {
+          "lat": 51.3912287,
+          "lng": -0.6037536
+        },
+        "greenCenter": {
+          "lat": 51.3919321,
+          "lng": -0.6082283
+        }
+      },
+      {
+        "number": 7,
+        "tee": {
+          "lat": 51.3924207,
+          "lng": -0.6086945
+        },
+        "greenCenter": {
+          "lat": 51.3893437,
+          "lng": -0.6099252
+        }
+      },
+      {
+        "number": 8,
+        "tee": {
+          "lat": 51.3892005,
+          "lng": -0.6108687
+        },
+        "greenCenter": {
+          "lat": 51.3881483,
+          "lng": -0.606102
+        }
+      },
+      {
+        "number": 9,
+        "tee": {
+          "lat": 51.3875552,
+          "lng": -0.6067832
+        },
+        "greenCenter": {
+          "lat": 51.38844,
+          "lng": -0.6125555
+        }
+      },
+      {
+        "number": 10,
+        "tee": {
+          "lat": 51.3886641,
+          "lng": -0.6137388
+        },
+        "greenCenter": {
+          "lat": 51.3891512,
+          "lng": -0.6114515
+        }
+      },
+      {
+        "number": 11,
+        "tee": {
+          "lat": 51.3890624,
+          "lng": -0.6110571
+        },
+        "greenCenter": {
+          "lat": 51.3922335,
+          "lng": -0.6098903
+        }
+      },
+      {
+        "number": 12,
+        "tee": {
+          "lat": 51.392458,
+          "lng": -0.6100824
+        },
+        "greenCenter": {
+          "lat": 51.3925404,
+          "lng": -0.6166024
+        }
+      },
+      {
+        "number": 13,
+        "tee": {
+          "lat": 51.3925488,
+          "lng": -0.6172796
+        },
+        "greenCenter": {
+          "lat": 51.395412,
+          "lng": -0.613348
+        }
+      },
+      {
+        "number": 14,
+        "tee": {
+          "lat": 51.3958381,
+          "lng": -0.6133338
+        },
+        "greenCenter": {
+          "lat": 51.3967208,
+          "lng": -0.611549
+        }
+      },
+      {
+        "number": 15,
+        "tee": {
+          "lat": 51.3967462,
+          "lng": -0.6111303
+        },
+        "greenCenter": {
+          "lat": 51.3993182,
+          "lng": -0.6061501
+        }
+      },
+      {
+        "number": 16,
+        "tee": {
+          "lat": 51.3995959,
+          "lng": -0.6070384
+        },
+        "greenCenter": {
+          "lat": 51.4014017,
+          "lng": -0.6032595
+        }
+      },
+      {
+        "number": 17,
+        "tee": {
+          "lat": 51.4014613,
+          "lng": -0.6022676
+        },
+        "greenCenter": {
+          "lat": 51.4036209,
+          "lng": -0.5961531
+        }
+      },
+      {
+        "number": 18,
+        "tee": {
+          "lat": 51.4042561,
+          "lng": -0.5944074
+        },
+        "greenCenter": {
+          "lat": 51.4013066,
+          "lng": -0.5903761
+        }
+      }
+    ]
+  },
+  {
+    "id": "verified-st-andrews-old",
+    "geometrySource": "OpenStreetMap golf=hole ways matched to the complete published card and checked 2026-06-21.",
+    "attribution": "Hole geometry from OpenStreetMap contributors under ODbL.",
+    "holes": [
+      {
+        "number": 1,
+        "tee": {
+          "lat": 56.3435644,
+          "lng": -2.8027475
+        },
+        "greenCenter": {
+          "lat": 56.3437844,
+          "lng": -2.8081441
+        }
+      },
+      {
+        "number": 2,
+        "tee": {
+          "lat": 56.3440071,
+          "lng": -2.8079172
+        },
+        "greenCenter": {
+          "lat": 56.3462103,
+          "lng": -2.8123284
+        }
+      },
+      {
+        "number": 3,
+        "tee": {
+          "lat": 56.3459916,
+          "lng": -2.8108824
+        },
+        "greenCenter": {
+          "lat": 56.3488857,
+          "lng": -2.813766
+        }
+      },
+      {
+        "number": 4,
+        "tee": {
+          "lat": 56.3482717,
+          "lng": -2.8124887
+        },
+        "greenCenter": {
+          "lat": 56.3517393,
+          "lng": -2.8154505
+        }
+      },
+      {
+        "number": 5,
+        "tee": {
+          "lat": 56.3515126,
+          "lng": -2.8144214
+        },
+        "greenCenter": {
+          "lat": 56.3550272,
+          "lng": -2.819425
+        }
+      },
+      {
+        "number": 6,
+        "tee": {
+          "lat": 56.3552046,
+          "lng": -2.8187565
+        },
+        "greenCenter": {
+          "lat": 56.3573745,
+          "lng": -2.8234864
+        }
+      },
+      {
+        "number": 7,
+        "tee": {
+          "lat": 56.3573923,
+          "lng": -2.8225959
+        },
+        "greenCenter": {
+          "lat": 56.3602199,
+          "lng": -2.8243513
+        }
+      },
+      {
+        "number": 8,
+        "tee": {
+          "lat": 56.3607224,
+          "lng": -2.8243506
+        },
+        "greenCenter": {
+          "lat": 56.3596499,
+          "lng": -2.8223161
+        }
+      },
+      {
+        "number": 9,
+        "tee": {
+          "lat": 56.3603662,
+          "lng": -2.8226392
+        },
+        "greenCenter": {
+          "lat": 56.3580738,
+          "lng": -2.8195412
+        }
+      },
+      {
+        "number": 10,
+        "tee": {
+          "lat": 56.3572907,
+          "lng": -2.8188808
+        },
+        "greenCenter": {
+          "lat": 56.3595045,
+          "lng": -2.8228874
+        }
+      },
+      {
+        "number": 11,
+        "tee": {
+          "lat": 56.3589303,
+          "lng": -2.8231712
+        },
+        "greenCenter": {
+          "lat": 56.3598452,
+          "lng": -2.824977
+        }
+      },
+      {
+        "number": 12,
+        "tee": {
+          "lat": 56.3595967,
+          "lng": -2.8253214
+        },
+        "greenCenter": {
+          "lat": 56.3571161,
+          "lng": -2.8242709
+        }
+      },
+      {
+        "number": 13,
+        "tee": {
+          "lat": 56.3570921,
+          "lng": -2.8251735
+        },
+        "greenCenter": {
+          "lat": 56.3552426,
+          "lng": -2.8199266
+        }
+      },
+      {
+        "number": 14,
+        "tee": {
+          "lat": 56.3550193,
+          "lng": -2.8209129
+        },
+        "greenCenter": {
+          "lat": 56.351678,
+          "lng": -2.8162077
+        }
+      },
+      {
+        "number": 15,
+        "tee": {
+          "lat": 56.3520562,
+          "lng": -2.8174401
+        },
+        "greenCenter": {
+          "lat": 56.3488556,
+          "lng": -2.8141844
+        }
+      },
+      {
+        "number": 16,
+        "tee": {
+          "lat": 56.3493569,
+          "lng": -2.8150334
+        },
+        "greenCenter": {
+          "lat": 56.346178,
+          "lng": -2.8128414
+        }
+      },
+      {
+        "number": 17,
+        "tee": {
+          "lat": 56.3458773,
+          "lng": -2.8126824
+        },
+        "greenCenter": {
+          "lat": 56.3431233,
+          "lng": -2.8084681
+        }
+      },
+      {
+        "number": 18,
+        "tee": {
+          "lat": 56.3433731,
+          "lng": -2.8084763
+        },
+        "greenCenter": {
+          "lat": 56.3431243,
+          "lng": -2.8030614
+        }
+      }
+    ]
+  },
+  {
+    "id": "verified-royal-birkdale",
+    "geometrySource": "OpenStreetMap golf=hole ways matched to the complete published card and checked 2026-06-21.",
+    "attribution": "Hole geometry from OpenStreetMap contributors under ODbL.",
+    "holes": [
+      {
+        "number": 1,
+        "tee": {
+          "lat": 53.6225023,
+          "lng": -3.0321155
+        },
+        "greenCenter": {
+          "lat": 53.6260402,
+          "lng": -3.0328708
+        }
+      },
+      {
+        "number": 2,
+        "tee": {
+          "lat": 53.6266001,
+          "lng": -3.0323644
+        },
+        "greenCenter": {
+          "lat": 53.6257715,
+          "lng": -3.0379524
+        }
+      },
+      {
+        "number": 3,
+        "tee": {
+          "lat": 53.6257447,
+          "lng": -3.0391953
+        },
+        "greenCenter": {
+          "lat": 53.6273738,
+          "lng": -3.0336003
+        }
+      },
+      {
+        "number": 4,
+        "tee": {
+          "lat": 53.6271665,
+          "lng": -3.0329644
+        },
+        "greenCenter": {
+          "lat": 53.6287532,
+          "lng": -3.0334973
+        }
+      },
+      {
+        "number": 5,
+        "tee": {
+          "lat": 53.6295616,
+          "lng": -3.0325355
+        },
+        "greenCenter": {
+          "lat": 53.6296635,
+          "lng": -3.0368181
+        }
+      },
+      {
+        "number": 6,
+        "tee": {
+          "lat": 53.6299331,
+          "lng": -3.0372683
+        },
+        "greenCenter": {
+          "lat": 53.6266204,
+          "lng": -3.0404754
+        }
+      },
+      {
+        "number": 7,
+        "tee": {
+          "lat": 53.626594,
+          "lng": -3.0391038
+        },
+        "greenCenter": {
+          "lat": 53.6255617,
+          "lng": -3.0407329
+        }
+      },
+      {
+        "number": 8,
+        "tee": {
+          "lat": 53.6254701,
+          "lng": -3.0422692
+        },
+        "greenCenter": {
+          "lat": 53.6251137,
+          "lng": -3.0361238
+        }
+      },
+      {
+        "number": 9,
+        "tee": {
+          "lat": 53.6257653,
+          "lng": -3.0360122
+        },
+        "greenCenter": {
+          "lat": 53.6229706,
+          "lng": -3.0333944
+        }
+      },
+      {
+        "number": 10,
+        "tee": {
+          "lat": 53.6219779,
+          "lng": -3.0339655
+        },
+        "greenCenter": {
+          "lat": 53.6242891,
+          "lng": -3.0366559
+        }
+      },
+      {
+        "number": 11,
+        "tee": {
+          "lat": 53.6246583,
+          "lng": -3.0362084
+        },
+        "greenCenter": {
+          "lat": 53.6240142,
+          "lng": -3.0420289
+        }
+      },
+      {
+        "number": 12,
+        "tee": {
+          "lat": 53.6243349,
+          "lng": -3.0435395
+        },
+        "greenCenter": {
+          "lat": 53.6228332,
+          "lng": -3.0440116
+        }
+      },
+      {
+        "number": 13,
+        "tee": {
+          "lat": 53.6227011,
+          "lng": -3.0433743
+        },
+        "greenCenter": {
+          "lat": 53.6233168,
+          "lng": -3.03651
+        }
+      },
+      {
+        "number": 14,
+        "tee": {
+          "lat": 53.6235917,
+          "lng": -3.0354285
+        },
+        "greenCenter": {
+          "lat": 53.6219525,
+          "lng": -3.035274
+        }
+      },
+      {
+        "number": 15,
+        "tee": {
+          "lat": 53.6219117,
+          "lng": -3.0360128
+        },
+        "greenCenter": {
+          "lat": 53.6189998,
+          "lng": -3.0416341
+        }
+      },
+      {
+        "number": 16,
+        "tee": {
+          "lat": 53.6190898,
+          "lng": -3.0387382
+        },
+        "greenCenter": {
+          "lat": 53.6176914,
+          "lng": -3.0441833
+        }
+      },
+      {
+        "number": 17,
+        "tee": {
+          "lat": 53.6174164,
+          "lng": -3.0448899
+        },
+        "greenCenter": {
+          "lat": 53.6182448,
+          "lng": -3.0373741
+        }
+      },
+      {
+        "number": 18,
+        "tee": {
+          "lat": 53.61873,
+          "lng": -3.0384387
+        },
+        "greenCenter": {
+          "lat": 53.6215093,
+          "lng": -3.033208
+        }
+      }
+    ]
+  },
+  {
+    "id": "verified-royal-lytham-st-annes",
+    "geometrySource": "OpenStreetMap golf=hole ways matched to the complete published card and checked 2026-06-21.",
+    "attribution": "Hole geometry from OpenStreetMap contributors under ODbL.",
+    "holes": [
+      {
+        "number": 1,
+        "tee": {
+          "lat": 53.7488964,
+          "lng": -3.019457
+        },
+        "greenCenter": {
+          "lat": 53.7481198,
+          "lng": -3.0169858
+        }
+      },
+      {
+        "number": 2,
+        "tee": {
+          "lat": 53.7481144,
+          "lng": -3.0180376
+        },
+        "greenCenter": {
+          "lat": 53.7467077,
+          "lng": -3.0118338
+        }
+      },
+      {
+        "number": 3,
+        "tee": {
+          "lat": 53.7466189,
+          "lng": -3.0133519
+        },
+        "greenCenter": {
+          "lat": 53.7453087,
+          "lng": -3.0072687
+        }
+      },
+      {
+        "number": 4,
+        "tee": {
+          "lat": 53.745334,
+          "lng": -3.0067642
+        },
+        "greenCenter": {
+          "lat": 53.7470947,
+          "lng": -3.011571
+        }
+      },
+      {
+        "number": 5,
+        "tee": {
+          "lat": 53.747344,
+          "lng": -3.0116
+        },
+        "greenCenter": {
+          "lat": 53.747745,
+          "lng": -3.0086956
+        }
+      },
+      {
+        "number": 6,
+        "tee": {
+          "lat": 53.7487189,
+          "lng": -3.008303
+        },
+        "greenCenter": {
+          "lat": 53.7450966,
+          "lng": -3.005852
+        }
+      },
+      {
+        "number": 7,
+        "tee": {
+          "lat": 53.7449693,
+          "lng": -3.0066947
+        },
+        "greenCenter": {
+          "lat": 53.7435223,
+          "lng": -2.9988749
+        }
+      },
+      {
+        "number": 8,
+        "tee": {
+          "lat": 53.7435321,
+          "lng": -3.0007882
+        },
+        "greenCenter": {
+          "lat": 53.742555,
+          "lng": -2.9953114
+        }
+      },
+      {
+        "number": 9,
+        "tee": {
+          "lat": 53.7423773,
+          "lng": -2.9952899
+        },
+        "greenCenter": {
+          "lat": 53.7425358,
+          "lng": -2.9930005
+        }
+      },
+      {
+        "number": 10,
+        "tee": {
+          "lat": 53.74272,
+          "lng": -2.9929028
+        },
+        "greenCenter": {
+          "lat": 53.7438847,
+          "lng": -2.9977678
+        }
+      },
+      {
+        "number": 11,
+        "tee": {
+          "lat": 53.7433688,
+          "lng": -2.997292
+        },
+        "greenCenter": {
+          "lat": 53.7455498,
+          "lng": -3.0043665
+        }
+      },
+      {
+        "number": 12,
+        "tee": {
+          "lat": 53.7459717,
+          "lng": -3.0035565
+        },
+        "greenCenter": {
+          "lat": 53.7473521,
+          "lng": -3.0048381
+        }
+      },
+      {
+        "number": 13,
+        "tee": {
+          "lat": 53.7488267,
+          "lng": -3.0067537
+        },
+        "greenCenter": {
+          "lat": 53.745969,
+          "lng": -3.0057983
+        }
+      },
+      {
+        "number": 14,
+        "tee": {
+          "lat": 53.7455446,
+          "lng": -3.0059189
+        },
+        "greenCenter": {
+          "lat": 53.7491476,
+          "lng": -3.0075042
+        }
+      },
+      {
+        "number": 15,
+        "tee": {
+          "lat": 53.7494265,
+          "lng": -3.00772
+        },
+        "greenCenter": {
+          "lat": 53.7474378,
+          "lng": -3.0131583
+        }
+      },
+      {
+        "number": 16,
+        "tee": {
+          "lat": 53.7474365,
+          "lng": -3.0137738
+        },
+        "greenCenter": {
+          "lat": 53.7498131,
+          "lng": -3.0112223
+        }
+      },
+      {
+        "number": 17,
+        "tee": {
+          "lat": 53.7504638,
+          "lng": -3.0102635
+        },
+        "greenCenter": {
+          "lat": 53.7479327,
+          "lng": -3.0140702
+        }
+      },
+      {
+        "number": 18,
+        "tee": {
+          "lat": 53.7471328,
+          "lng": -3.0131964
+        },
+        "greenCenter": {
+          "lat": 53.7492264,
+          "lng": -3.0176432
+        }
+      }
+    ]
+  },
+  {
+    "id": "verified-ganton",
+    "geometrySource": "OpenStreetMap golf=hole ways matched to the complete published card and checked 2026-06-21.",
+    "attribution": "Hole geometry from OpenStreetMap contributors under ODbL.",
+    "holes": [
+      {
+        "number": 1,
+        "tee": {
+          "lat": 54.1898519,
+          "lng": -0.4960132
+        },
+        "greenCenter": {
+          "lat": 54.1877019,
+          "lng": -0.4927244
+        }
+      },
+      {
+        "number": 2,
+        "tee": {
+          "lat": 54.1867076,
+          "lng": -0.4919952
+        },
+        "greenCenter": {
+          "lat": 54.1889964,
+          "lng": -0.4966632
+        }
+      },
+      {
+        "number": 3,
+        "tee": {
+          "lat": 54.1894567,
+          "lng": -0.4958074
+        },
+        "greenCenter": {
+          "lat": 54.1885553,
+          "lng": -0.5005769
+        }
+      },
+      {
+        "number": 4,
+        "tee": {
+          "lat": 54.1883525,
+          "lng": -0.5005462
+        },
+        "greenCenter": {
+          "lat": 54.186088,
+          "lng": -0.4972477
+        }
+      },
+      {
+        "number": 5,
+        "tee": {
+          "lat": 54.1858822,
+          "lng": -0.4978128
+        },
+        "greenCenter": {
+          "lat": 54.1869574,
+          "lng": -0.4991168
+        }
+      },
+      {
+        "number": 6,
+        "tee": {
+          "lat": 54.1874502,
+          "lng": -0.4996446
+        },
+        "greenCenter": {
+          "lat": 54.1837453,
+          "lng": -0.5008535
+        }
+      },
+      {
+        "number": 7,
+        "tee": {
+          "lat": 54.1829586,
+          "lng": -0.5008893
+        },
+        "greenCenter": {
+          "lat": 54.1844919,
+          "lng": -0.4962303
+        }
+      },
+      {
+        "number": 8,
+        "tee": {
+          "lat": 54.1842912,
+          "lng": -0.4951102
+        },
+        "greenCenter": {
+          "lat": 54.1826042,
+          "lng": -0.5001156
+        }
+      },
+      {
+        "number": 9,
+        "tee": {
+          "lat": 54.1822115,
+          "lng": -0.5004426
+        },
+        "greenCenter": {
+          "lat": 54.1838005,
+          "lng": -0.4939023
+        }
+      },
+      {
+        "number": 10,
+        "tee": {
+          "lat": 54.1839497,
+          "lng": -0.4949575
+        },
+        "greenCenter": {
+          "lat": 54.1842022,
+          "lng": -0.4925913
+        }
+      },
+      {
+        "number": 11,
+        "tee": {
+          "lat": 54.1844256,
+          "lng": -0.4918414
+        },
+        "greenCenter": {
+          "lat": 54.1854618,
+          "lng": -0.4975036
+        }
+      },
+      {
+        "number": 12,
+        "tee": {
+          "lat": 54.1856591,
+          "lng": -0.4979419
+        },
+        "greenCenter": {
+          "lat": 54.1856373,
+          "lng": -0.4925851
+        }
+      },
+      {
+        "number": 13,
+        "tee": {
+          "lat": 54.1860465,
+          "lng": -0.4922712
+        },
+        "greenCenter": {
+          "lat": 54.1881436,
+          "lng": -0.4992778
+        }
+      },
+      {
+        "number": 14,
+        "tee": {
+          "lat": 54.1884626,
+          "lng": -0.4990083
+        },
+        "greenCenter": {
+          "lat": 54.187573,
+          "lng": -0.4953506
+        }
+      },
+      {
+        "number": 15,
+        "tee": {
+          "lat": 54.1883444,
+          "lng": -0.4959844
+        },
+        "greenCenter": {
+          "lat": 54.1855666,
+          "lng": -0.4907982
+        }
+      },
+      {
+        "number": 16,
+        "tee": {
+          "lat": 54.1853599,
+          "lng": -0.4899435
+        },
+        "greenCenter": {
+          "lat": 54.1886735,
+          "lng": -0.4925964
+        }
+      },
+      {
+        "number": 17,
+        "tee": {
+          "lat": 54.1892373,
+          "lng": -0.4934509
+        },
+        "greenCenter": {
+          "lat": 54.1893898,
+          "lng": -0.4900435
+        }
+      },
+      {
+        "number": 18,
+        "tee": {
+          "lat": 54.1894144,
+          "lng": -0.4892545
+        },
+        "greenCenter": {
+          "lat": 54.1899213,
+          "lng": -0.4946861
+        }
+      }
+    ]
+  },
+  {
+    "id": "verified-woodhall-spa-hotchkin",
+    "geometrySource": "OpenStreetMap golf=hole ways matched to the complete published card and checked 2026-06-21.",
+    "attribution": "Hole geometry from OpenStreetMap contributors under ODbL.",
+    "holes": [
+      {
+        "number": 1,
+        "tee": {
+          "lat": 53.1554261,
+          "lng": -0.2047179
+        },
+        "greenCenter": {
+          "lat": 53.156679,
+          "lng": -0.2002527
+        }
+      },
+      {
+        "number": 2,
+        "tee": {
+          "lat": 53.1565737,
+          "lng": -0.1999309
+        },
+        "greenCenter": {
+          "lat": 53.158822,
+          "lng": -0.1959116
+        }
+      },
+      {
+        "number": 3,
+        "tee": {
+          "lat": 53.1579022,
+          "lng": -0.1968913
+        },
+        "greenCenter": {
+          "lat": 53.1592368,
+          "lng": -0.1917442
+        }
+      },
+      {
+        "number": 4,
+        "tee": {
+          "lat": 53.1595472,
+          "lng": -0.1906119
+        },
+        "greenCenter": {
+          "lat": 53.1592122,
+          "lng": -0.1961763
+        }
+      },
+      {
+        "number": 5,
+        "tee": {
+          "lat": 53.1597069,
+          "lng": -0.1960741
+        },
+        "greenCenter": {
+          "lat": 53.1587697,
+          "lng": -0.197734
+        }
+      },
+      {
+        "number": 6,
+        "tee": {
+          "lat": 53.1586218,
+          "lng": -0.1992237
+        },
+        "greenCenter": {
+          "lat": 53.1619285,
+          "lng": -0.1930601
+        }
+      },
+      {
+        "number": 7,
+        "tee": {
+          "lat": 53.160909,
+          "lng": -0.1930655
+        },
+        "greenCenter": {
+          "lat": 53.1639336,
+          "lng": -0.1897052
+        }
+      },
+      {
+        "number": 8,
+        "tee": {
+          "lat": 53.1638316,
+          "lng": -0.1891647
+        },
+        "greenCenter": {
+          "lat": 53.1625107,
+          "lng": -0.1909187
+        }
+      },
+      {
+        "number": 9,
+        "tee": {
+          "lat": 53.1617405,
+          "lng": -0.1914261
+        },
+        "greenCenter": {
+          "lat": 53.1650741,
+          "lng": -0.1857524
+        }
+      },
+      {
+        "number": 10,
+        "tee": {
+          "lat": 53.164136,
+          "lng": -0.186092
+        },
+        "greenCenter": {
+          "lat": 53.165583,
+          "lng": -0.1823221
+        }
+      },
+      {
+        "number": 11,
+        "tee": {
+          "lat": 53.1657498,
+          "lng": -0.1818814
+        },
+        "greenCenter": {
+          "lat": 53.1660456,
+          "lng": -0.1878392
+        }
+      },
+      {
+        "number": 12,
+        "tee": {
+          "lat": 53.1657626,
+          "lng": -0.1887628
+        },
+        "greenCenter": {
+          "lat": 53.165522,
+          "lng": -0.1864058
+        }
+      },
+      {
+        "number": 13,
+        "tee": {
+          "lat": 53.1654449,
+          "lng": -0.1854353
+        },
+        "greenCenter": {
+          "lat": 53.1644303,
+          "lng": -0.1913694
+        }
+      },
+      {
+        "number": 14,
+        "tee": {
+          "lat": 53.1651553,
+          "lng": -0.1913227
+        },
+        "greenCenter": {
+          "lat": 53.1626854,
+          "lng": -0.1968014
+        }
+      },
+      {
+        "number": 15,
+        "tee": {
+          "lat": 53.1624119,
+          "lng": -0.1973485
+        },
+        "greenCenter": {
+          "lat": 53.1624932,
+          "lng": -0.1929618
+        }
+      },
+      {
+        "number": 16,
+        "tee": {
+          "lat": 53.1623445,
+          "lng": -0.1926921
+        },
+        "greenCenter": {
+          "lat": 53.1605937,
+          "lng": -0.197241
+        }
+      },
+      {
+        "number": 17,
+        "tee": {
+          "lat": 53.1608845,
+          "lng": -0.1975352
+        },
+        "greenCenter": {
+          "lat": 53.1585482,
+          "lng": -0.1997731
+        }
+      },
+      {
+        "number": 18,
+        "tee": {
+          "lat": 53.1583081,
+          "lng": -0.1994789
+        },
+        "greenCenter": {
+          "lat": 53.1558938,
+          "lng": -0.2047105
+        }
+      }
+    ]
+  },
+  {
+    "id": "verified-swinley-forest",
+    "geometrySource": "OpenStreetMap golf=hole ways matched to the complete published card and checked 2026-06-21.",
+    "attribution": "Hole geometry from OpenStreetMap contributors under ODbL.",
+    "holes": [
+      {
+        "number": 1,
+        "tee": {
+          "lat": 51.3894781,
+          "lng": -0.6799101
+        },
+        "greenCenter": {
+          "lat": 51.3865058,
+          "lng": -0.6820912
+        }
+      },
+      {
+        "number": 2,
+        "tee": {
+          "lat": 51.386836,
+          "lng": -0.6824537
+        },
+        "greenCenter": {
+          "lat": 51.3839991,
+          "lng": -0.6816384
+        }
+      },
+      {
+        "number": 3,
+        "tee": {
+          "lat": 51.3837611,
+          "lng": -0.6814573
+        },
+        "greenCenter": {
+          "lat": 51.3826284,
+          "lng": -0.6850425
+        }
+      },
+      {
+        "number": 4,
+        "tee": {
+          "lat": 51.3823573,
+          "lng": -0.684923
+        },
+        "greenCenter": {
+          "lat": 51.3829385,
+          "lng": -0.6871951
+        }
+      },
+      {
+        "number": 5,
+        "tee": {
+          "lat": 51.382919,
+          "lng": -0.6877928
+        },
+        "greenCenter": {
+          "lat": 51.3800729,
+          "lng": -0.6837027
+        }
+      },
+      {
+        "number": 6,
+        "tee": {
+          "lat": 51.3799285,
+          "lng": -0.6833756
+        },
+        "greenCenter": {
+          "lat": 51.3778933,
+          "lng": -0.6881142
+        }
+      },
+      {
+        "number": 7,
+        "tee": {
+          "lat": 51.3779555,
+          "lng": -0.6884759
+        },
+        "greenCenter": {
+          "lat": 51.3761658,
+          "lng": -0.6926061
+        }
+      },
+      {
+        "number": 8,
+        "tee": {
+          "lat": 51.3759995,
+          "lng": -0.6924517
+        },
+        "greenCenter": {
+          "lat": 51.3755737,
+          "lng": -0.6943488
+        }
+      },
+      {
+        "number": 9,
+        "tee": {
+          "lat": 51.3752991,
+          "lng": -0.6948313
+        },
+        "greenCenter": {
+          "lat": 51.378266,
+          "lng": -0.6966428
+        }
+      },
+      {
+        "number": 10,
+        "tee": {
+          "lat": 51.3786948,
+          "lng": -0.6969787
+        },
+        "greenCenter": {
+          "lat": 51.3799663,
+          "lng": -0.6951613
+        }
+      },
+      {
+        "number": 11,
+        "tee": {
+          "lat": 51.3804319,
+          "lng": -0.6963872
+        },
+        "greenCenter": {
+          "lat": 51.3806524,
+          "lng": -0.6923655
+        }
+      },
+      {
+        "number": 12,
+        "tee": {
+          "lat": 51.3798658,
+          "lng": -0.693052
+        },
+        "greenCenter": {
+          "lat": 51.3765417,
+          "lng": -0.6932574
+        }
+      },
+      {
+        "number": 13,
+        "tee": {
+          "lat": 51.3765984,
+          "lng": -0.6927403
+        },
+        "greenCenter": {
+          "lat": 51.3778727,
+          "lng": -0.691581
+        }
+      },
+      {
+        "number": 14,
+        "tee": {
+          "lat": 51.3775839,
+          "lng": -0.6923323
+        },
+        "greenCenter": {
+          "lat": 51.3806852,
+          "lng": -0.6917285
+        }
+      },
+      {
+        "number": 15,
+        "tee": {
+          "lat": 51.3809587,
+          "lng": -0.6931014
+        },
+        "greenCenter": {
+          "lat": 51.3833637,
+          "lng": -0.6882953
+        }
+      },
+      {
+        "number": 16,
+        "tee": {
+          "lat": 51.3832281,
+          "lng": -0.6878502
+        },
+        "greenCenter": {
+          "lat": 51.3850125,
+          "lng": -0.6834137
+        }
+      },
+      {
+        "number": 17,
+        "tee": {
+          "lat": 51.3852054,
+          "lng": -0.6837515
+        },
+        "greenCenter": {
+          "lat": 51.3866446,
+          "lng": -0.682998
+        }
+      },
+      {
+        "number": 18,
+        "tee": {
+          "lat": 51.3867866,
+          "lng": -0.6837575
+        },
+        "greenCenter": {
+          "lat": 51.3892641,
+          "lng": -0.6804633
+        }
+      }
+    ]
+  },
+  {
+    "id": "verified-hillside",
+    "geometrySource": "OpenStreetMap golf=hole ways matched to the complete published card and checked 2026-06-21.",
+    "attribution": "Hole geometry from OpenStreetMap contributors under ODbL.",
+    "holes": [
+      {
+        "number": 1,
+        "tee": {
+          "lat": 53.6197162,
+          "lng": -3.0275293
+        },
+        "greenCenter": {
+          "lat": 53.6168603,
+          "lng": -3.0301471
+        }
+      },
+      {
+        "number": 2,
+        "tee": {
+          "lat": 53.617103,
+          "lng": -3.0304759
+        },
+        "greenCenter": {
+          "lat": 53.613156,
+          "lng": -3.0334346
+        }
+      },
+      {
+        "number": 3,
+        "tee": {
+          "lat": 53.6124401,
+          "lng": -3.0341461
+        },
+        "greenCenter": {
+          "lat": 53.6154882,
+          "lng": -3.0327122
+        }
+      },
+      {
+        "number": 4,
+        "tee": {
+          "lat": 53.6156205,
+          "lng": -3.0332022
+        },
+        "greenCenter": {
+          "lat": 53.614756,
+          "lng": -3.0356411
+        }
+      },
+      {
+        "number": 5,
+        "tee": {
+          "lat": 53.6148145,
+          "lng": -3.0345749
+        },
+        "greenCenter": {
+          "lat": 53.6102509,
+          "lng": -3.0360553
+        }
+      },
+      {
+        "number": 6,
+        "tee": {
+          "lat": 53.6096185,
+          "lng": -3.0368159
+        },
+        "greenCenter": {
+          "lat": 53.6132096,
+          "lng": -3.0366567
+        }
+      },
+      {
+        "number": 7,
+        "tee": {
+          "lat": 53.6133219,
+          "lng": -3.0358118
+        },
+        "greenCenter": {
+          "lat": 53.6143958,
+          "lng": -3.0373795
+        }
+      },
+      {
+        "number": 8,
+        "tee": {
+          "lat": 53.6143851,
+          "lng": -3.0379679
+        },
+        "greenCenter": {
+          "lat": 53.6159375,
+          "lng": -3.0332642
+        }
+      },
+      {
+        "number": 9,
+        "tee": {
+          "lat": 53.6161452,
+          "lng": -3.0332165
+        },
+        "greenCenter": {
+          "lat": 53.6187605,
+          "lng": -3.0297224
+        }
+      },
+      {
+        "number": 10,
+        "tee": {
+          "lat": 53.6186914,
+          "lng": -3.0305862
+        },
+        "greenCenter": {
+          "lat": 53.6178628,
+          "lng": -3.0325508
+        }
+      },
+      {
+        "number": 11,
+        "tee": {
+          "lat": 53.6174719,
+          "lng": -3.0323928
+        },
+        "greenCenter": {
+          "lat": 53.61515,
+          "lng": -3.038007
+        }
+      },
+      {
+        "number": 12,
+        "tee": {
+          "lat": 53.6139501,
+          "lng": -3.0384555
+        },
+        "greenCenter": {
+          "lat": 53.6108171,
+          "lng": -3.0380312
+        }
+      },
+      {
+        "number": 13,
+        "tee": {
+          "lat": 53.6106421,
+          "lng": -3.0384461
+        },
+        "greenCenter": {
+          "lat": 53.6115084,
+          "lng": -3.0437904
+        }
+      },
+      {
+        "number": 14,
+        "tee": {
+          "lat": 53.6118652,
+          "lng": -3.0449716
+        },
+        "greenCenter": {
+          "lat": 53.6116134,
+          "lng": -3.0392212
+        }
+      },
+      {
+        "number": 15,
+        "tee": {
+          "lat": 53.6116219,
+          "lng": -3.0380958
+        },
+        "greenCenter": {
+          "lat": 53.6132187,
+          "lng": -3.042644
+        }
+      },
+      {
+        "number": 16,
+        "tee": {
+          "lat": 53.6136603,
+          "lng": -3.0429311
+        },
+        "greenCenter": {
+          "lat": 53.6145325,
+          "lng": -3.0401747
+        }
+      },
+      {
+        "number": 17,
+        "tee": {
+          "lat": 53.6148944,
+          "lng": -3.0398878
+        },
+        "greenCenter": {
+          "lat": 53.6182637,
+          "lng": -3.0345373
+        }
+      },
+      {
+        "number": 18,
+        "tee": {
+          "lat": 53.6178792,
+          "lng": -3.0341962
+        },
+        "greenCenter": {
+          "lat": 53.6197751,
+          "lng": -3.0285414
+        }
+      }
+    ]
+  },
+  {
     "id": "verified-royal-st-georges",
     "geometrySource": "OpenStreetMap golf=hole ways matched to the official Royal St George's par sequence and yardages, checked 2026-06-21.",
     "attribution": "Hole geometry from OpenStreetMap contributors under ODbL.",
@@ -52385,6 +54640,1031 @@ export const sharedCourseDefaults = [
         "greenCenter": {
           "lat": 57.8793245,
           "lng": -4.0204617
+        }
+      }
+    ]
+  },
+  {
+    "id": "verified-royal-dornoch-struie",
+    "geometrySource": "OpenStreetMap ways explicitly tagged Struie Course, checked 2026-06-21.",
+    "attribution": "Hole geometry from OpenStreetMap contributors under ODbL.",
+    "holes": [
+      {
+        "number": 1,
+        "tee": {
+          "lat": 57.8775363,
+          "lng": -4.0234138
+        },
+        "greenCenter": {
+          "lat": 57.8771281,
+          "lng": -4.0216932
+        }
+      },
+      {
+        "number": 2,
+        "tee": {
+          "lat": 57.8764936,
+          "lng": -4.022195
+        },
+        "greenCenter": {
+          "lat": 57.8741622,
+          "lng": -4.025044
+        }
+      },
+      {
+        "number": 3,
+        "tee": {
+          "lat": 57.8744873,
+          "lng": -4.0222307
+        },
+        "greenCenter": {
+          "lat": 57.873308,
+          "lng": -4.0275935
+        }
+      },
+      {
+        "number": 4,
+        "tee": {
+          "lat": 57.8733861,
+          "lng": -4.0281083
+        },
+        "greenCenter": {
+          "lat": 57.8701493,
+          "lng": -4.0285807
+        }
+      },
+      {
+        "number": 5,
+        "tee": {
+          "lat": 57.8699276,
+          "lng": -4.0276899
+        },
+        "greenCenter": {
+          "lat": 57.872926,
+          "lng": -4.027093
+        }
+      },
+      {
+        "number": 6,
+        "tee": {
+          "lat": 57.8733818,
+          "lng": -4.0285639
+        },
+        "greenCenter": {
+          "lat": 57.8707287,
+          "lng": -4.030438
+        }
+      },
+      {
+        "number": 7,
+        "tee": {
+          "lat": 57.8706995,
+          "lng": -4.0294974
+        },
+        "greenCenter": {
+          "lat": 57.8698297,
+          "lng": -4.0313633
+        }
+      },
+      {
+        "number": 8,
+        "tee": {
+          "lat": 57.8694331,
+          "lng": -4.0320665
+        },
+        "greenCenter": {
+          "lat": 57.8693675,
+          "lng": -4.0405047
+        }
+      },
+      {
+        "number": 9,
+        "tee": {
+          "lat": 57.8691332,
+          "lng": -4.041683
+        },
+        "greenCenter": {
+          "lat": 57.8679141,
+          "lng": -4.0403303
+        }
+      },
+      {
+        "number": 10,
+        "tee": {
+          "lat": 57.8679832,
+          "lng": -4.0414656
+        },
+        "greenCenter": {
+          "lat": 57.8681875,
+          "lng": -4.0475919
+        }
+      },
+      {
+        "number": 11,
+        "tee": {
+          "lat": 57.8683286,
+          "lng": -4.0481975
+        },
+        "greenCenter": {
+          "lat": 57.8692764,
+          "lng": -4.0433103
+        }
+      },
+      {
+        "number": 12,
+        "tee": {
+          "lat": 57.8694057,
+          "lng": -4.04216
+        },
+        "greenCenter": {
+          "lat": 57.8710313,
+          "lng": -4.040513
+        }
+      },
+      {
+        "number": 13,
+        "tee": {
+          "lat": 57.8714764,
+          "lng": -4.0400378
+        },
+        "greenCenter": {
+          "lat": 57.8698107,
+          "lng": -4.0326718
+        }
+      },
+      {
+        "number": 14,
+        "tee": {
+          "lat": 57.8700668,
+          "lng": -4.0319044
+        },
+        "greenCenter": {
+          "lat": 57.8733486,
+          "lng": -4.0299632
+        }
+      },
+      {
+        "number": 15,
+        "tee": {
+          "lat": 57.8736416,
+          "lng": -4.028429
+        },
+        "greenCenter": {
+          "lat": 57.8759544,
+          "lng": -4.0267519
+        }
+      },
+      {
+        "number": 16,
+        "tee": {
+          "lat": 57.8763373,
+          "lng": -4.0241555
+        },
+        "greenCenter": {
+          "lat": 57.8739792,
+          "lng": -4.0277184
+        }
+      },
+      {
+        "number": 17,
+        "tee": {
+          "lat": 57.8734789,
+          "lng": -4.0278008
+        },
+        "greenCenter": {
+          "lat": 57.8764482,
+          "lng": -4.0233501
+        }
+      },
+      {
+        "number": 18,
+        "tee": {
+          "lat": 57.8768667,
+          "lng": -4.0228204
+        },
+        "greenCenter": {
+          "lat": 57.8776986,
+          "lng": -4.0239982
+        }
+      }
+    ]
+  },
+  {
+    "id": "verified-belfry-brabazon",
+    "geometrySource": "OpenStreetMap numbered Brabazon hole ways matched to the published scorecard, checked 2026-06-21.",
+    "attribution": "Hole geometry from OpenStreetMap contributors under ODbL.",
+    "holes": [
+      {
+        "number": 1,
+        "tee": {
+          "lat": 52.5552367,
+          "lng": -1.7343396
+        },
+        "greenCenter": {
+          "lat": 52.5583813,
+          "lng": -1.7322999
+        }
+      },
+      {
+        "number": 2,
+        "tee": {
+          "lat": 52.5579396,
+          "lng": -1.7315075
+        },
+        "greenCenter": {
+          "lat": 52.5609117,
+          "lng": -1.7301668
+        }
+      },
+      {
+        "number": 3,
+        "tee": {
+          "lat": 52.5607548,
+          "lng": -1.7308523
+        },
+        "greenCenter": {
+          "lat": 52.5628609,
+          "lng": -1.7365001
+        }
+      },
+      {
+        "number": 4,
+        "tee": {
+          "lat": 52.5623782,
+          "lng": -1.735338
+        },
+        "greenCenter": {
+          "lat": 52.5597066,
+          "lng": -1.7313737
+        }
+      },
+      {
+        "number": 5,
+        "tee": {
+          "lat": 52.5598403,
+          "lng": -1.7326857
+        },
+        "greenCenter": {
+          "lat": 52.5567093,
+          "lng": -1.7346126
+        }
+      },
+      {
+        "number": 6,
+        "tee": {
+          "lat": 52.5570943,
+          "lng": -1.7352887
+        },
+        "greenCenter": {
+          "lat": 52.5605067,
+          "lng": -1.7348488
+        }
+      },
+      {
+        "number": 7,
+        "tee": {
+          "lat": 52.5606162,
+          "lng": -1.7336119
+        },
+        "greenCenter": {
+          "lat": 52.5616238,
+          "lng": -1.735285
+        }
+      },
+      {
+        "number": 8,
+        "tee": {
+          "lat": 52.5618894,
+          "lng": -1.7360585
+        },
+        "greenCenter": {
+          "lat": 52.558337,
+          "lng": -1.7354363
+        }
+      },
+      {
+        "number": 9,
+        "tee": {
+          "lat": 52.5590114,
+          "lng": -1.7367077
+        },
+        "greenCenter": {
+          "lat": 52.5555372,
+          "lng": -1.734971
+        }
+      },
+      {
+        "number": 10,
+        "tee": {
+          "lat": 52.5546589,
+          "lng": -1.7349111
+        },
+        "greenCenter": {
+          "lat": 52.5547791,
+          "lng": -1.7386164
+        }
+      },
+      {
+        "number": 11,
+        "tee": {
+          "lat": 52.5543404,
+          "lng": -1.7392068
+        },
+        "greenCenter": {
+          "lat": 52.5572409,
+          "lng": -1.7421701
+        }
+      },
+      {
+        "number": 12,
+        "tee": {
+          "lat": 52.5575959,
+          "lng": -1.7424235
+        },
+        "greenCenter": {
+          "lat": 52.5589027,
+          "lng": -1.7401658
+        }
+      },
+      {
+        "number": 13,
+        "tee": {
+          "lat": 52.5593247,
+          "lng": -1.740132
+        },
+        "greenCenter": {
+          "lat": 52.5620292,
+          "lng": -1.7376029
+        }
+      },
+      {
+        "number": 14,
+        "tee": {
+          "lat": 52.5620326,
+          "lng": -1.7367604
+        },
+        "greenCenter": {
+          "lat": 52.5604703,
+          "lng": -1.7368356
+        }
+      },
+      {
+        "number": 15,
+        "tee": {
+          "lat": 52.5612918,
+          "lng": -1.7373864
+        },
+        "greenCenter": {
+          "lat": 52.5570813,
+          "lng": -1.7404235
+        }
+      },
+      {
+        "number": 16,
+        "tee": {
+          "lat": 52.5574745,
+          "lng": -1.7416934
+        },
+        "greenCenter": {
+          "lat": 52.5550994,
+          "lng": -1.7379277
+        }
+      },
+      {
+        "number": 17,
+        "tee": {
+          "lat": 52.5552019,
+          "lng": -1.73725
+        },
+        "greenCenter": {
+          "lat": 52.55919,
+          "lng": -1.7376206
+        }
+      },
+      {
+        "number": 18,
+        "tee": {
+          "lat": 52.5584674,
+          "lng": -1.7372977
+        },
+        "greenCenter": {
+          "lat": 52.5551807,
+          "lng": -1.735377
+        }
+      }
+    ]
+  },
+  {
+    "id": "verified-gleneagles-kings",
+    "geometrySource": "OpenStreetMap western Gleneagles routing matched to the King's yellow card, checked 2026-06-21.",
+    "attribution": "Hole geometry from OpenStreetMap contributors under ODbL.",
+    "holes": [
+      {
+        "number": 1,
+        "tee": {
+          "lat": 56.2805447,
+          "lng": -3.7475467
+        },
+        "greenCenter": {
+          "lat": 56.2776141,
+          "lng": -3.7481901
+        }
+      },
+      {
+        "number": 2,
+        "tee": {
+          "lat": 56.2775762,
+          "lng": -3.7493783
+        },
+        "greenCenter": {
+          "lat": 56.2769278,
+          "lng": -3.7432402
+        }
+      },
+      {
+        "number": 3,
+        "tee": {
+          "lat": 56.2765945,
+          "lng": -3.7429553
+        },
+        "greenCenter": {
+          "lat": 56.2749585,
+          "lng": -3.747673
+        }
+      },
+      {
+        "number": 4,
+        "tee": {
+          "lat": 56.2752815,
+          "lng": -3.748183
+        },
+        "greenCenter": {
+          "lat": 56.2758334,
+          "lng": -3.7544583
+        }
+      },
+      {
+        "number": 5,
+        "tee": {
+          "lat": 56.2762733,
+          "lng": -3.7548837
+        },
+        "greenCenter": {
+          "lat": 56.2760671,
+          "lng": -3.7574164
+        }
+      },
+      {
+        "number": 6,
+        "tee": {
+          "lat": 56.2755208,
+          "lng": -3.7578149
+        },
+        "greenCenter": {
+          "lat": 56.2756703,
+          "lng": -3.7645083
+        }
+      },
+      {
+        "number": 7,
+        "tee": {
+          "lat": 56.2762724,
+          "lng": -3.7641306
+        },
+        "greenCenter": {
+          "lat": 56.2780324,
+          "lng": -3.7694665
+        }
+      },
+      {
+        "number": 8,
+        "tee": {
+          "lat": 56.2777859,
+          "lng": -3.7695571
+        },
+        "greenCenter": {
+          "lat": 56.2775611,
+          "lng": -3.7721996
+        }
+      },
+      {
+        "number": 9,
+        "tee": {
+          "lat": 56.2770164,
+          "lng": -3.7730046
+        },
+        "greenCenter": {
+          "lat": 56.2756447,
+          "lng": -3.7672448
+        }
+      },
+      {
+        "number": 10,
+        "tee": {
+          "lat": 56.2753942,
+          "lng": -3.7667482
+        },
+        "greenCenter": {
+          "lat": 56.2767848,
+          "lng": -3.7735461
+        }
+      },
+      {
+        "number": 11,
+        "tee": {
+          "lat": 56.2768926,
+          "lng": -3.7742785
+        },
+        "greenCenter": {
+          "lat": 56.2784961,
+          "lng": -3.7726602
+        }
+      },
+      {
+        "number": 12,
+        "tee": {
+          "lat": 56.2789671,
+          "lng": -3.7727955
+        },
+        "greenCenter": {
+          "lat": 56.2787665,
+          "lng": -3.7662833
+        }
+      },
+      {
+        "number": 13,
+        "tee": {
+          "lat": 56.2784284,
+          "lng": -3.7665126
+        },
+        "greenCenter": {
+          "lat": 56.2773062,
+          "lng": -3.7600968
+        }
+      },
+      {
+        "number": 14,
+        "tee": {
+          "lat": 56.2776546,
+          "lng": -3.7602011
+        },
+        "greenCenter": {
+          "lat": 56.2773843,
+          "lng": -3.7555025
+        }
+      },
+      {
+        "number": 15,
+        "tee": {
+          "lat": 56.2771004,
+          "lng": -3.7557495
+        },
+        "greenCenter": {
+          "lat": 56.2759076,
+          "lng": -3.7492632
+        }
+      },
+      {
+        "number": 16,
+        "tee": {
+          "lat": 56.2756361,
+          "lng": -3.7478038
+        },
+        "greenCenter": {
+          "lat": 56.2767738,
+          "lng": -3.7491441
+        }
+      },
+      {
+        "number": 17,
+        "tee": {
+          "lat": 56.276879,
+          "lng": -3.7496916
+        },
+        "greenCenter": {
+          "lat": 56.2777282,
+          "lng": -3.7549567
+        }
+      },
+      {
+        "number": 18,
+        "tee": {
+          "lat": 56.2779992,
+          "lng": -3.7556677
+        },
+        "greenCenter": {
+          "lat": 56.2802664,
+          "lng": -3.7484298
+        }
+      }
+    ]
+  },
+  {
+    "id": "verified-gleneagles-pga-centenary",
+    "geometrySource": "OpenStreetMap named PGA Centenary ways matched to Gleneagles' official hole guide, checked 2026-06-21.",
+    "attribution": "Hole geometry from OpenStreetMap contributors under ODbL.",
+    "holes": [
+      {
+        "number": 1,
+        "tee": {
+          "lat": 56.2807477,
+          "lng": -3.7447364
+        },
+        "greenCenter": {
+          "lat": 56.2779772,
+          "lng": -3.7409697
+        }
+      },
+      {
+        "number": 2,
+        "tee": {
+          "lat": 56.2780788,
+          "lng": -3.7396344
+        },
+        "greenCenter": {
+          "lat": 56.274046,
+          "lng": -3.739172
+        }
+      },
+      {
+        "number": 3,
+        "tee": {
+          "lat": 56.2724407,
+          "lng": -3.7411854
+        },
+        "greenCenter": {
+          "lat": 56.2736042,
+          "lng": -3.7462945
+        }
+      },
+      {
+        "number": 4,
+        "tee": {
+          "lat": 56.2739695,
+          "lng": -3.7467188
+        },
+        "greenCenter": {
+          "lat": 56.2737954,
+          "lng": -3.7500744
+        }
+      },
+      {
+        "number": 5,
+        "tee": {
+          "lat": 56.2736951,
+          "lng": -3.7511178
+        },
+        "greenCenter": {
+          "lat": 56.2751939,
+          "lng": -3.757328
+        }
+      },
+      {
+        "number": 6,
+        "tee": {
+          "lat": 56.2750721,
+          "lng": -3.7544873
+        },
+        "greenCenter": {
+          "lat": 56.2746363,
+          "lng": -3.7515884
+        }
+      },
+      {
+        "number": 7,
+        "tee": {
+          "lat": 56.2741571,
+          "lng": -3.7519821
+        },
+        "greenCenter": {
+          "lat": 56.2741315,
+          "lng": -3.7452766
+        }
+      },
+      {
+        "number": 8,
+        "tee": {
+          "lat": 56.2752311,
+          "lng": -3.7463812
+        },
+        "greenCenter": {
+          "lat": 56.2736527,
+          "lng": -3.7411265
+        }
+      },
+      {
+        "number": 9,
+        "tee": {
+          "lat": 56.2725595,
+          "lng": -3.7381702
+        },
+        "greenCenter": {
+          "lat": 56.277415,
+          "lng": -3.7371273
+        }
+      },
+      {
+        "number": 10,
+        "tee": {
+          "lat": 56.2778273,
+          "lng": -3.7373801
+        },
+        "greenCenter": {
+          "lat": 56.278312,
+          "lng": -3.7345104
+        }
+      },
+      {
+        "number": 11,
+        "tee": {
+          "lat": 56.2791274,
+          "lng": -3.7349614
+        },
+        "greenCenter": {
+          "lat": 56.2815225,
+          "lng": -3.7364316
+        }
+      },
+      {
+        "number": 12,
+        "tee": {
+          "lat": 56.2824492,
+          "lng": -3.7344079
+        },
+        "greenCenter": {
+          "lat": 56.285228,
+          "lng": -3.7385515
+        }
+      },
+      {
+        "number": 13,
+        "tee": {
+          "lat": 56.285755,
+          "lng": -3.7382997
+        },
+        "greenCenter": {
+          "lat": 56.2841542,
+          "lng": -3.7319897
+        }
+      },
+      {
+        "number": 14,
+        "tee": {
+          "lat": 56.284801,
+          "lng": -3.7334136
+        },
+        "greenCenter": {
+          "lat": 56.2867675,
+          "lng": -3.7362761
+        }
+      },
+      {
+        "number": 15,
+        "tee": {
+          "lat": 56.2873311,
+          "lng": -3.7358377
+        },
+        "greenCenter": {
+          "lat": 56.2848725,
+          "lng": -3.7308525
+        }
+      },
+      {
+        "number": 16,
+        "tee": {
+          "lat": 56.2843964,
+          "lng": -3.7306224
+        },
+        "greenCenter": {
+          "lat": 56.2806816,
+          "lng": -3.7346314
+        }
+      },
+      {
+        "number": 17,
+        "tee": {
+          "lat": 56.2806751,
+          "lng": -3.7333926
+        },
+        "greenCenter": {
+          "lat": 56.2791549,
+          "lng": -3.7339577
+        }
+      },
+      {
+        "number": 18,
+        "tee": {
+          "lat": 56.2786789,
+          "lng": -3.7352641
+        },
+        "greenCenter": {
+          "lat": 56.2801032,
+          "lng": -3.741942
+        }
+      }
+    ]
+  },
+  {
+    "id": "verified-auchterarder",
+    "geometrySource": "OpenStreetMap named Auchterarder ways matched exactly to the published white-card par sequence, checked 2026-06-21.",
+    "attribution": "Hole geometry from OpenStreetMap contributors under ODbL.",
+    "holes": [
+      {
+        "number": 1,
+        "tee": {
+          "lat": 56.2904424,
+          "lng": -3.7225972
+        },
+        "greenCenter": {
+          "lat": 56.2875439,
+          "lng": -3.724933
+        }
+      },
+      {
+        "number": 2,
+        "tee": {
+          "lat": 56.2873677,
+          "lng": -3.7249943
+        },
+        "greenCenter": {
+          "lat": 56.289307,
+          "lng": -3.7280351
+        }
+      },
+      {
+        "number": 3,
+        "tee": {
+          "lat": 56.2898657,
+          "lng": -3.7286679
+        },
+        "greenCenter": {
+          "lat": 56.2874209,
+          "lng": -3.7258855
+        }
+      },
+      {
+        "number": 4,
+        "tee": {
+          "lat": 56.287198,
+          "lng": -3.7252913
+        },
+        "greenCenter": {
+          "lat": 56.2872204,
+          "lng": -3.7274061
+        }
+      },
+      {
+        "number": 5,
+        "tee": {
+          "lat": 56.2886633,
+          "lng": -3.7283532
+        },
+        "greenCenter": {
+          "lat": 56.2852208,
+          "lng": -3.7290084
+        }
+      },
+      {
+        "number": 6,
+        "tee": {
+          "lat": 56.2845949,
+          "lng": -3.7287063
+        },
+        "greenCenter": {
+          "lat": 56.2870446,
+          "lng": -3.7343206
+        }
+      },
+      {
+        "number": 7,
+        "tee": {
+          "lat": 56.2872506,
+          "lng": -3.7352282
+        },
+        "greenCenter": {
+          "lat": 56.2888481,
+          "lng": -3.7306013
+        }
+      },
+      {
+        "number": 8,
+        "tee": {
+          "lat": 56.2889234,
+          "lng": -3.7318296
+        },
+        "greenCenter": {
+          "lat": 56.2893815,
+          "lng": -3.7296137
+        }
+      },
+      {
+        "number": 9,
+        "tee": {
+          "lat": 56.2898465,
+          "lng": -3.7288217
+        },
+        "greenCenter": {
+          "lat": 56.2859237,
+          "lng": -3.7294393
+        }
+      },
+      {
+        "number": 10,
+        "tee": {
+          "lat": 56.2860469,
+          "lng": -3.7299956
+        },
+        "greenCenter": {
+          "lat": 56.2890143,
+          "lng": -3.7294853
+        }
+      },
+      {
+        "number": 11,
+        "tee": {
+          "lat": 56.2887008,
+          "lng": -3.7299561
+        },
+        "greenCenter": {
+          "lat": 56.2872745,
+          "lng": -3.7339735
+        }
+      },
+      {
+        "number": 12,
+        "tee": {
+          "lat": 56.2870676,
+          "lng": -3.7333516
+        },
+        "greenCenter": {
+          "lat": 56.2869705,
+          "lng": -3.7310659
+        }
+      },
+      {
+        "number": 13,
+        "tee": {
+          "lat": 56.2869682,
+          "lng": -3.7330154
+        },
+        "greenCenter": {
+          "lat": 56.2853888,
+          "lng": -3.7297405
+        }
+      },
+      {
+        "number": 14,
+        "tee": {
+          "lat": 56.2851011,
+          "lng": -3.7287024
+        },
+        "greenCenter": {
+          "lat": 56.2863291,
+          "lng": -3.7262725
+        }
+      },
+      {
+        "number": 15,
+        "tee": {
+          "lat": 56.2860126,
+          "lng": -3.7278668
+        },
+        "greenCenter": {
+          "lat": 56.2884562,
+          "lng": -3.7218388
+        }
+      },
+      {
+        "number": 16,
+        "tee": {
+          "lat": 56.2893705,
+          "lng": -3.7216218
+        },
+        "greenCenter": {
+          "lat": 56.2879101,
+          "lng": -3.7237473
+        }
+      },
+      {
+        "number": 17,
+        "tee": {
+          "lat": 56.2881705,
+          "lng": -3.7240007
+        },
+        "greenCenter": {
+          "lat": 56.2910768,
+          "lng": -3.7199981
+        }
+      },
+      {
+        "number": 18,
+        "tee": {
+          "lat": 56.2910988,
+          "lng": -3.7196136
+        },
+        "greenCenter": {
+          "lat": 56.2908476,
+          "lng": -3.7222975
         }
       }
     ]

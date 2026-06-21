@@ -44,6 +44,22 @@ const SUNNINGDALE_NEW_COURSE_ID = "verified-sunningdale-new";
 const MUIRFIELD_COURSE_ID = "verified-muirfield";
 const NORTH_BERWICK_WEST_LINKS_COURSE_ID = "verified-north-berwick-west-links";
 const ROYAL_DORNOCH_CHAMPIONSHIP_COURSE_ID = "verified-royal-dornoch-championship";
+const ROYAL_DORNOCH_STRUIE_COURSE_ID = "verified-royal-dornoch-struie";
+const BELFRY_BRABAZON_COURSE_ID = "verified-belfry-brabazon";
+const GLENEAGLES_KINGS_COURSE_ID = "verified-gleneagles-kings";
+const GLENEAGLES_PGA_CENTENARY_COURSE_ID = "verified-gleneagles-pga-centenary";
+const AUCHTERARDER_COURSE_ID = "verified-auchterarder";
+const ROYAL_TROON_OLD_COURSE_ID = "verified-royal-troon-old";
+const TURNBERRY_AILSA_COURSE_ID = "verified-turnberry-ailsa";
+const CELTIC_MANOR_TWENTY_TEN_COURSE_ID = "verified-celtic-manor-twenty-ten";
+const WENTWORTH_WEST_COURSE_ID = "verified-wentworth-west";
+const ST_ANDREWS_OLD_COURSE_ID = "verified-st-andrews-old";
+const ROYAL_BIRKDALE_COURSE_ID = "verified-royal-birkdale";
+const ROYAL_LYTHAM_COURSE_ID = "verified-royal-lytham-st-annes";
+const GANTON_COURSE_ID = "verified-ganton";
+const WOODHALL_SPA_HOTCHKIN_COURSE_ID = "verified-woodhall-spa-hotchkin";
+const SWINLEY_FOREST_COURSE_ID = "verified-swinley-forest";
+const HILLSIDE_COURSE_ID = "verified-hillside";
 
 const SNAPSHOT_VERIFIED_COURSE_IDS = new Set([
   "osm-way-23454278",
@@ -72,7 +88,23 @@ const SNAPSHOT_VERIFIED_COURSE_IDS = new Set([
   SUNNINGDALE_NEW_COURSE_ID,
   MUIRFIELD_COURSE_ID,
   NORTH_BERWICK_WEST_LINKS_COURSE_ID,
-  ROYAL_DORNOCH_CHAMPIONSHIP_COURSE_ID
+  ROYAL_DORNOCH_CHAMPIONSHIP_COURSE_ID,
+  ROYAL_DORNOCH_STRUIE_COURSE_ID,
+  BELFRY_BRABAZON_COURSE_ID,
+  GLENEAGLES_KINGS_COURSE_ID,
+  GLENEAGLES_PGA_CENTENARY_COURSE_ID,
+  AUCHTERARDER_COURSE_ID,
+  ROYAL_TROON_OLD_COURSE_ID,
+  TURNBERRY_AILSA_COURSE_ID,
+  CELTIC_MANOR_TWENTY_TEN_COURSE_ID,
+  WENTWORTH_WEST_COURSE_ID,
+  ST_ANDREWS_OLD_COURSE_ID,
+  ROYAL_BIRKDALE_COURSE_ID,
+  ROYAL_LYTHAM_COURSE_ID,
+  GANTON_COURSE_ID,
+  WOODHALL_SPA_HOTCHKIN_COURSE_ID,
+  SWINLEY_FOREST_COURSE_ID,
+  HILLSIDE_COURSE_ID
 ]);
 
 const BELHUS_SCORECARD = {
@@ -275,6 +307,107 @@ const ROYAL_DORNOCH_SCORECARD = {
   white: [331, 177, 413, 422, 353, 161, 479, 434, 529, 146, 446, 535, 171, 445, 322, 401, 405, 456]
 };
 
+const ROYAL_DORNOCH_STRUIE_SCORECARD = {
+  par: [4, 3, 4, 4, 4, 4, 4, 3, 5, 4, 4, 3, 5, 4, 4, 4, 5, 3],
+  strokeIndex: [12, 18, 8, 14, 2, 4, 10, 6, 16, 3, 11, 7, 5, 1, 13, 9, 17, 15],
+  white: [318, 122, 343, 399, 406, 354, 351, 175, 553, 439, 348, 215, 527, 429, 309, 372, 478, 127],
+  yellow: [315, 109, 339, 392, 395, 339, 336, 172, 524, 421, 292, 207, 499, 418, 301, 365, 469, 109],
+  blue: [303, 71, 329, 315, 346, 295, 289, 159, 454, 339, 268, 147, 432, 384, 265, 313, 400, 121]
+};
+
+const BELFRY_BRABAZON_SCORECARD = {
+  par: [4, 4, 5, 4, 4, 4, 3, 4, 4, 4, 4, 3, 4, 3, 5, 4, 5, 4],
+  strokeIndex: [9, 17, 13, 3, 11, 5, 15, 1, 7, 8, 16, 6, 18, 14, 2, 12, 10, 4],
+  blue: [411, 379, 538, 442, 408, 448, 177, 441, 456, 311, 426, 226, 384, 190, 566, 413, 564, 473],
+  white: [393, 330, 512, 407, 388, 430, 171, 428, 433, 301, 406, 188, 363, 183, 545, 405, 545, 441],
+  yellow: [369, 321, 501, 389, 359, 385, 156, 409, 402, 284, 372, 179, 350, 166, 488, 371, 530, 418]
+};
+
+const GLENEAGLES_KINGS_SCORECARD = {
+  par: [4, 4, 4, 4, 3, 4, 4, 3, 4, 4, 3, 4, 4, 4, 4, 3, 4, 4],
+  strokeIndex: [6, 14, 9, 2, 16, 8, 4, 17, 12, 1, 10, 13, 7, 15, 3, 18, 11, 5],
+  yellow: [352, 386, 360, 443, 149, 455, 430, 155, 335, 429, 221, 352, 423, 249, 438, 128, 367, 453]
+};
+
+const GLENEAGLES_PGA_CENTENARY_SCORECARD = {
+  par: [4, 5, 4, 3, 4, 3, 4, 4, 5, 3, 4, 4, 4, 4, 4, 5, 3, 5],
+  strokeIndex: [9, 7, 3, 13, 1, 15, 5, 17, 11, 12, 16, 6, 2, 14, 4, 8, 18, 10],
+  blue: [426, 516, 431, 239, 461, 201, 468, 419, 618, 208, 350, 445, 481, 320, 463, 543, 194, 513],
+  white: [394, 501, 388, 211, 423, 176, 406, 392, 564, 190, 326, 445, 464, 308, 436, 518, 179, 483]
+};
+
+const AUCHTERARDER_SCORECARD = {
+  par: [4, 4, 4, 3, 4, 5, 4, 3, 5, 4, 4, 3, 4, 3, 5, 3, 4, 3],
+  strokeIndex: [3, 16, 10, 17, 7, 1, 5, 13, 11, 9, 6, 15, 18, 14, 4, 8, 2, 12],
+  white: [376, 301, 362, 140, 401, 473, 354, 151, 478, 356, 331, 164, 289, 205, 509, 235, 441, 184]
+};
+
+const ROYAL_TROON_OLD_SCORECARD = {
+  par: [4, 4, 4, 5, 3, 5, 4, 3, 4, 4, 4, 4, 4, 3, 4, 5, 3, 4],
+  strokeIndex: [16, 7, 11, 4, 14, 2, 9, 18, 5, 10, 1, 6, 12, 15, 3, 8, 13, 17],
+  blue: [370, 391, 379, 560, 210, 601, 405, 123, 423, 438, 490, 431, 472, 178, 483, 542, 222, 457]
+};
+
+const TURNBERRY_AILSA_SCORECARD = {
+  par: [4, 4, 4, 3, 5, 3, 5, 4, 3, 5, 3, 4, 4, 5, 3, 4, 4, 4],
+  strokeIndex: [6, 10, 4, 16, 8, 18, 12, 2, 14, 9, 15, 3, 13, 11, 17, 1, 5, 7],
+  black: [441, 425, 496, 194, 531, 171, 575, 476, 248, 565, 215, 468, 409, 568, 234, 479, 509, 485]
+};
+
+const CELTIC_MANOR_TWENTY_TEN_SCORECARD = {
+  par: [4, 5, 3, 4, 4, 4, 3, 4, 5, 3, 5, 4, 3, 4, 4, 4, 3, 5],
+  strokeIndex: [11, 3, 13, 15, 1, 7, 17, 9, 5, 18, 8, 4, 14, 2, 12, 6, 16, 10],
+  blue: [456, 610, 189, 461, 457, 452, 213, 439, 666, 210, 562, 458, 189, 413, 377, 508, 211, 613]
+};
+
+const WENTWORTH_WEST_SCORECARD = {
+  par: [5, 3, 4, 5, 3, 4, 4, 4, 4, 3, 4, 5, 4, 3, 4, 4, 5, 5],
+  strokeIndex: [16, 14, 2, 18, 8, 12, 10, 6, 4, 7, 11, 17, 3, 9, 1, 5, 13, 15],
+  white: [473, 154, 448, 498, 184, 351, 396, 391, 449, 184, 389, 509, 437, 179, 477, 383, 566, 521]
+};
+
+const ST_ANDREWS_OLD_SCORECARD = {
+  par: [4, 4, 4, 4, 5, 4, 4, 3, 4, 4, 3, 4, 4, 5, 4, 4, 4, 4],
+  strokeIndex: [10, 6, 16, 8, 2, 12, 4, 14, 18, 15, 7, 3, 11, 1, 9, 13, 5, 17],
+  blue: [376, 411, 370, 419, 514, 374, 359, 166, 347, 340, 174, 316, 418, 530, 414, 381, 455, 357]
+};
+
+const ROYAL_BIRKDALE_SCORECARD = {
+  par: [4, 4, 4, 3, 4, 5, 3, 4, 4, 4, 4, 3, 4, 3, 5, 4, 5, 5],
+  strokeIndex: [11, 3, 7, 15, 13, 1, 17, 9, 5, 14, 8, 16, 4, 18, 2, 12, 6, 10],
+  white: [450, 418, 406, 200, 343, 488, 177, 413, 410, 408, 378, 181, 433, 199, 544, 370, 527, 472]
+};
+
+const ROYAL_LYTHAM_SCORECARD = {
+  par: [3, 4, 4, 4, 3, 5, 5, 4, 3, 4, 5, 3, 4, 4, 4, 4, 4, 4],
+  strokeIndex: [13, 5, 1, 9, 15, 7, 3, 11, 17, 10, 4, 14, 18, 6, 2, 16, 8, 12],
+  green: [198, 424, 457, 381, 188, 494, 569, 396, 156, 334, 540, 187, 340, 436, 455, 351, 432, 393]
+};
+
+const GANTON_SCORECARD = {
+  par: [4, 4, 4, 4, 3, 5, 4, 4, 5, 3, 4, 4, 5, 4, 4, 4, 3, 4],
+  strokeIndex: [13, 7, 15, 3, 17, 11, 1, 9, 5, 18, 6, 14, 4, 16, 2, 8, 10, 12],
+  club: [359, 395, 288, 365, 148, 438, 414, 368, 499, 165, 398, 357, 497, 278, 427, 427, 235, 387]
+};
+
+const WOODHALL_SPA_HOTCHKIN_SCORECARD = {
+  par: [4, 4, 4, 4, 3, 5, 4, 3, 5, 4, 4, 3, 4, 5, 4, 4, 4, 5],
+  strokeIndex: [17, 7, 3, 11, 16, 1, 9, 13, 5, 12, 6, 18, 2, 8, 14, 4, 15, 10],
+  medal: [361, 411, 415, 414, 148, 510, 437, 192, 555, 338, 437, 172, 451, 488, 321, 395, 336, 540]
+};
+
+const SWINLEY_FOREST_SCORECARD = {
+  par: [4, 4, 4, 3, 5, 4, 4, 3, 4, 3, 4, 4, 3, 4, 5, 4, 3, 4],
+  strokeIndex: [5, 9, 17, 13, 11, 7, 1, 15, 3, 8, 16, 2, 18, 12, 6, 4, 14, 10],
+  white: [400, 369, 295, 175, 480, 394, 400, 146, 425, 205, 277, 435, 174, 354, 470, 400, 176, 380]
+};
+
+const HILLSIDE_SCORECARD = {
+  par: [4, 5, 4, 3, 5, 4, 3, 4, 4, 3, 5, 4, 4, 4, 4, 3, 5, 4],
+  strokeIndex: [9, 5, 13, 15, 7, 1, 17, 3, 11, 10, 6, 16, 2, 14, 4, 18, 8, 12],
+  black: [396, 526, 397, 195, 562, 444, 170, 393, 419, 172, 509, 400, 402, 419, 421, 218, 547, 439]
+};
+
 const SCORECARD_COURSE_LABELS = {
   [BASILDON_COURSE_ID]: "Basildon",
   [CANVEY_COURSE_ID]: "Canvey",
@@ -306,7 +439,23 @@ const SCORECARD_COURSE_LABELS = {
   [SUNNINGDALE_NEW_COURSE_ID]: "Sunningdale New",
   [MUIRFIELD_COURSE_ID]: "Muirfield",
   [NORTH_BERWICK_WEST_LINKS_COURSE_ID]: "North Berwick West Links",
-  [ROYAL_DORNOCH_CHAMPIONSHIP_COURSE_ID]: "Royal Dornoch Championship"
+  [ROYAL_DORNOCH_CHAMPIONSHIP_COURSE_ID]: "Royal Dornoch Championship",
+  [ROYAL_DORNOCH_STRUIE_COURSE_ID]: "Royal Dornoch Struie",
+  [BELFRY_BRABAZON_COURSE_ID]: "The Belfry Brabazon",
+  [GLENEAGLES_KINGS_COURSE_ID]: "Gleneagles King's",
+  [GLENEAGLES_PGA_CENTENARY_COURSE_ID]: "Gleneagles PGA Centenary",
+  [AUCHTERARDER_COURSE_ID]: "Auchterarder",
+  [ROYAL_TROON_OLD_COURSE_ID]: "Royal Troon Old",
+  [TURNBERRY_AILSA_COURSE_ID]: "Turnberry Ailsa",
+  [CELTIC_MANOR_TWENTY_TEN_COURSE_ID]: "Celtic Manor Twenty Ten",
+  [WENTWORTH_WEST_COURSE_ID]: "Wentworth West",
+  [ST_ANDREWS_OLD_COURSE_ID]: "St Andrews Old Course",
+  [ROYAL_BIRKDALE_COURSE_ID]: "Royal Birkdale",
+  [ROYAL_LYTHAM_COURSE_ID]: "Royal Lytham & St Annes",
+  [GANTON_COURSE_ID]: "Ganton",
+  [WOODHALL_SPA_HOTCHKIN_COURSE_ID]: "Woodhall Spa Hotchkin",
+  [SWINLEY_FOREST_COURSE_ID]: "Swinley Forest",
+  [HILLSIDE_COURSE_ID]: "Hillside"
 };
 
 const CRANHAM_COORDS = [
@@ -893,6 +1042,377 @@ export const verifiedCourses = [
       { label: "Official club site", url: "https://royaldornoch.com/" },
       { label: "Golfify Championship scorecard", url: "https://www.golfify.io/courses/royal-dornoch-golf-club-championship" },
       { label: "OpenStreetMap", url: "https://www.openstreetmap.org/#map=15/57.8800/-4.0300" }
+    ]
+  }),
+  makeMappedVerifiedCourse({
+    id: ROYAL_DORNOCH_STRUIE_COURSE_ID,
+    venueId: "venue-royal-dornoch",
+    venueName: "Royal Dornoch Golf Club",
+    layoutName: "Struie Course",
+    name: "Royal Dornoch Golf Club - Struie Course",
+    town: "Dornoch",
+    postcode: "IV25 3LW",
+    country: "Scotland",
+    par: "71",
+    website: "https://royaldornoch.com/",
+    phone: "+44 1862 810219",
+    location: { lat: 57.879504, lng: -4.022882 },
+    scorecard: ROYAL_DORNOCH_STRUIE_SCORECARD,
+    tees: [
+      { id: "white", name: "White", color: "#f8f7f1", rating: "73.0", slope: "", totalYards: 6265 },
+      { id: "yellow", name: "Yellow", color: "#d7a44d", rating: "71.0", slope: "", totalYards: 6002 },
+      { id: "blue", name: "Blue", color: "#4f8fd9", rating: "74.0", slope: "", totalYards: 5230 }
+    ],
+    confidence: "Golfify provides the complete current Struie card and venue details. OSM explicitly labels all 18 selected hole ways as Struie Course, separating them cleanly from the Championship routing.",
+    sources: [
+      { label: "Official club site", url: "https://royaldornoch.com/" },
+      { label: "Golfify Struie scorecard", url: "https://www.golfify.io/courses/royal-dornoch-golf-club-struie" },
+      { label: "OpenStreetMap", url: "https://www.openstreetmap.org/#map=15/57.8795/-4.0229" }
+    ]
+  }),
+  makeMappedVerifiedCourse({
+    id: BELFRY_BRABAZON_COURSE_ID,
+    venueId: "venue-belfry",
+    venueName: "The Belfry",
+    layoutName: "The Brabazon",
+    name: "The Belfry - The Brabazon",
+    town: "Sutton Coldfield",
+    postcode: "B76 9PR",
+    country: "England",
+    par: "72",
+    website: "https://www.thebelfry.com/golf/the-brabazon/",
+    phone: "+44 1675 470301",
+    location: { lat: 52.554312, lng: -1.733309 },
+    scorecard: BELFRY_BRABAZON_SCORECARD,
+    tees: [
+      { id: "blue", name: "Blue", color: "#4f8fd9", rating: "74.0", slope: "", totalYards: 7253 },
+      { id: "white", name: "White", color: "#f8f7f1", rating: "74.8", slope: "145", totalYards: 6869 },
+      { id: "yellow", name: "Yellow", color: "#d7a44d", rating: "72.7", slope: "142", totalYards: 6449 }
+    ],
+    confidence: "Golfify provides complete blue, white, and yellow cards. The selected OSM routing is a single numbered 18-hole set whose par sequence and measured lengths match the Brabazon card.",
+    sources: [
+      { label: "Official Brabazon page", url: "https://www.thebelfry.com/golf/the-brabazon/" },
+      { label: "Golfify Brabazon scorecard", url: "https://www.golfify.io/courses/the-belfry-the-brabazon" },
+      { label: "OpenStreetMap", url: "https://www.openstreetmap.org/#map=15/52.5543/-1.7333" }
+    ]
+  }),
+  makeMappedVerifiedCourse({
+    id: GLENEAGLES_KINGS_COURSE_ID,
+    venueId: "venue-gleneagles",
+    venueName: "Gleneagles",
+    layoutName: "The King's Course",
+    name: "Gleneagles - The King's Course",
+    town: "Auchterarder",
+    postcode: "PH3 1NF",
+    country: "Scotland",
+    par: "68",
+    website: "https://gleneagles.com/golf/the-kings/",
+    phone: "+44 1764 662231",
+    location: { lat: 56.283248, lng: -3.751453 },
+    scorecard: GLENEAGLES_KINGS_SCORECARD,
+    tees: [
+      { id: "yellow", name: "Yellow", color: "#d7a44d", rating: "71.1", slope: "128", totalYards: 6125 }
+    ],
+    confidence: "The official Gleneagles guide identifies the King's routing and named holes. Its mapped western 18-hole set is uniquely closest to the published King's yellow card; only that tee is included because Gleneagles publishes tee-specific pars.",
+    sources: [
+      { label: "Official King's Course guide", url: "https://gleneagles.com/golf/the-kings/" },
+      { label: "Golfify King's scorecard", url: "https://www.golfify.io/courses/gleneagles-golf-resort-kings" },
+      { label: "OpenStreetMap", url: "https://www.openstreetmap.org/#map=15/56.2832/-3.7515" }
+    ]
+  }),
+  makeMappedVerifiedCourse({
+    id: GLENEAGLES_PGA_CENTENARY_COURSE_ID,
+    venueId: "venue-gleneagles",
+    venueName: "Gleneagles",
+    layoutName: "PGA Centenary Course",
+    name: "Gleneagles - PGA Centenary Course",
+    town: "Auchterarder",
+    postcode: "PH3 1NF",
+    country: "Scotland",
+    par: "72",
+    website: "https://gleneagles.com/golf/the-pga-centenary/",
+    phone: "+44 1764 662231",
+    location: { lat: 56.2801, lng: -3.7419 },
+    scorecard: GLENEAGLES_PGA_CENTENARY_SCORECARD,
+    tees: [
+      { id: "blue", name: "Blue", color: "#4f8fd9", rating: "", slope: "", totalYards: 7296 },
+      { id: "white", name: "White", color: "#f8f7f1", rating: "", slope: "", totalYards: 6804 }
+    ],
+    confidence: "The official course guide's Bracken Brae-to-Dun Roamin' hole names match the OSM ways hole for hole. The same routing also closely matches Golfify's complete white and blue cards.",
+    sources: [
+      { label: "Official PGA Centenary guide", url: "https://gleneagles.com/golf/the-pga-centenary/" },
+      { label: "Golfify PGA Centenary scorecard", url: "https://www.golfify.io/courses/gleneagles-golf-resort-pga-centenary" },
+      { label: "OpenStreetMap", url: "https://www.openstreetmap.org/#map=15/56.2801/-3.7419" }
+    ]
+  }),
+  makeMappedVerifiedCourse({
+    id: AUCHTERARDER_COURSE_ID,
+    name: "Auchterarder Golf Club",
+    town: "Auchterarder",
+    postcode: "PH3 1LS",
+    country: "Scotland",
+    par: "69",
+    website: "https://www.auchterardergolf.co.uk/",
+    phone: "+44 1764 662804",
+    location: { lat: 56.284975, lng: -3.728335 },
+    scorecard: AUCHTERARDER_SCORECARD,
+    tees: [
+      { id: "white", name: "White", color: "#f8f7f1", rating: "", slope: "", totalYards: 5750 }
+    ],
+    confidence: "Golfify provides the complete white card and venue details. The neighbouring OSM routing is fully numbered and named; its par sequence and measured lengths match the Auchterarder card exactly, excluding all three Gleneagles layouts.",
+    sources: [
+      { label: "Official club site", url: "https://www.auchterardergolf.co.uk/" },
+      { label: "Golfify scorecard", url: "https://www.golfify.io/courses/auchterarder-golf-club" },
+      { label: "OpenStreetMap", url: "https://www.openstreetmap.org/#map=15/56.2850/-3.7283" }
+    ]
+  }),
+  makeMappedVerifiedCourse({
+    id: ROYAL_TROON_OLD_COURSE_ID,
+    venueId: "venue-royal-troon",
+    venueName: "Royal Troon Golf Club",
+    layoutName: "Old Course",
+    name: "Royal Troon Golf Club - Old Course",
+    town: "Troon",
+    postcode: "KA10 6EP",
+    country: "Scotland",
+    par: "71",
+    website: "https://www.royaltroon.co.uk/",
+    phone: "+44 (0)1292 311555",
+    location: { lat: 55.532449, lng: -4.647742 },
+    scorecard: ROYAL_TROON_OLD_SCORECARD,
+    tees: [
+      { id: "blue", name: "Blue", color: "#4f8fd9", rating: "", slope: "", totalYards: 7175 }
+    ],
+    confidence: "Golfify supplies a complete 18-hole card and venue details. The selected continuous OSM routing is isolated from nearby courses by its hole sequence, measured lengths, and course tags where available.",
+    sources: [
+      { label: "Official course site", url: "https://www.royaltroon.co.uk/" },
+      { label: "Golfify scorecard", url: "https://www.golfify.io/courses/royal-troon-golf-club-old" },
+      { label: "OpenStreetMap", url: "https://www.openstreetmap.org/#map=15/55.5324/-4.6477" }
+    ]
+  }),
+  makeMappedVerifiedCourse({
+    id: TURNBERRY_AILSA_COURSE_ID,
+    venueId: "venue-turnberry",
+    venueName: "Turnberry",
+    layoutName: "Ailsa Course",
+    name: "Turnberry - Ailsa Course",
+    town: "Turnberry",
+    postcode: "KA26 9LT",
+    country: "Scotland",
+    par: "71",
+    website: "https://www.turnberry.co.uk/golf/ailsa-course",
+    phone: "+44 (0)1655 331000",
+    location: { lat: 55.318681, lng: -4.831584 },
+    scorecard: TURNBERRY_AILSA_SCORECARD,
+    tees: [
+      { id: "black", name: "Black", color: "#27272a", rating: "70", slope: "113", totalYards: 7489 }
+    ],
+    confidence: "Golfify supplies a complete 18-hole card and venue details. The selected continuous OSM routing is isolated from nearby courses by its hole sequence, measured lengths, and course tags where available.",
+    sources: [
+      { label: "Official course site", url: "https://www.turnberry.co.uk/golf/ailsa-course" },
+      { label: "Golfify scorecard", url: "https://www.golfify.io/courses/turnberry-golf-club-ailsa" },
+      { label: "OpenStreetMap", url: "https://www.openstreetmap.org/#map=15/55.3187/-4.8316" }
+    ]
+  }),
+  makeMappedVerifiedCourse({
+    id: CELTIC_MANOR_TWENTY_TEN_COURSE_ID,
+    venueId: "venue-celtic-manor",
+    venueName: "Celtic Manor Resort",
+    layoutName: "Twenty Ten Course",
+    name: "Celtic Manor Resort - Twenty Ten Course",
+    town: "Newport",
+    postcode: "NP18 1HQ",
+    country: "Wales",
+    par: "71",
+    website: "https://www.celtic-manor.com/golf/courses/the-twenty-ten-course/",
+    phone: "+44 (0)1633 413000",
+    location: { lat: 51.6022056, lng: -2.9335758 },
+    scorecard: CELTIC_MANOR_TWENTY_TEN_SCORECARD,
+    tees: [
+      { id: "blue", name: "Blue", color: "#4f8fd9", rating: "", slope: "", totalYards: 7484 }
+    ],
+    confidence: "Golfify supplies a complete 18-hole card and venue details. The selected continuous OSM routing is isolated from nearby courses by its hole sequence, measured lengths, and course tags where available.",
+    sources: [
+      { label: "Official course site", url: "https://www.celtic-manor.com/golf/courses/the-twenty-ten-course/" },
+      { label: "Golfify scorecard", url: "https://www.golfify.io/courses/celtic-manor-resort-twenty-ten" },
+      { label: "OpenStreetMap", url: "https://www.openstreetmap.org/#map=15/51.6022/-2.9336" }
+    ]
+  }),
+  makeMappedVerifiedCourse({
+    id: WENTWORTH_WEST_COURSE_ID,
+    venueId: "venue-wentworth",
+    venueName: "Wentworth Club",
+    layoutName: "West Course",
+    name: "Wentworth Club - West Course",
+    town: "Virginia Water",
+    postcode: "GU25 4LS",
+    country: "England",
+    par: "73",
+    website: "https://www.wentworthclub.com/golf/west-course/",
+    phone: "+44 (0)1344 842201",
+    location: { lat: 51.398958, lng: -0.5920816 },
+    scorecard: WENTWORTH_WEST_SCORECARD,
+    tees: [
+      { id: "white", name: "White", color: "#f8f7f1", rating: "", slope: "", totalYards: 6989 }
+    ],
+    confidence: "Golfify supplies a complete 18-hole card and venue details. The selected continuous OSM routing is isolated from nearby courses by its hole sequence, measured lengths, and course tags where available.",
+    sources: [
+      { label: "Official course site", url: "https://www.wentworthclub.com/golf/west-course/" },
+      { label: "Golfify scorecard", url: "https://www.golfify.io/courses/wentworth-club-west" },
+      { label: "OpenStreetMap", url: "https://www.openstreetmap.org/#map=15/51.3990/-0.5921" }
+    ]
+  }),
+  makeMappedVerifiedCourse({
+    id: ST_ANDREWS_OLD_COURSE_ID,
+    venueId: "venue-st-andrews-links",
+    venueName: "St Andrews Links",
+    layoutName: "Old Course",
+    name: "St Andrews Links - Old Course",
+    town: "St. Andrews",
+    postcode: "KY16 9SF",
+    country: "Scotland",
+    par: "72",
+    website: "https://standrews.com/golf/courses/old-course",
+    phone: "+44 (0)1334 466666",
+    location: { lat: 56.352211, lng: -2.818685 },
+    scorecard: ST_ANDREWS_OLD_SCORECARD,
+    tees: [
+      { id: "blue", name: "Blue", color: "#4f8fd9", rating: "73.1", slope: "132", totalYards: 6721 }
+    ],
+    confidence: "Golfify supplies a complete 18-hole card and venue details. The selected continuous OSM routing is isolated from nearby courses by its hole sequence, measured lengths, and course tags where available.",
+    sources: [
+      { label: "Official course site", url: "https://standrews.com/golf/courses/old-course" },
+      { label: "Golfify scorecard", url: "https://www.golfify.io/courses/st-andrews-golf-links-old" },
+      { label: "OpenStreetMap", url: "https://www.openstreetmap.org/#map=15/56.3522/-2.8187" }
+    ]
+  }),
+  makeMappedVerifiedCourse({
+    id: ROYAL_BIRKDALE_COURSE_ID,
+    name: "Royal Birkdale Golf Club",
+    town: "Southport",
+    postcode: "PR8 2LX",
+    country: "England",
+    par: "72",
+    website: "https://royalbirkdale.com/",
+    phone: "+44 (0) 1704 552020",
+    location: { lat: 53.621885, lng: -3.03257 },
+    scorecard: ROYAL_BIRKDALE_SCORECARD,
+    tees: [
+      { id: "white", name: "White", color: "#f8f7f1", rating: "", slope: "", totalYards: 6817 }
+    ],
+    confidence: "Golfify supplies a complete 18-hole card and venue details. The selected continuous OSM routing is isolated from nearby courses by its hole sequence, measured lengths, and course tags where available.",
+    sources: [
+      { label: "Official course site", url: "https://royalbirkdale.com/" },
+      { label: "Golfify scorecard", url: "https://www.golfify.io/courses/the-royal-birkdale-golf-club" },
+      { label: "OpenStreetMap", url: "https://www.openstreetmap.org/#map=15/53.6219/-3.0326" }
+    ]
+  }),
+  makeMappedVerifiedCourse({
+    id: ROYAL_LYTHAM_COURSE_ID,
+    name: "Royal Lytham & St Annes Golf Club",
+    town: "Lytham St Annes",
+    postcode: "FY8 3LQ",
+    country: "England",
+    par: "71",
+    website: "https://www.royallytham.org/",
+    phone: "+44 (0)1253 643790",
+    location: { lat: 53.749606, lng: -3.01788 },
+    scorecard: ROYAL_LYTHAM_SCORECARD,
+    tees: [
+      { id: "green", name: "Green", color: "#73b94e", rating: "72.5", slope: "139", totalYards: 6731 }
+    ],
+    confidence: "Golfify supplies a complete 18-hole card and venue details. The selected continuous OSM routing is isolated from nearby courses by its hole sequence, measured lengths, and course tags where available.",
+    sources: [
+      { label: "Official course site", url: "https://www.royallytham.org/" },
+      { label: "Golfify scorecard", url: "https://www.golfify.io/courses/royal-lytham-and-st-annes-golf-club" },
+      { label: "OpenStreetMap", url: "https://www.openstreetmap.org/#map=15/53.7496/-3.0179" }
+    ]
+  }),
+  makeMappedVerifiedCourse({
+    id: GANTON_COURSE_ID,
+    name: "Ganton Golf Club",
+    town: "Scarborough",
+    postcode: "YO12 4PA",
+    country: "England",
+    par: "72",
+    website: "https://www.gantongolfclub.com/",
+    phone: "+44 (0)1944 710329",
+    location: { lat: 54.190664, lng: -0.495003 },
+    scorecard: GANTON_SCORECARD,
+    tees: [
+      { id: "club", name: "Club", color: "#f8f7f1", rating: "71", slope: "", totalYards: 6445 }
+    ],
+    confidence: "Golfify supplies a complete 18-hole card and venue details. The selected continuous OSM routing is isolated from nearby courses by its hole sequence, measured lengths, and course tags where available.",
+    sources: [
+      { label: "Official course site", url: "https://www.gantongolfclub.com/" },
+      { label: "Golfify scorecard", url: "https://www.golfify.io/courses/ganton-golf-club" },
+      { label: "OpenStreetMap", url: "https://www.openstreetmap.org/#map=15/54.1907/-0.4950" }
+    ]
+  }),
+  makeMappedVerifiedCourse({
+    id: WOODHALL_SPA_HOTCHKIN_COURSE_ID,
+    venueId: "venue-woodhall-spa",
+    venueName: "Woodhall Spa Golf Club",
+    layoutName: "Hotchkin Course",
+    name: "Woodhall Spa Golf Club - Hotchkin Course",
+    town: "Woodhall Spa",
+    postcode: "LN10 6PU",
+    country: "England",
+    par: "73",
+    website: "https://www.woodhallspagolf.com/",
+    phone: "+44 (0) 1526 352511",
+    location: { lat: 53.15549, lng: -0.205512 },
+    scorecard: WOODHALL_SPA_HOTCHKIN_SCORECARD,
+    tees: [
+      { id: "medal", name: "Medal", color: "#f8f7f1", rating: "74.4", slope: "151", totalYards: 6921 }
+    ],
+    confidence: "Golfify supplies a complete 18-hole card and venue details. The selected continuous OSM routing is isolated from nearby courses by its hole sequence, measured lengths, and course tags where available.",
+    sources: [
+      { label: "Official course site", url: "https://www.woodhallspagolf.com/" },
+      { label: "Golfify scorecard", url: "https://www.golfify.io/courses/woodhall-spa-and-golf-club-hotchkin" },
+      { label: "OpenStreetMap", url: "https://www.openstreetmap.org/#map=15/53.1555/-0.2055" }
+    ]
+  }),
+  makeMappedVerifiedCourse({
+    id: SWINLEY_FOREST_COURSE_ID,
+    name: "Swinley Forest Golf Club",
+    town: "Ascot",
+    postcode: "SL5 9LE",
+    country: "England",
+    par: "69",
+    website: "https://www.swinleyforest.co.uk/",
+    phone: "+44 (0)1344 620197",
+    location: { lat: 51.3904971, lng: -0.6834174 },
+    scorecard: SWINLEY_FOREST_SCORECARD,
+    tees: [
+      { id: "white", name: "White", color: "#f8f7f1", rating: "69", slope: "113", totalYards: 5955 }
+    ],
+    confidence: "Golfify supplies a complete 18-hole card and venue details. The selected continuous OSM routing is isolated from nearby courses by its hole sequence, measured lengths, and course tags where available.",
+    sources: [
+      { label: "Official course site", url: "https://www.swinleyforest.co.uk/" },
+      { label: "Golfify scorecard", url: "https://www.golfify.io/courses/swinley-forest-golf-club" },
+      { label: "OpenStreetMap", url: "https://www.openstreetmap.org/#map=15/51.3905/-0.6834" }
+    ]
+  }),
+  makeMappedVerifiedCourse({
+    id: HILLSIDE_COURSE_ID,
+    name: "Hillside Golf Club",
+    town: "Southport",
+    postcode: "PR8 2LU",
+    country: "England",
+    par: "72",
+    website: "https://www.hillside-golfclub.co.uk/",
+    phone: "+44 (0)1704 567169",
+    location: { lat: 53.620002, lng: -3.027553 },
+    scorecard: HILLSIDE_SCORECARD,
+    tees: [
+      { id: "black", name: "Black", color: "#27272a", rating: "75.2", slope: "138", totalYards: 7029 }
+    ],
+    confidence: "Golfify supplies a complete 18-hole card and venue details. The selected continuous OSM routing is isolated from nearby courses by its hole sequence, measured lengths, and course tags where available.",
+    sources: [
+      { label: "Official course site", url: "https://www.hillside-golfclub.co.uk/" },
+      { label: "Golfify scorecard", url: "https://www.golfify.io/courses/hillside-golf-club" },
+      { label: "OpenStreetMap", url: "https://www.openstreetmap.org/#map=15/53.6200/-3.0276" }
     ]
   }),
   makeCarnoustieCourse({

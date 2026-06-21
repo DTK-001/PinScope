@@ -1,4 +1,4 @@
-const CACHE_NAME = "local-loop-golf-v125-uk-course-batch-two";
+const CACHE_NAME = "local-loop-golf-v127-uk-course-batch-four";
 
 const APP_SHELL = [
   "./",
