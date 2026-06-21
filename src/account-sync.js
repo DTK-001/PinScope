@@ -210,7 +210,7 @@ async function fetchRemoteState(userId) {
   const [settingsResult, roundsResult] = await Promise.all([
     client
       .from("user_settings")
-      .select("selected_course_id,active_round_id,clubs,settings,updated_at")
+      .select("selected_course_id,active_round_id,clubs,settings,profile_data,updated_at")
       .eq("user_id", userId)
       .maybeSingle(),
     client
@@ -242,6 +242,9 @@ function mergeRemoteState(localState, remote) {
   });
   const rounds = Array.from(localRounds.values()).sort((a, b) => roundTime(b) - roundTime(a));
   const settings = remote.settings;
+  const profile = settings?.profile_data && typeof settings.profile_data === "object"
+    ? settings.profile_data
+    : {};
   const activeRoundId = rounds.some((round) => round.id === settings?.active_round_id && round.status === "active")
     ? settings.active_round_id
     : "";
@@ -251,6 +254,8 @@ function mergeRemoteState(localState, remote) {
     activeRoundId,
     clubs: Array.isArray(settings?.clubs) && settings.clubs.length ? settings.clubs : localState.clubs,
     settings: settings?.settings && typeof settings.settings === "object" ? settings.settings : localState.settings,
+    activeBagId: profile.activeBagId || localState.activeBagId,
+    bags: Array.isArray(profile.bags) && profile.bags.length ? profile.bags : localState.bags,
     rounds
   };
 }
@@ -274,6 +279,12 @@ async function pushState(userId, state, forceRounds) {
     active_round_id: state.activeRoundId || null,
     clubs: state.clubs || [],
     settings: state.settings || {},
+    profile_data: {
+      activeBagId: state.activeBagId || "",
+      bags: state.bags || [],
+      clubs: state.clubs || [],
+      settings: state.settings || {}
+    },
     updated_at: now
   }, { onConflict: "user_id" });
   if (settingsResult.error) {

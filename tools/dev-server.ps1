@@ -147,6 +147,42 @@ function Send-GolfCourseApiProxy {
   }
 }
 
+function Send-ArcgisSession {
+  param(
+    [System.IO.Stream]$Stream,
+    [bool]$HeadOnly = $false
+  )
+
+  $key = [System.Environment]::GetEnvironmentVariable("ARCGIS_API_KEY", "Process")
+  if ([string]::IsNullOrWhiteSpace($key)) {
+    Send-Json $Stream 503 "Service Unavailable" '{"error":"ArcGIS API key is not configured on the local server."}' $HeadOnly
+    return
+  }
+
+  $encodedKey = [System.Uri]::EscapeDataString($key)
+  $uri = "https://basemapstyles-api.arcgis.com/arcgis/rest/services/styles/v2/sessions/start?styleFamily=arcgis&durationSeconds=43200&f=json&token=$encodedKey"
+  try {
+    $response = Invoke-WebRequest -UseBasicParsing -Uri $uri -Headers @{ Accept = "application/json" } -TimeoutSec 20
+    $body = $response.Content | ConvertFrom-Json
+    if ($body.error) {
+      $message = if ($body.error.message) { $body.error.message } else { "ArcGIS basemap session could not be started." }
+      Send-Json $Stream 502 "Upstream Error" (@{ error = $message } | ConvertTo-Json -Compress) $HeadOnly
+      return
+    }
+
+    $payload = @{
+      sessionToken = $body.sessionToken
+      startTime = $body.startTime
+      endTime = $body.endTime
+      styleFamily = if ($body.styleFamily) { $body.styleFamily } else { "arcgis" }
+    } | ConvertTo-Json -Compress
+    Send-Json $Stream 200 "OK" $payload $HeadOnly
+  }
+  catch {
+    Send-Json $Stream 502 "Upstream Error" '{"error":"ArcGIS basemap session request failed."}' $HeadOnly
+  }
+}
+
 try {
   Import-LocalEnv $rootFull
   $listener.Start()
@@ -184,6 +220,12 @@ try {
 
       if ($target.StartsWith("/api/golfcourseapi/", [System.StringComparison]::OrdinalIgnoreCase)) {
         Send-GolfCourseApiProxy $stream $target $headOnly
+        $client.Close()
+        continue
+      }
+
+      if ($target.Split("?")[0].Equals("/api/arcgis/session", [System.StringComparison]::OrdinalIgnoreCase)) {
+        Send-ArcgisSession $stream $headOnly
         $client.Close()
         continue
       }

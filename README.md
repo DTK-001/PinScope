@@ -1,91 +1,43 @@
-# PinScope
-
-PinScope is a phone-first golf companion PWA for course selection, active-round scoring, GPS yardages, shot planning, and club recommendations.
+# PinScope Course Sync Worker
 
 ## Supabase accounts
 
-PinScope supports optional email sign-in and local-first cloud sync. The public project URL/key live in `src/supabase-config.js`; never put a secret or `service_role` key in frontend code.
+The PinScope frontend supports optional email sign-in and local-first cloud sync. The public project URL/key live in `src/supabase-config.js`; never put a secret or `service_role` key in frontend code.
 
-Before testing accounts:
+Before testing accounts, run `supabase/schema.sql` in the Supabase SQL Editor and set Authentication -> URL Configuration -> Site URL to the deployed app URL (or `http://localhost:4174` locally). Rounds, bags, and settings are cached per account on the device and synchronized when a connection is available.
 
-1. Open Supabase Dashboard -> SQL Editor.
-2. Run `supabase/schema.sql` once.
-3. Set Authentication -> URL Configuration -> Site URL to `http://localhost:4174` for local development.
-4. Start the app, open the `@` account button, and request a sign-in email.
+This is the small backend that lets you publish mapped course geometry once and have every device load it automatically.
 
-Rounds and settings are cached per account on the device, written locally first, and synchronized when a connection is available.
+## What it does
 
-## ArcGIS satellite imagery
+- `GET /` returns the published course library.
+- `POST /` saves/replaces published course data, protected by an admin token.
+- Public users do not need the admin token. They only read the data.
 
-This version no longer ships baked satellite snapshots or uses Azure Maps.
+## Setup summary
 
-Satellite imagery now loads at runtime through **ArcGIS Location Platform Basemap Styles** using **basemap sessions**:
-
-- The real ArcGIS key must be stored only on the backend/serverless host as `ARCGIS_API_KEY`.
-- The frontend calls `/api/arcgis/session`.
-- The backend creates an ArcGIS basemap session and returns only the temporary `sessionToken`.
-- The frontend uses that session token to request the ArcGIS imagery style/tiles.
-- Do not commit static satellite images, ArcGIS keys, Azure keys, or `.env.local` files.
-
-## Required ArcGIS setup
-
-Create an ArcGIS Location Platform API key credential with this privilege:
-
-```text
-Location services → Basemaps → Basemap styles service
-```
-
-Set it in your deployment provider as:
-
-```text
-ARCGIS_API_KEY=your_arcgis_location_platform_api_key_here
-```
-
-For local testing, copy `.env.example` to `.env.local` and add your key there. Do not commit `.env.local`.
-
-## Running locally
-
-Because the ArcGIS key must stay server-side, use the included local server instead of opening `index.html` directly:
+1. Install Wrangler if you do not have it already.
+2. Copy `wrangler.example.toml` to `wrangler.toml`.
+3. Create a KV namespace:
 
 ```bash
-node dev-server.mjs
+wrangler kv namespace create PINSCOPE_COURSES
 ```
 
-Then open:
+4. Paste the returned KV namespace id into `wrangler.toml`.
+5. Set a private admin token:
 
-```text
-http://localhost:4174
+```bash
+wrangler secret put PINSCOPE_ADMIN_TOKEN
 ```
 
-## Deployment
+6. Deploy the worker:
 
-Deploy to a host that supports `/api/arcgis/session`, such as Vercel-style serverless functions, or port the route in `api/arcgis/session.js` to your chosen backend.
-
-GitHub Pages alone cannot protect `ARCGIS_API_KEY` because it only serves static files.
-
-## Course data
-
-Course and hole geometry still lives in the app/course packs. Keep using OSM or mapper JSON for:
-
-- tee points
-- green center/front/back points
-- green polygons
-- hole geometry
-- scorecard data
-
-ArcGIS only replaces the satellite/background imagery layer. PinScope overlays, GPS, scorecard, shot-planning, and club logic remain app-owned.
-
-## Files to avoid committing
-
-Do not commit:
-
-```text
-.env
-.env.local
-*API KEY*.txt
-assets/snapshots/
+```bash
+wrangler deploy
 ```
 
-## Commercial-safe imagery direction
+7. In PinScope, open **Cloud course sync**, paste the worker URL as the Sync endpoint, and save it.
+8. On your admin device only, enter the admin token as well. Then when you run **OSM holes** or **Import mapper JSON**, the mapped course is automatically published.
 
-The commercial-safe direction is live licensed imagery through ArcGIS sessions, not pre-generated local satellite JPGs.
+For public builds, keep `src/sync-config.js` with the endpoint only and no admin token. Users will load the published holes automatically without importing files.

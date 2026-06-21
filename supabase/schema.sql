@@ -7,8 +7,12 @@ create table if not exists public.user_settings (
   active_round_id text,
   clubs jsonb not null default '[]'::jsonb,
   settings jsonb not null default '{}'::jsonb,
+  profile_data jsonb not null default '{}'::jsonb,
   updated_at timestamptz not null default now()
 );
+
+alter table public.user_settings
+  add column if not exists profile_data jsonb not null default '{}'::jsonb;
 
 create table if not exists public.user_rounds (
   user_id uuid not null references auth.users(id) on delete cascade,

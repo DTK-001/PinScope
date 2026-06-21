@@ -6,7 +6,17 @@ const courses = [
   { id: 'osm-way-23454278', name: 'Cranham Golf Course', lat: 51.555764, lng: 0.282267 },
   { id: 'verified-belhus-park', name: 'Belhus Park Golf Club', lat: 51.507331, lng: 0.263364 },
   { id: 'verified-basildon', name: 'Basildon Golf Course', lat: 51.5746, lng: 0.4372 },
-  { id: 'verified-castle-point-canvey', name: 'Canvey Island Golf Course', lat: 51.5354, lng: 0.5844 }
+  { id: 'verified-castle-point-canvey', name: 'Canvey Island Golf Course', lat: 51.5354, lng: 0.5844 },
+  { id: 'verified-mid-kent', name: 'Mid Kent Golf Club', lat: 51.422099, lng: 0.365254 },
+  { id: 'verified-st-cleres-hall', name: 'St Cleres Hall Golf Club', lat: 51.50759, lng: 0.410656 },
+  { id: 'verified-top-meadow', name: 'Top Meadow Golf Club', lat: 51.541154, lng: 0.312411 },
+  { id: 'verified-ingrebourne-links', name: 'Ingrebourne Links Golf & Country Club', lat: 51.513613, lng: 0.230958 },
+  { id: 'verified-princes-park', name: 'Princes Park Golf Course', lat: 51.449228, lng: 0.234188 },
+  { id: 'verified-gravesend-golf-centre', name: 'Gravesend Golf Centre', lat: 51.422422, lng: 0.405488 },
+  { id: 'verified-langdon-hills', name: 'Langdon Hills Golf & Country Club', lat: 51.531174, lng: 0.365153 },
+  { id: 'verified-dartford', name: 'Dartford Golf Club', lat: 51.435069, lng: 0.20045 },
+  { id: 'verified-corinthian-fawkham-valley', name: 'Corinthian Sports Club', lat: 51.385299, lng: 0.294437 },
+  { id: 'verified-barnehurst', name: 'Barnehurst Golf Course', lat: 51.460138, lng: 0.172763 }
 ];
 
 function overpassQuery(course, radius = 1300) {
@@ -14,7 +24,7 @@ function overpassQuery(course, radius = 1300) {
 (
   way["golf"="hole"](around:${radius},${course.lat},${course.lng});
 );
-out tags geom center;`;
+out geom;`;
 }
 
 function holeNumber(tags = {}) {
@@ -54,6 +64,9 @@ function yardsBetween(a, b) {
 }
 
 function candidateFromElement(element) {
+  if (element.tags?.golf !== 'hole') {
+    return null;
+  }
   const number = holeNumber(element.tags);
   const geometry = lineGeometry(element);
   if (!number || geometry.length < 2) {
@@ -114,13 +127,22 @@ async function fetchCourse(course) {
     : courses;
   const results = [];
   for (const course of selected) {
-    results.push(await fetchCourse(course));
+    try {
+      results.push(await fetchCourse(course));
+    } catch (error) {
+      results.push({
+        ...course,
+        error: error.message || String(error),
+        holes: Array.from({ length: 18 }, () => null)
+      });
+    }
   }
   fs.mkdirSync('artifacts', { recursive: true });
   fs.writeFileSync('artifacts/hole-coordinates-osm.json', JSON.stringify(results, null, 2));
   console.log(JSON.stringify(results.map((course) => ({
     id: course.id,
     name: course.name,
+    error: course.error || undefined,
     found: course.holes.filter(Boolean).length,
     missing: course.holes.map((hole, index) => hole ? null : index + 1).filter(Boolean)
   })), null, 2));
