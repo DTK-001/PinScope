@@ -19,7 +19,7 @@
         "lat": 51.555764,
         "lng": 0.282267
       },
-      "attribution": "Identity from Cranham Golf Course official website. Hole geometry from OpenStreetMap contributors under ODbL. OpenStreetMap contributors. Imagery: Azure Maps.",
+      "attribution": "Identity from Cranham Golf Course official website. Hole geometry from OpenStreetMap contributors under ODbL. OpenStreetMap contributors. Imagery: Esri, Maxar, Earthstar Geographics, and the GIS User Community.",
       "geometrySource": "OpenStreetMap",
       "verification": {
         "status": "verified",
@@ -19033,7 +19033,7 @@
         "lat": 51.507331,
         "lng": 0.263364
       },
-      "attribution": "Scorecard from Golfify and Belhus Park Golf Club scorecard page. Available tee and green geometry from OpenStreetMap contributors under ODbL. OpenStreetMap contributors. Imagery: Azure Maps. Scorecard from Golfify and Belhus Park Golf Club scorecard page. Available tee and green geometry from OpenStreetMap contributors under ODbL. OpenStreetMap contributors. Imagery: Azure Maps. Scorecard from Golfify and Belhus Park Golf Club scorecard page. Available tee and green geometry from OpenStreetMap contributors under ODbL. OpenStreetMap contributors. Imagery: Azure Maps. Scorecard from Golfify and Belhus Park Golf Club scorecard page. Available tee and green geometry from OpenStreetMap contributors under ODbL. OpenStreetMap contributors. Imagery: Azure Maps. Hole geometry from OpenStreetMap contributors under ODbL.",
+      "attribution": "Scorecard from Golfify and Belhus Park Golf Club scorecard page. Available tee and green geometry from OpenStreetMap contributors under ODbL. OpenStreetMap contributors. Imagery: Esri, Maxar, Earthstar Geographics, and the GIS User Community. Scorecard from Golfify and Belhus Park Golf Club scorecard page. Available tee and green geometry from OpenStreetMap contributors under ODbL. OpenStreetMap contributors. Imagery: Esri, Maxar, Earthstar Geographics, and the GIS User Community. Scorecard from Golfify and Belhus Park Golf Club scorecard page. Available tee and green geometry from OpenStreetMap contributors under ODbL. OpenStreetMap contributors. Imagery: Esri, Maxar, Earthstar Geographics, and the GIS User Community. Scorecard from Golfify and Belhus Park Golf Club scorecard page. Available tee and green geometry from OpenStreetMap contributors under ODbL. OpenStreetMap contributors. Imagery: Esri, Maxar, Earthstar Geographics, and the GIS User Community. Hole geometry from OpenStreetMap contributors under ODbL.",
       "geometrySource": "PinScope course pack: data\\course-pack\\local-osm-map.json",
       "verification": {
         "status": "verified",
@@ -23454,7 +23454,7 @@
         "lat": 51.5354,
         "lng": 0.5844
       },
-      "attribution": "Castle Point / Canvey scorecard seeded from My Online Golf Club and cross-checked against Golfshake and Grassy. Available tee and green geometry from OpenStreetMap contributors under ODbL. OpenStreetMap contributors. Imagery: Azure Maps.",
+      "attribution": "Castle Point / Canvey scorecard seeded from My Online Golf Club and cross-checked against Golfshake and Grassy. Available tee and green geometry from OpenStreetMap contributors under ODbL. OpenStreetMap contributors. Imagery: Esri, Maxar, Earthstar Geographics, and the GIS User Community.",
       "geometrySource": "PinScope course pack: data\\course-pack\\local-osm-map.json",
       "verification": {
         "status": "verified",
@@ -23531,23 +23531,6 @@
             "osm": "way/889214000",
             "satelliteAligned": false
           },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-castle-point-canvey/hole-01-64677e4533.jpg",
-            "storageKey": "assets/snapshots/verified-castle-point-canvey/hole-01-64677e4533.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.534603,
-              "lng": 0.574648
-            },
-            "zoom": 17,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-05T21:01:56.779Z",
-            "fingerprint": "64677e4533",
-            "geometrySignature": "fc996fb1"
-          },
           "visual": {
             "path": [
               [
@@ -23605,23 +23588,6 @@
             "updatedAt": "2026-05-05T21:01:52.597Z",
             "osm": "way/889217055",
             "satelliteAligned": false
-          },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-castle-point-canvey/hole-02-b946cd7b1d.jpg",
-            "storageKey": "assets/snapshots/verified-castle-point-canvey/hole-02-b946cd7b1d.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.537406,
-              "lng": 0.572004
-            },
-            "zoom": 16,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-05T21:01:56.933Z",
-            "fingerprint": "b946cd7b1d",
-            "geometrySignature": "6c7fe72a"
           },
           "visual": {
             "path": [
@@ -23681,23 +23647,6 @@
             "osm": "way/889219893",
             "satelliteAligned": false
           },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-castle-point-canvey/hole-03-ba24d9ea39.jpg",
-            "storageKey": "assets/snapshots/verified-castle-point-canvey/hole-03-ba24d9ea39.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.537531,
-              "lng": 0.569319
-            },
-            "zoom": 17,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-05T21:01:57.067Z",
-            "fingerprint": "ba24d9ea39",
-            "geometrySignature": "805f73a9"
-          },
           "visual": {
             "path": [
               [
@@ -23755,23 +23704,6 @@
             "updatedAt": "2026-05-05T21:01:52.597Z",
             "osm": "way/889222068",
             "satelliteAligned": false
-          },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-castle-point-canvey/hole-04-2d395f98cf.jpg",
-            "storageKey": "assets/snapshots/verified-castle-point-canvey/hole-04-2d395f98cf.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.53567,
-              "lng": 0.571599
-            },
-            "zoom": 18,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-05T21:01:57.225Z",
-            "fingerprint": "2d395f98cf",
-            "geometrySignature": "e99b1a48"
           },
           "visual": {
             "path": [
@@ -23831,23 +23763,6 @@
             "osm": "way/889226157",
             "satelliteAligned": false
           },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-castle-point-canvey/hole-05-a42d7c60a3.jpg",
-            "storageKey": "assets/snapshots/verified-castle-point-canvey/hole-05-a42d7c60a3.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.534872,
-              "lng": 0.569385
-            },
-            "zoom": 16,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-05T21:01:57.367Z",
-            "fingerprint": "a42d7c60a3",
-            "geometrySignature": "bac21fdf"
-          },
           "visual": {
             "path": [
               [
@@ -23905,23 +23820,6 @@
             "updatedAt": "2026-05-05T21:01:52.597Z",
             "osm": "way/889227536",
             "satelliteAligned": false
-          },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-castle-point-canvey/hole-06-657778af70.jpg",
-            "storageKey": "assets/snapshots/verified-castle-point-canvey/hole-06-657778af70.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.536369,
-              "lng": 0.565981
-            },
-            "zoom": 18,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-05T21:01:57.500Z",
-            "fingerprint": "657778af70",
-            "geometrySignature": "58be5d00"
           },
           "visual": {
             "path": [
@@ -23981,23 +23879,6 @@
             "osm": "way/889237187",
             "satelliteAligned": false
           },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-castle-point-canvey/hole-07-efa21fb306.jpg",
-            "storageKey": "assets/snapshots/verified-castle-point-canvey/hole-07-efa21fb306.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.536694,
-              "lng": 0.568773
-            },
-            "zoom": 16,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-05T21:01:57.630Z",
-            "fingerprint": "efa21fb306",
-            "geometrySignature": "34ba2daf"
-          },
           "visual": {
             "path": [
               [
@@ -24055,23 +23936,6 @@
             "updatedAt": "2026-05-05T21:01:52.597Z",
             "osm": "way/889237195",
             "satelliteAligned": false
-          },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-castle-point-canvey/hole-08-412f4ea8d4.jpg",
-            "storageKey": "assets/snapshots/verified-castle-point-canvey/hole-08-412f4ea8d4.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.53608,
-              "lng": 0.573275
-            },
-            "zoom": 18,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-05T21:01:57.730Z",
-            "fingerprint": "412f4ea8d4",
-            "geometrySignature": "0302cc1f"
           },
           "visual": {
             "path": [
@@ -24131,23 +23995,6 @@
             "osm": "way/889237200",
             "satelliteAligned": false
           },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-castle-point-canvey/hole-09-c1299565b3.jpg",
-            "storageKey": "assets/snapshots/verified-castle-point-canvey/hole-09-c1299565b3.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.535626,
-              "lng": 0.57499
-            },
-            "zoom": 17,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-05T21:01:57.874Z",
-            "fingerprint": "c1299565b3",
-            "geometrySignature": "852bf112"
-          },
           "visual": {
             "path": [
               [
@@ -24205,23 +24052,6 @@
             "updatedAt": "2026-05-05T21:01:52.597Z",
             "osm": "way/889239566",
             "satelliteAligned": false
-          },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-castle-point-canvey/hole-10-5e9eb60e4f.jpg",
-            "storageKey": "assets/snapshots/verified-castle-point-canvey/hole-10-5e9eb60e4f.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.53369,
-              "lng": 0.576863
-            },
-            "zoom": 17,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-05T21:01:57.984Z",
-            "fingerprint": "5e9eb60e4f",
-            "geometrySignature": "2d61cf9c"
           },
           "visual": {
             "path": [
@@ -24359,23 +24189,6 @@
             "osm": "way/889246713",
             "satelliteAligned": false
           },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-castle-point-canvey/hole-13-07ab3cd839.jpg",
-            "storageKey": "assets/snapshots/verified-castle-point-canvey/hole-13-07ab3cd839.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.532898,
-              "lng": 0.589913
-            },
-            "zoom": 17,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-05T21:01:58.147Z",
-            "fingerprint": "07ab3cd839",
-            "geometrySignature": "b432d297"
-          },
           "visual": {
             "path": [
               [
@@ -24433,23 +24246,6 @@
             "updatedAt": "2026-05-05T21:01:52.597Z",
             "osm": "way/889256370",
             "satelliteAligned": false
-          },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-castle-point-canvey/hole-14-de93852761.jpg",
-            "storageKey": "assets/snapshots/verified-castle-point-canvey/hole-14-de93852761.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.531601,
-              "lng": 0.593265
-            },
-            "zoom": 17,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-05T21:01:58.252Z",
-            "fingerprint": "de93852761",
-            "geometrySignature": "187c4658"
           },
           "visual": {
             "path": [
@@ -24509,23 +24305,6 @@
             "osm": "way/889256376",
             "satelliteAligned": false
           },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-castle-point-canvey/hole-15-a688de6480.jpg",
-            "storageKey": "assets/snapshots/verified-castle-point-canvey/hole-15-a688de6480.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.53332,
-              "lng": 0.592714
-            },
-            "zoom": 17,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-05T21:01:58.387Z",
-            "fingerprint": "a688de6480",
-            "geometrySignature": "c6e24687"
-          },
           "visual": {
             "path": [
               [
@@ -24583,23 +24362,6 @@
             "updatedAt": "2026-05-05T21:01:52.597Z",
             "osm": "way/889256382",
             "satelliteAligned": false
-          },
-          "snapshot": {
-            "imageUrl": "./assets/snapshots/verified-castle-point-canvey/hole-16-98d52b48be.jpg",
-            "storageKey": "assets/snapshots/verified-castle-point-canvey/hole-16-98d52b48be.jpg",
-            "width": 900,
-            "height": 1300,
-            "center": {
-              "lat": 51.53426,
-              "lng": 0.586525
-            },
-            "zoom": 16,
-            "provider": "azure-maps",
-            "tileset": "microsoft.imagery",
-            "attribution": "Imagery: Azure Maps",
-            "generatedAt": "2026-05-05T21:01:58.524Z",
-            "fingerprint": "98d52b48be",
-            "geometrySignature": "caf6016a"
           },
           "visual": {
             "path": [

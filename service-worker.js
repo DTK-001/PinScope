@@ -1,4 +1,4 @@
-const CACHE_NAME = "local-loop-golf-v67";
+const CACHE_NAME = "pinscope-account-v1";
 
 const APP_SHELL = [
   "./",
@@ -9,11 +9,14 @@ const APP_SHELL = [
   "./assets/gps-pink.png",
   "./assets/icon.svg",
   "./src/app.js",
+  "./src/account-sync.js",
+  "./src/arcgis-session.js",
   "./src/course-data.js",
   "./src/cranham-map-data.js",
   "./src/local-area.js",
   "./src/osm.js",
   "./src/storage.js",
+  "./src/supabase-config.js",
   "./src/styles.css",
   "./src/verified-courses.js",
   "./src/verified-green-defaults.js",
@@ -45,7 +48,7 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  if (url.pathname.startsWith("/api/")) {
+  if (url.pathname.startsWith("/api/") || url.pathname.includes("/api/")) {
     return;
   }
 

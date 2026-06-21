@@ -112,6 +112,116 @@ p {
   line-height: 1.1;
 }
 
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.account-pill {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  color: var(--muted);
+  background: rgba(255, 255, 255, 0.07);
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.account-pill.signed-in {
+  border-color: rgba(53, 240, 193, 0.68);
+  color: #071414;
+  background: #35f0c1;
+}
+
+.account-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  align-items: end;
+  padding: 16px;
+  background: rgba(3, 3, 7, 0.78);
+  backdrop-filter: blur(8px);
+}
+
+.account-sheet {
+  width: min(100%, 560px);
+  max-height: calc(100vh - 32px);
+  overflow: auto;
+  margin: 0 auto;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--panel-strong);
+  box-shadow: var(--shadow);
+}
+
+.account-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.account-head h2 {
+  margin: 0;
+}
+
+.account-copy,
+.account-status,
+.account-last-sync,
+.account-small {
+  color: var(--muted);
+}
+
+.account-copy {
+  margin-bottom: 16px;
+}
+
+.account-status {
+  margin-top: 14px;
+  font-size: 0.86rem;
+}
+
+.account-status.error {
+  color: #ff9bbd;
+}
+
+.account-status.signed-in {
+  color: #86efcf;
+}
+
+.account-small,
+.account-last-sync {
+  margin-top: 8px;
+  font-size: 0.76rem;
+}
+
+.account-user {
+  display: grid;
+  gap: 4px;
+  padding: 14px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.account-user span {
+  color: var(--muted);
+  font-size: 0.76rem;
+}
+
+.account-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 18px;
+}
+
 .eyebrow {
   margin-bottom: 4px;
   color: var(--accent);
@@ -726,6 +836,49 @@ p {
   grid-column: 1 / -1;
   color: var(--muted);
   font-size: 0.72rem;
+}
+
+.round-delete-button {
+  justify-self: start;
+  margin-top: 12px;
+  border: 1px solid rgba(255, 91, 143, 0.55);
+  border-radius: 999px;
+  padding: 8px 12px;
+  color: #ff9bbd;
+  background: rgba(255, 91, 143, 0.08);
+  font-weight: 800;
+}
+
+.round-satellite-map {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  aspect-ratio: 9 / 13;
+  max-height: 430px;
+  margin-top: 10px;
+  border-radius: 10px;
+  background: #080b0c;
+}
+
+.round-satellite-map .azure-tile-layer,
+.round-satellite-map .photo-hole-overlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.round-satellite-map .satellite-attribution {
+  position: absolute;
+  right: 5px;
+  bottom: 4px;
+  z-index: 4;
+}
+
+.round-map-unavailable {
+  margin: 9px 0 0;
+  color: var(--muted);
+  font-size: 0.76rem;
 }
 
 .course-meta {

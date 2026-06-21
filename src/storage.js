@@ -4,6 +4,8 @@ import { verifiedGreenDefaults } from "./verified-green-defaults.js";
 import { sharedCourseDefaults } from "./shared-course-defaults.js";
 
 const STORAGE_KEY = "local-loop-golf:v1";
+const LAST_ACCOUNT_KEY = "pinscope:last-account-id:v1";
+let activeAccountId = readLastAccountId();
 const REMOVED_BUILT_IN_COURSE_IDS = new Set(["demo-starter-nine"]);
 const GPS_FIELDS = ["tee", "greenFront", "greenCenter", "greenBack"];
 
@@ -79,11 +81,7 @@ function mergeSharedHoleDefault(baseHole, sharedHole) {
 
   next.geometry = mergeGeometry(baseHole.geometry, sharedHole.geometry);
 
-  if (validSnapshot(sharedHole.snapshot)) {
-    next.snapshot = sharedHole.snapshot;
-  } else if (validSnapshot(baseHole.snapshot)) {
-    next.snapshot = baseHole.snapshot;
-  }
+  delete next.snapshot;
 
   if (sharedHole.mapping && typeof sharedHole.mapping === "object") {
     next.mapping = {
@@ -120,15 +118,59 @@ export function loadState() {
 }
 
 export function saveState(state) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  localStorage.setItem(activeStorageKey(), JSON.stringify(state));
+}
+
+export function useStateAccount(accountId = "") {
+  activeAccountId = String(accountId || "").trim();
+}
+
+export function rememberStateAccount(accountId = "") {
+  const normalized = String(accountId || "").trim();
+  useStateAccount(normalized);
+  if (normalized) {
+    localStorage.setItem(LAST_ACCOUNT_KEY, normalized);
+  } else {
+    localStorage.removeItem(LAST_ACCOUNT_KEY);
+  }
+}
+
+export function loadStateForAccount(accountId = "") {
+  useStateAccount(accountId);
+  return loadState();
+}
+
+export function hasStateForAccount(accountId = "") {
+  return Boolean(localStorage.getItem(storageKeyForAccount(accountId)));
+}
+
+export function clearAnonymousState() {
+  localStorage.removeItem(STORAGE_KEY);
 }
 
 function readStoredState() {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(activeStorageKey());
     return raw ? JSON.parse(raw) : null;
   } catch {
     return null;
+  }
+}
+
+function activeStorageKey() {
+  return storageKeyForAccount(activeAccountId);
+}
+
+function storageKeyForAccount(accountId = "") {
+  const normalized = String(accountId || "").trim();
+  return normalized ? `${STORAGE_KEY}:account:${normalized}` : STORAGE_KEY;
+}
+
+function readLastAccountId() {
+  try {
+    return String(localStorage.getItem(LAST_ACCOUNT_KEY) || "").trim();
+  } catch {
+    return "";
   }
 }
 
@@ -193,13 +235,7 @@ function mergeBuiltInHole(defaultHole, storedHole) {
     ? mergeGeometry(defaultHole.geometry, storedHole.geometry)
     : mergeGeometry(storedHole.geometry, defaultHole.geometry);
 
-  if (!storedIsNewer && validSnapshot(defaultHole.snapshot)) {
-    next.snapshot = defaultHole.snapshot;
-  } else if (validSnapshot(storedHole.snapshot)) {
-    next.snapshot = storedHole.snapshot;
-  } else {
-    delete next.snapshot;
-  }
+  delete next.snapshot;
 
   if (storedHole.mapping && typeof storedHole.mapping === "object") {
     next.mapping = storedIsNewer
@@ -255,9 +291,7 @@ function applyHoleGreenDefault(hole, defaults) {
     next.geometry = mergeGeometry(next.geometry, defaults.geometry);
   }
 
-  if (validSnapshot(defaults.snapshot)) {
-    next.snapshot = defaults.snapshot;
-  }
+  delete next.snapshot;
 
   if (defaults.mapping && typeof defaults.mapping === "object") {
     next.mapping = { ...(next.mapping || {}), ...defaults.mapping };
@@ -294,18 +328,8 @@ function roundGeoPoint(point) {
   return { lat: Number(Number(point.lat).toFixed(6)), lng: Number(Number(point.lng).toFixed(6)) };
 }
 
-function validSnapshot(snapshot) {
-  return Boolean(
-    snapshot &&
-      typeof snapshot === "object" &&
-      String(snapshot.imageUrl || snapshot.url || "").trim() &&
-      validGeoPoint(snapshot.center) &&
-      Number.isFinite(Number(snapshot.zoom)) &&
-      Number.isFinite(Number(snapshot.width)) &&
-      Number.isFinite(Number(snapshot.height)) &&
-      Number(snapshot.width) > 0 &&
-      Number(snapshot.height) > 0
-  );
+function validSnapshot() {
+  return false;
 }
 
 function mergeAttribution(primary = "", extra = "") {

@@ -15,6 +15,16 @@ import {
 import { homeArea } from "./local-area.js";
 import { fetchOsmCourseLayout, findNearbyOsmCourses } from "./osm.js";
 import { loadState, saveState } from "./storage.js";
+import { arcgisBasemapStatus, arcgisTileSize, arcgisTileUrl, ensureArcgisBasemap } from "./arcgis-session.js";
+import {
+  accountStatus,
+  initializeAccountSync,
+  queueCloudRoundDeletion,
+  scheduleAccountSync,
+  sendAccountMagicLink,
+  signOutAccount,
+  syncAccountNow
+} from "./account-sync.js";
 
 const CRANHAM_COURSE_ID = "osm-way-23454278";
 const BELHUS_COURSE_ID = "verified-belhus-park";
@@ -31,20 +41,14 @@ const GPS_GREY_IMAGE_SRC = "./assets/gps-grey.png";
 const HOLE_SWIPE_MIN_DISTANCE = 68;
 const HOLE_SWIPE_VERTICAL_RATIO = 1.25;
 const GPS_TEST_QUERY_KEY = "gpsTest";
-const AZURE_MAPS_KEY_STORAGE = "pinscope:azure-maps-key:v1";
-const AZURE_MAPS_ENABLED_STORAGE = "pinscope:azure-maps-enabled:v1";
+const ARCGIS_MAPS_ENABLED_STORAGE = "pinscope:arcgis-maps-enabled:v1";
 const SATELLITE_ANCHOR_EDITS_STORAGE = "pinscope:satellite-anchor-edits:v1";
-const AZURE_MAPS_QUERY_KEY = "azureMapsKey";
-const AZURE_MAPS_QUERY_ENABLED = "azureMaps";
-const AZURE_MAPS_TILE_SIZE = 256;
-const AZURE_MAPS_REQUEST_TILE_SIZE = 512;
-const AZURE_MAPS_STATIC_TILE_SIZE = 512;
-const AZURE_MAPS_ZOOM = 17;
+const ARCGIS_MAPS_QUERY_ENABLED = "arcgisMaps";
+const ARCGIS_MAPS_ZOOM = 17;
 const SATELLITE_PRELOAD_CONCURRENCY = 2;
 const SATELLITE_PANEL_RATIO = 13 / 9;
-const ESRI_WORLD_IMAGERY_URL = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile";
-const ESRI_WORLD_IMAGERY_EXPORT_URL = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/export";
-const SATELLITE_ATTRIBUTION = "Imagery: Esri World Imagery";
+const SATELLITE_ATTRIBUTION = "Imagery: Esri, Maxar, Earthstar Geographics, and the GIS User Community";
+const GREEN_ARRIVAL_RADIUS_YARDS = 18;
 const BELHUS_PHOTO_GEO_BOUNDS = {
   north: 51.515,
   south: 51.5046,
@@ -71,8 +75,7 @@ let holeSwipe = null;
 let wheelHoleNavigationAt = 0;
 let courseSearchQuery = "";
 let gpsTestMoveMode = false;
-let azureMapsKey = initAzureMapsKey();
-let azureMapsEnabled = initAzureMapsEnabled();
+let azureMapsEnabled = initArcgisMapsEnabled();
 let view = getViewFromHash();
 let gps = {
   status: "off",
@@ -87,8 +90,17 @@ let satellitePreloadedUrls = new Set();
 let satellitePreloadingUrls = new Set();
 let notice = "";
 let scoreCardOpen = false;
+let accountOpen = false;
 
 render();
+initializeAccountSync({
+  getState: () => state,
+  onState: (nextState) => {
+    state = nextState;
+    render();
+  },
+  onStatus: () => render()
+});
 registerServiceWorker();
 
 window.addEventListener("hashchange", () => {
@@ -145,13 +157,19 @@ function render() {
         <p class="eyebrow">PinScope</p>
         <h1>${pageTitle()}</h1>
       </div>
-      <button class="gps-pill ${gps.status}" type="button" data-action="gps">
-        <span class="gps-dot" aria-hidden="true"></span>
-        <span>${gpsLabel()}</span>
-      </button>
+      <div class="topbar-actions">
+        <button class="account-pill ${accountStatus().signedIn ? "signed-in" : ""}" type="button" data-action="open-account" aria-label="${accountStatus().signedIn ? "Open account" : "Sign in"}">
+          ${escapeHtml(accountInitial())}
+        </button>
+        <button class="gps-pill ${gps.status}" type="button" data-action="gps">
+          <span class="gps-dot" aria-hidden="true"></span>
+          <span>${gpsLabel()}</span>
+        </button>
+      </div>
     </header>
     <main class="screen">${renderView()}</main>
     ${scoreCardOpen ? renderScoreCardOverlay() : ""}
+    ${accountOpen ? renderAccountOverlay() : ""}
     ${notice ? `<aside class="toast" role="status">${escapeHtml(notice)}</aside>` : ""}
     <nav class="bottom-nav" aria-label="Primary">
       ${navItem("courses", "Courses", "C")}
@@ -161,6 +179,57 @@ function render() {
     </nav>
   `;
   queuePhotoCanvasRender();
+}
+
+function accountInitial() {
+  const account = accountStatus();
+  return account.signedIn && account.email ? account.email.charAt(0).toUpperCase() : "@";
+}
+
+function renderAccountOverlay() {
+  const account = accountStatus();
+  const busy = ["loading", "sending", "syncing"].includes(account.phase);
+  return `
+    <section class="account-backdrop" role="dialog" aria-modal="true" aria-label="PinScope account">
+      <div class="account-sheet">
+        <header class="account-head">
+          <div>
+            <p class="eyebrow">PinScope Account</p>
+            <h2>${account.signedIn ? "Cloud sync" : "Sign in"}</h2>
+          </div>
+          <button class="icon-action" type="button" data-action="close-account" aria-label="Close account">X</button>
+        </header>
+        ${account.signedIn ? `
+          <div class="account-user">
+            <span>Signed in as</span>
+            <strong>${escapeHtml(account.email)}</strong>
+          </div>
+          <p class="account-status ${account.phase}">${escapeHtml(account.message || "")}</p>
+          ${account.lastSyncAt ? `<p class="account-last-sync">Last synced ${escapeHtml(formatAccountSyncTime(account.lastSyncAt))}</p>` : ""}
+          <div class="account-actions">
+            <button class="primary-action" type="button" data-action="sync-account" ${busy ? "disabled" : ""}>Sync now</button>
+            <button class="secondary-action" type="button" data-action="sign-out" ${busy ? "disabled" : ""}>Sign out</button>
+          </div>
+        ` : `
+          <p class="account-copy">Use your email to keep rounds, scores, settings, and club yardages available across devices.</p>
+          <form class="stack" data-form="account-sign-in">
+            <label>
+              <span>Email address</span>
+              <input name="email" type="email" autocomplete="email" required placeholder="you@example.com" value="${escapeAttribute(account.email || "")}" />
+            </label>
+            <button class="primary-action full" type="submit" ${busy ? "disabled" : ""}>${account.phase === "sending" ? "Sending..." : "Email me a sign-in link"}</button>
+          </form>
+          <p class="account-status ${account.phase}">${escapeHtml(account.message || "")}</p>
+          <p class="account-small">PinScope still works offline and without an account.</p>
+        `}
+      </div>
+    </section>
+  `;
+}
+
+function formatAccountSyncTime(value) {
+  const date = new Date(value);
+  return Number.isFinite(date.getTime()) ? date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "";
 }
 
 function isActiveRoundView() {
@@ -257,7 +326,7 @@ function renderCourses() {
     <section class="course-list">
       ${filteredCourses.length ? filteredCourses.map(renderCourseCard).join("") : `<p class="empty-copy">No courses match that search.</p>`}
     </section>
-    <p class="source-note">OpenStreetMap imports require ODbL attribution. Export the mapped course pack, put it in data/course-pack, then run the build script to bake snapshots into the downloadable app.</p>
+    <p class="source-note">OpenStreetMap imports require ODbL attribution. Export the mapped course pack and keep it in data/course-pack. Satellite imagery now loads live through ArcGIS sessions.</p>
   `;
 }
 
@@ -367,19 +436,15 @@ function renderCourseCard(course) {
 function renderCourseGeometryStatus(course) {
   const mapped = courseMappedHoleCount(course);
   const total = course.holes?.length || course.holesCount || 18;
-  const snapshots = courseSnapshotHoleCount(course);
   const label = mapped
     ? mapped < total
       ? `${mapped}/${total} GPS holes mapped - click OSM holes to refresh`
       : `${mapped}/${total} GPS holes mapped`
     : "GPS holes not mapped yet";
-  const snapshotLabel = snapshots
-    ? `${snapshots}/${total} saved satellite snapshot${snapshots === 1 ? "" : "s"}`
-    : "No saved satellite snapshots yet";
   return `
     <div class="course-geometry-status ${mapped ? "mapped" : "pending"}">
       <span>${label}</span>
-      <span>${snapshotLabel}</span>
+      <span>Satellite imagery: ArcGIS live session</span>
       ${course.geometrySource ? `<em>${escapeHtml(course.geometrySource)}</em>` : ""}
     </div>
   `;
@@ -403,8 +468,8 @@ function courseMappedHoleCount(course) {
   return (course?.holes || []).filter((hole) => confirmedHoleAnchors(course, hole)).length;
 }
 
-function courseSnapshotHoleCount(course) {
-  return (course?.holes || []).filter((hole) => validHoleSnapshot(hole?.snapshot, hole, course)).length;
+function courseSnapshotHoleCount() {
+  return 0;
 }
 
 function renderTeeSummary(course) {
@@ -516,7 +581,7 @@ function shotTrackingState(round, holeNumber) {
   const entry = trackedRoundEntry(round, holeNumber);
   const shots = trackedShots(entry);
   const active = trackedActiveShot(entry);
-  const nextNumber = active?.number || shots.length + 1;
+  const nextNumber = active ? active.number + 1 : shots.length + 1;
   if (!gps.position || gps.status !== "ready") {
     return {
       active: Boolean(active),
@@ -576,7 +641,8 @@ function currentGpsPoint() {
 }
 
 function trackedShotScore(entry) {
-  return trackedShots(entry).length + (trackedActiveShot(entry) ? 1 : 0);
+  const playedShots = trackedShots(entry).length + (trackedActiveShot(entry) ? 1 : 0);
+  return playedShots + (entry?.greenDetectedAt ? Number(entry.autoPutts || 2) : 0);
 }
 
 function syncTrackedScore(round, holeNumber) {
@@ -616,9 +682,17 @@ function trackShot() {
       endedAt: now,
       yards: yards ?? 0
     });
-    entry.activeShot = null;
+    const number = activeShot.number + 1;
+    entry.activeShot = {
+      id: `shot-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+      number,
+      start: position,
+      startedAt: now
+    };
     syncTrackedScore(round, round.currentHole);
-    persist(yards === null ? `Shot ${activeShot.number} landed.` : `Shot ${activeShot.number}: ${yards} yd.`);
+    persist(yards === null
+      ? `Shot ${activeShot.number} landed. Shot ${number} started.`
+      : `Shot ${activeShot.number}: ${yards} yd. Shot ${number} started.`);
     return;
   }
   const number = trackedShots(entry).length + 1;
@@ -630,6 +704,68 @@ function trackShot() {
   };
   syncTrackedScore(round, round.currentHole);
   persist(`Shot ${number} started. Tap again at your ball.`);
+}
+
+function completeTrackedShotOnGreen(position) {
+  const round = getActiveRound(state);
+  const course = round ? getCourse(state, round.courseId) : null;
+  const hole = course?.holes?.find((item) => Number(item.number) === Number(round.currentHole));
+  const entry = round ? trackedRoundEntry(round, round.currentHole) : null;
+  const activeShot = trackedActiveShot(entry);
+  if (!round || !hole || !entry || !activeShot || entry.greenDetectedAt || !positionIsOnGreen(hole, position)) {
+    return false;
+  }
+
+  const now = new Date().toISOString();
+  const yards = yardsBetween(activeShot.start, position);
+  ensureTrackedShotState(entry);
+  entry.shots.push({
+    ...activeShot,
+    end: { lat: position.lat, lng: position.lng, accuracy: position.accuracy || 0 },
+    endedAt: now,
+    yards: yards ?? 0,
+    endedOnGreen: true
+  });
+  entry.activeShot = null;
+  entry.greenDetectedAt = now;
+  entry.autoPutts = 2;
+
+  const leadPlayerId = getRoundPlayers(round)[0]?.id || "player-1";
+  const playerEntry = getPlayerEntry(round, hole.number, leadPlayerId) || getRoundEntry(round, hole.number);
+  if (playerEntry) {
+    playerEntry.putts = 2;
+    playerEntry.score = clamp(entry.shots.length + 2, 1, 12);
+    playerEntry.gir = entry.shots.length + Number(playerEntry.penalties || 0) <= Number(hole.par) - 2;
+  }
+  saveState(state);
+  scheduleAccountSync();
+  notice = `Green reached in ${entry.shots.length}. Two putts added.`;
+  return true;
+}
+
+function positionIsOnGreen(hole, position) {
+  const polygon = Array.isArray(hole?.geometry?.greenPolygon) ? hole.geometry.greenPolygon.filter(validGeoPoint) : [];
+  if (polygon.length >= 3 && pointInGeoPolygon(position, polygon)) {
+    return true;
+  }
+  const distances = [hole?.greenFront, hole?.greenCenter, hole?.greenBack]
+    .map((point) => yardsBetween(position, point))
+    .filter((distance) => Number.isFinite(distance));
+  return distances.length > 0 && Math.min(...distances) <= GREEN_ARRIVAL_RADIUS_YARDS;
+}
+
+function pointInGeoPolygon(point, polygon) {
+  let inside = false;
+  for (let index = 0, previous = polygon.length - 1; index < polygon.length; previous = index, index += 1) {
+    const a = polygon[index];
+    const b = polygon[previous];
+    const crosses = ((a.lat > point.lat) !== (b.lat > point.lat)) &&
+      (point.lng < ((b.lng - a.lng) * (point.lat - a.lat)) / ((b.lat - a.lat) || Number.EPSILON) + a.lng);
+    if (crosses) {
+      inside = !inside;
+    }
+  }
+  return inside;
 }
 
 function savedHomeCourseCount() {
@@ -801,10 +937,7 @@ function renderPlayerScoreCard(round, course, hole, player) {
 
 function renderHoleVisual(hole) {
   const course = activeVisualCourse();
-  if (snapshotAvailableForHole(hole, course)) {
-    return renderSnapshotHoleVisual(hole, course);
-  }
-  if (azureMapsActiveForHole(hole, course)) {
+  if (arcgisMapsActiveForHole(hole, course)) {
     return renderAzureHoleVisual(hole, course);
   }
   if (hole.visual?.photo && coursePhotoSource(photoCourseId(hole))) {
@@ -829,82 +962,21 @@ function renderHoleVisual(hole) {
 }
 
 function renderSnapshotHoleVisual(hole, course) {
-  const courseId = course?.id || photoCourseId(hole);
-  const snapshot = normalizeHoleSnapshot(hole?.snapshot);
-  const anchors = azureHoleAnchors(hole, course);
-  const marker = photoTargetMarkers(hole.par);
-  const panelRatio = snapshot.height / snapshot.width;
-  const transform = snapshotDisplayTransform(snapshot, anchors, marker, panelRatio);
-  if (!snapshot || !anchors || !transform) {
-    return renderAzureHoleVisual(hole, course);
-  }
-
-  const tee = { x: marker.tee[0], y: marker.tee[1] };
-  const green = { x: marker.green[0], y: marker.green[1] };
-  const greenShapeSvg = renderSnapshotGreenShapeSvg(hole, snapshot, transform);
-  const gpsPoint = gps.status === "ready" && gps.position ? snapshotGeoToTargetPoint(snapshot, gps.position, transform) : null;
-  const start = gpsPoint || tee;
-  const shotPlan = resolveSnapshotShotPlan(courseId, hole, anchors, snapshot, transform);
-  const trackedShotOverlay = renderSnapshotTrackedShotOverlay(hole, snapshot, transform);
-  const routePoints = shotPlan
-    ? [start, ...shotPlan.viewPoints, green].map((point) => `${point.x},${point.y}`).join(" ")
-    : "";
-  const guide = shotPlan ? "" : `<line class="photo-guide-route" x1="${start.x}" y1="${start.y}" x2="${green.x}" y2="${green.y}"></line>`;
-  const zoom = photoEditMode ? 1 : photoZoomLevel(courseId, hole.number);
-  const pan = photoPanOffset(courseId, hole.number, zoom);
-  const markerScale = Number((1 / Math.max(1, zoom)).toFixed(4));
-  const zoomClass = zoom > 1 ? " zoomed" : "";
-  const attribution = snapshot.attribution || "Imagery: Azure Maps";
-  return `
-    <section class="hole-visual photo-hole azure-hole snapshot-hole${shotPlan ? " planning" : ""}${zoomClass}" style="--photo-marker-scale:${markerScale}; --satellite-panel-ratio:${panelRatio};" data-snapshot-hole="${hole.number}" data-azure-hole="${hole.number}" data-azure-course-id="${courseId}" aria-label="${escapeAttribute(course?.name || "Course")} saved satellite snapshot hole ${hole.number}">
-      <div class="photo-pan-layer" style="transform:${photoPanTransform(pan)};">
-        <div class="photo-zoom-layer" style="transform:scale(${zoom});">
-          <div class="azure-tile-layer loaded snapshot-tile-layer" data-azure-tile-layer>
-            <svg class="snapshot-map-svg" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-              <image class="snapshot-map-image" href="${escapeAttribute(snapshot.imageUrl)}" x="0" y="0" width="100" height="100" preserveAspectRatio="none" transform="${snapshotImageTransform(transform)}" data-azure-tile data-loaded="1"></image>
-            </svg>
-          </div>
-          <svg class="photo-hole-overlay" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-            <defs>
-              <linearGradient id="snapshot-shot-gradient-${hole.number}" x1="0" y1="1" x2="0" y2="0">
-                <stop offset="0" stop-color="#ff4fd8"></stop>
-                <stop offset="1" stop-color="#8d5cff"></stop>
-              </linearGradient>
-            </defs>
-            ${greenShapeSvg}
-            ${guide}
-            ${trackedShotOverlay}
-            ${shotPlan ? `<polyline class="photo-plan-route" points="${routePoints}" stroke="url(#snapshot-shot-gradient-${hole.number})"></polyline>` : ""}
-            ${shotPlan?.viewPoints.map((point) => `
-              <circle class="photo-plan-point" cx="${point.x}" cy="${point.y}" r="1.9"></circle>
-              <path class="photo-plan-cross" d="M ${point.x - 1.4} ${point.y} L ${point.x + 1.4} ${point.y} M ${point.x} ${point.y - 1.4} L ${point.x} ${point.y + 1.4}"></path>
-            `).join("") || ""}
-          </svg>
-          ${greenShapeSvg ? renderPhotoGreenCenterDot(green) : renderPhotoGreenMarkerElement(green, hole.par)}
-          ${renderPhotoTeeMarkerElement(tee, Boolean(gpsPoint))}
-          ${renderPhotoGpsMarker(gpsPoint)}
-        </div>
-      </div>
-      <div class="photo-info-stack">
-        <div class="photo-hole-badge">
-          <span>Hole ${hole.number}</span>
-          <strong>Par ${hole.par}</strong>
-          <span>${firstHoleYardage(hole.yards)} yd</span>
-          <span>SI ${hole.strokeIndex}</span>
-          <em>Saved snapshot</em>
-        </div>
-        ${renderAzureShotInfo(courseId, hole, shotPlan)}
-      </div>
-      ${renderPhotoClubPanel(hole, shotPlan)}
-      ${renderGpsTestControls(hole, courseId)}
-      ${renderPhotoZoomControls(courseId, hole.number, zoom)}
-      <div class="satellite-attribution">${escapeHtml(attribution)}</div>
-    </section>
-  `;
+  return renderAzureHoleVisual(hole, course);
 }
 
 function renderAzureHoleVisual(hole, course) {
   const courseId = course?.id || photoCourseId(hole);
+  const status = arcgisBasemapStatus();
+  if ((status.phase === "idle" || status.phase === "expired") && !ensureArcgisBasemap.pendingRender) {
+    ensureArcgisBasemap.pendingRender = true;
+    ensureArcgisBasemap()
+      .then(() => render())
+      .catch(() => render())
+      .finally(() => {
+        ensureArcgisBasemap.pendingRender = false;
+      });
+  }
   const anchors = azureHoleAnchors(hole, course);
   const marker = photoTargetMarkers(hole.par);
   const panelRatio = satellitePanelRatio();
@@ -929,12 +1001,12 @@ function renderAzureHoleVisual(hole, course) {
   const zoomClass = zoom > 1 ? " zoomed" : "";
   const editClass = photoEditMode ? " editing" : "";
   return `
-    <section class="hole-visual photo-hole azure-hole${shotPlan ? " planning" : ""}${zoomClass}${editClass}" style="--photo-marker-scale:${markerScale}; --satellite-panel-ratio:${panelRatio};" data-azure-hole="${hole.number}" data-azure-course-id="${courseId}" aria-label="${escapeAttribute(course?.name || "Course")} Azure satellite hole ${hole.number}">
+    <section class="hole-visual photo-hole azure-hole${shotPlan ? " planning" : ""}${zoomClass}${editClass}" style="--photo-marker-scale:${markerScale}; --satellite-panel-ratio:${panelRatio};" data-azure-hole="${hole.number}" data-azure-course-id="${courseId}" aria-label="${escapeAttribute(course?.name || "Course")} ArcGIS satellite hole ${hole.number}">
       <div class="photo-pan-layer" style="transform:${photoPanTransform(pan)};">
         <div class="photo-zoom-layer" style="transform:scale(${zoom});">
           <div class="azure-tile-layer" data-azure-tile-layer>
             ${renderAzureTiles(map)}
-            <div class="azure-map-status" data-azure-map-status>Loading satellite</div>
+            <div class="azure-map-status" data-azure-map-status>${escapeHtml(arcgisStatusLabel())}</div>
           </div>
           <svg class="photo-hole-overlay" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
             <defs>
@@ -984,8 +1056,8 @@ function renderAzureHoleVisual(hole, course) {
   `;
 }
 
-function renderTrackedShotOverlay(hole, anchors, marker, panelRatio) {
-  const round = getActiveRound(state);
+function renderTrackedShotOverlay(hole, anchors, marker, panelRatio, sourceRound = null) {
+  const round = sourceRound || getActiveRound(state);
   const entry = round ? trackedRoundEntry(round, hole.number) : null;
   const shots = trackedShots(entry);
   const activeShot = trackedActiveShot(entry);
@@ -1004,61 +1076,87 @@ function renderTrackedShotOverlay(hole, anchors, marker, panelRatio) {
   return `
     ${completed.map(({ shot, start, end }) => `
       <line class="tracked-shot-route" x1="${start.x}" y1="${start.y}" x2="${end.x}" y2="${end.y}"></line>
-      <circle class="tracked-shot-landing" cx="${end.x}" cy="${end.y}" r="1.55"></circle>
+      <ellipse class="tracked-shot-landing" cx="${end.x}" cy="${end.y}" rx="1.55" ry="${Number((1.55 / panelRatio).toFixed(3))}"></ellipse>
       <text class="tracked-shot-label" x="${end.x + 1.8}" y="${end.y - 1.8}">${shot.number}</text>
     `).join("")}
     ${activeStart && activeEnd ? `
       <line class="tracked-shot-route active" x1="${activeStart.x}" y1="${activeStart.y}" x2="${activeEnd.x}" y2="${activeEnd.y}"></line>
-      <circle class="tracked-shot-landing active" cx="${activeStart.x}" cy="${activeStart.y}" r="1.4"></circle>
+      <ellipse class="tracked-shot-landing active" cx="${activeStart.x}" cy="${activeStart.y}" rx="1.4" ry="${Number((1.4 / panelRatio).toFixed(3))}"></ellipse>
     ` : ""}
   `;
 }
 
-function renderAzureTiles(map) {
-  if (map.image) {
-    return `
-      <img class="azure-map-image" src="${map.image.src}" alt="" aria-hidden="true" loading="eager" decoding="async" referrerpolicy="no-referrer" data-azure-tile style="left:${map.image.left}%; top:${map.image.top}%; width:${map.image.width}%; height:${map.image.height}%; transform:rotate(${map.image.rotation}deg);" />
-    `;
+function renderAzureTiles(map, eager = true) {
+  const status = arcgisBasemapStatus();
+  if (!status.ready) {
+    return "";
   }
-  return map.tiles.map((tile) => `
-    <img class="azure-map-tile" src="${satelliteTileUrl(tile.x, tile.y, map.zoom)}" alt="" aria-hidden="true" loading="eager" decoding="async" referrerpolicy="no-referrer" data-azure-tile data-fallback-src="${escapeAttribute(esriTileUrl(tile.x, tile.y, map.zoom))}" style="left:${tile.left}%; top:${tile.top}%; width:${tile.width}%; height:${tile.height}%; transform:rotate(${tile.rotation}deg);" />
-  `).join("");
+  if (map.image) {
+    return "";
+  }
+  return map.tiles.map((tile) => {
+    const src = satelliteTileUrl(tile.x, tile.y, map.zoom);
+    if (!src) {
+      return "";
+    }
+    return `
+      <img class="azure-map-tile" src="${escapeAttribute(src)}" alt="" aria-hidden="true" loading="${eager ? "eager" : "lazy"}" decoding="async" referrerpolicy="no-referrer" data-azure-tile style="left:${tile.left}%; top:${tile.top}%; width:${tile.width}%; height:${tile.height}%; transform:rotate(${tile.rotation}deg);" />
+    `;
+  }).join("");
+}
+
+function arcgisStatusLabel() {
+  const status = arcgisBasemapStatus();
+  if (status.ready) {
+    return "Loading satellite";
+  }
+  if (status.phase === "error") {
+    return status.error || "ArcGIS imagery unavailable";
+  }
+  if (status.phase === "loading-session") {
+    return "Starting ArcGIS map session";
+  }
+  if (status.phase === "loading-style") {
+    return "Loading ArcGIS imagery";
+  }
+  return "Preparing satellite imagery";
 }
 
 function queueCourseSatellitePreload(course, currentHoleNumber = 1) {
   if (!course?.holes?.length || !azureMapsEnabled) {
     return;
   }
-  if (satellitePreloadCourseId !== course.id) {
-    satellitePreloadCourseId = course.id;
-    satellitePreloadQueue = [];
-    satellitePreloadedUrls = new Set();
-    satellitePreloadingUrls = new Set();
-    satellitePreloadActive = 0;
-  }
-  const ratio = satellitePanelRatio();
-  const orderedHoles = course.holes
-    .slice()
-    .sort((a, b) => {
-      const aDistance = Math.abs(Number(a.number) - Number(currentHoleNumber));
-      const bDistance = Math.abs(Number(b.number) - Number(currentHoleNumber));
-      return aDistance - bDistance || Number(a.number) - Number(b.number);
+  ensureArcgisBasemap().then(() => {
+    if (satellitePreloadCourseId !== course.id) {
+      satellitePreloadCourseId = course.id;
+      satellitePreloadQueue = [];
+      satellitePreloadedUrls = new Set();
+      satellitePreloadingUrls = new Set();
+      satellitePreloadActive = 0;
+    }
+    const ratio = satellitePanelRatio();
+    const orderedHoles = course.holes
+      .filter((hole) => Math.abs(Number(hole.number) - Number(currentHoleNumber)) <= 1)
+      .sort((a, b) => {
+        const aDistance = Math.abs(Number(a.number) - Number(currentHoleNumber));
+        const bDistance = Math.abs(Number(b.number) - Number(currentHoleNumber));
+        return aDistance - bDistance || Number(a.number) - Number(b.number);
+      });
+    const queuedUrls = new Set([...satellitePreloadQueue.map((item) => item.src), ...satellitePreloadingUrls]);
+    orderedHoles.forEach((hole) => {
+      const items = satelliteMapPreloadItems(azureMapViewForHole(azureHoleAnchors(hole, course), photoTargetMarkers(hole.par), ratio));
+      items.forEach((item) => {
+        if (!item.src || satellitePreloadedUrls.has(item.src) || queuedUrls.has(item.src)) {
+          return;
+        }
+        queuedUrls.add(item.src);
+        satellitePreloadQueue.push(item);
+      });
     });
-  const queuedUrls = new Set([...satellitePreloadQueue.map((item) => item.src), ...satellitePreloadingUrls]);
-  orderedHoles.forEach((hole) => {
-    const snapshot = normalizeHoleSnapshot(hole?.snapshot);
-    const items = snapshot
-      ? [{ src: snapshot.imageUrl }]
-      : satelliteMapPreloadItems(azureMapViewForHole(azureHoleAnchors(hole, course), photoTargetMarkers(hole.par), ratio));
-    items.forEach((item) => {
-      if (!item.src || satellitePreloadedUrls.has(item.src) || queuedUrls.has(item.src)) {
-        return;
-      }
-      queuedUrls.add(item.src);
-      satellitePreloadQueue.push(item);
-    });
+    scheduleSatellitePreload();
+  }).catch(() => {
+    // The visible map will show the ArcGIS session error.
   });
-  scheduleSatellitePreload();
 }
 
 function satelliteMapPreloadItems(map) {
@@ -1068,10 +1166,9 @@ function satelliteMapPreloadItems(map) {
   if (map.image?.src) {
     return [{ src: map.image.src }];
   }
-  return (map.tiles || []).map((tile) => ({
-    src: satelliteTileUrl(tile.x, tile.y, map.zoom),
-    fallbackSrc: azureMapsKey ? esriTileUrl(tile.x, tile.y, map.zoom) : ""
-  }));
+  return (map.tiles || [])
+    .map((tile) => ({ src: satelliteTileUrl(tile.x, tile.y, map.zoom), fallbackSrc: "" }))
+    .filter((item) => item.src);
 }
 
 function scheduleSatellitePreload() {
@@ -1129,7 +1226,7 @@ function renderAzureShotInfo(courseId, hole, shotPlan) {
           <strong>${segment.yards}<small>yd</small></strong>
         </div>
       `).join("")}
-      <button class="photo-clear-shot" type="button" data-action="clear-azure-shot-plan" data-course-id="${courseId}" data-hole="${hole.number}" aria-label="Clear shot path">Clear</button>
+      <button class="photo-clear-shot" type="button" data-action="clear-satellite-shot-plan" data-course-id="${courseId}" data-hole="${hole.number}" aria-label="Clear shot path">Clear</button>
     </div>
   `;
 }
@@ -1220,7 +1317,7 @@ function renderPhotoHoleVisual(hole) {
       ${photoEditMode ? "" : renderGpsTestControls(hole, courseId)}
       ${photoEditMode ? "" : renderPhotoZoomControls(courseId, hole.number, zoom)}
       <div class="photo-align-toolbar">
-        ${!photoEditMode && satelliteAvailableForHole(hole, course) ? `<button class="photo-tool-button" type="button" data-action="toggle-azure-maps">Satellite</button>` : ""}
+        ${!photoEditMode && satelliteAvailableForHole(hole, course) ? `<button class="photo-tool-button" type="button" data-action="toggle-arcgis-maps">Satellite</button>` : ""}
         <button class="photo-tool-button" type="button" data-action="toggle-photo-edit">${photoEditMode ? "Done" : "Adjust"}</button>
         ${photoEditMode && (edited || generated) ? `<button class="photo-tool-button" type="button" data-action="reset-hole-photo-alignment" data-course-id="${courseId}" data-hole="${hole.number}">Reset Hole</button>` : ""}
         ${photoEditMode && courseAligned ? `<button class="photo-tool-button" type="button" data-action="reset-course-photo-calibration" data-course-id="${courseId}">Reset Course</button>` : ""}
@@ -1471,129 +1568,67 @@ function activeVisualCourse() {
   return round ? getCourse(state, round.courseId) : getCourse(state, state.selectedCourseId);
 }
 
-function snapshotAvailableForHole(hole, course = activeVisualCourse()) {
-  return Boolean(validHoleSnapshot(hole?.snapshot, hole, course) && azureHoleAnchors(hole, course));
+function snapshotAvailableForHole() {
+  return false;
 }
 
-function validHoleSnapshot(snapshot, hole = null, course = null) {
-  const normalized = normalizeHoleSnapshot(snapshot);
-  if (!normalized) {
-    return false;
-  }
-  if (!hole) {
-    return true;
-  }
-  const signature = snapshotGeometrySignature(course?.id || "", hole);
-  return !normalized.geometrySignature || normalized.geometrySignature === signature;
+function validHoleSnapshot() {
+  return false;
 }
 
-function normalizeHoleSnapshot(snapshot) {
-  if (!snapshot || typeof snapshot !== "object") {
-    return null;
-  }
-  const imageUrl = String(snapshot.imageUrl || snapshot.url || "").trim();
-  const center = normalizeGeoPoint(snapshot.center);
-  const zoom = Number(snapshot.zoom);
-  const width = Number(snapshot.width);
-  const height = Number(snapshot.height);
-  if (!imageUrl || !center || !Number.isFinite(zoom) || !Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) {
-    return null;
-  }
-  return {
-    ...snapshot,
-    imageUrl,
-    center,
-    zoom,
-    width,
-    height,
-    geometrySignature: String(snapshot.geometrySignature || "").trim()
-  };
+function normalizeHoleSnapshot() {
+  return null;
+}
+
+function arcgisMapsActiveForHole(hole, course = activeVisualCourse()) {
+  return Boolean(azureMapsEnabled && satelliteAvailableForHole(hole, course));
 }
 
 function azureMapsActiveForHole(hole, course = activeVisualCourse()) {
-  return Boolean(azureMapsEnabled && satelliteAvailableForHole(hole, course));
+  return arcgisMapsActiveForHole(hole, course);
 }
 
 function satelliteAvailableForHole(hole, course = activeVisualCourse()) {
   return Boolean(azureHoleAnchors(hole, course));
 }
 
-function initAzureMapsKey() {
+function initArcgisMapsEnabled() {
   const params = new URLSearchParams(window.location.search);
-  const queryKey = String(params.get(AZURE_MAPS_QUERY_KEY) || "").trim();
-  if (queryKey) {
-    try {
-      localStorage.setItem(AZURE_MAPS_KEY_STORAGE, queryKey);
-      localStorage.setItem(AZURE_MAPS_ENABLED_STORAGE, "1");
-    } catch {
-      // The key still works for the current page load if storage is blocked.
-    }
-    return queryKey;
-  }
-  return readLocalStorage(AZURE_MAPS_KEY_STORAGE, "");
-}
-
-function initAzureMapsEnabled() {
-  const params = new URLSearchParams(window.location.search);
-  const queryValue = params.get(AZURE_MAPS_QUERY_ENABLED);
+  const queryValue = params.get(ARCGIS_MAPS_QUERY_ENABLED);
   if (queryValue !== null) {
     const enabled = queryValue !== "0" && queryValue.toLowerCase() !== "false";
     try {
-      localStorage.setItem(AZURE_MAPS_ENABLED_STORAGE, enabled ? "1" : "0");
+      localStorage.setItem(ARCGIS_MAPS_ENABLED_STORAGE, enabled ? "1" : "0");
     } catch {
       // Keep the setting in memory if storage is blocked.
     }
     return enabled;
   }
-  return true;
+  return readLocalStorage(ARCGIS_MAPS_ENABLED_STORAGE, "1") !== "0";
 }
 
-function saveAzureMapsEnabled() {
+function saveArcgisMapsEnabled() {
   try {
-    localStorage.setItem(AZURE_MAPS_ENABLED_STORAGE, azureMapsEnabled ? "1" : "0");
+    localStorage.setItem(ARCGIS_MAPS_ENABLED_STORAGE, azureMapsEnabled ? "1" : "0");
   } catch {
     // In-memory toggle still works for this session.
   }
 }
 
-function satelliteTileUrl(x, y, zoom) {
-  return azureMapsKey ? azureTileUrl(x, y, zoom) : esriTileUrl(x, y, zoom);
+function saveAzureMapsEnabled() {
+  saveArcgisMapsEnabled();
 }
 
-function azureTileUrl(x, y, zoom) {
-  const params = new URLSearchParams({
-    "api-version": "2024-04-01",
-    tilesetId: "microsoft.imagery",
-    zoom: String(zoom),
-    x: String(x),
-    y: String(y),
-    tileSize: String(AZURE_MAPS_REQUEST_TILE_SIZE),
-    view: "Auto",
-    "subscription-key": azureMapsKey
-  });
-  return `https://atlas.microsoft.com/map/tile?${params.toString()}`;
+function satelliteTileUrl(x, y, zoom) {
+  return arcgisTileUrl(x, y, zoom);
 }
 
 function esriTileUrl(x, y, zoom) {
-  return `${ESRI_WORLD_IMAGERY_URL}/${zoom}/${y}/${x}`;
+  return arcgisTileUrl(x, y, zoom);
 }
 
-function esriExportUrl(bounds) {
-  const params = new URLSearchParams({
-    bbox: [
-      bounds.mercator.left,
-      bounds.mercator.bottom,
-      bounds.mercator.right,
-      bounds.mercator.top
-    ].map((value) => value.toFixed(3)).join(","),
-    bboxSR: "3857",
-    imageSR: "3857",
-    size: `${bounds.imageWidth},${bounds.imageHeight}`,
-    format: "jpgpng",
-    transparent: "false",
-    f: "image"
-  });
-  return `${ESRI_WORLD_IMAGERY_EXPORT_URL}?${params.toString()}`;
+function esriExportUrl() {
+  return "";
 }
 
 function azureHoleAnchors(hole, course = activeVisualCourse()) {
@@ -1641,7 +1676,7 @@ function azureMapViewForHole(anchors, marker = photoTargetMarkers(4), panelRatio
   if (!anchors?.tee || !anchors?.green) {
     return null;
   }
-  const zoom = AZURE_MAPS_ZOOM;
+  const zoom = ARCGIS_MAPS_ZOOM;
   const tee = geoToWorldPixel(anchors.tee, zoom);
   const green = geoToWorldPixel(anchors.green, zoom);
   const ratio = normalizedSatelliteRatio(panelRatio);
@@ -1658,33 +1693,29 @@ function azureMapViewForHole(anchors, marker = photoTargetMarkers(4), panelRatio
   if (worldCorners.length !== 4) {
     return null;
   }
-  if (!azureMapsKey) {
-    const image = satelliteExportImage(worldCorners, transform, marker, ratio);
-    return image ? { zoom, image, tiles: [], attribution: SATELLITE_ATTRIBUTION } : null;
-  }
-  const minTileX = Math.floor(Math.min(...worldCorners.map((point) => point.x)) / AZURE_MAPS_TILE_SIZE);
-  const maxTileX = Math.floor(Math.max(...worldCorners.map((point) => point.x)) / AZURE_MAPS_TILE_SIZE);
-  const minTileY = Math.floor(Math.min(...worldCorners.map((point) => point.y)) / AZURE_MAPS_TILE_SIZE);
-  const maxTileY = Math.floor(Math.max(...worldCorners.map((point) => point.y)) / AZURE_MAPS_TILE_SIZE);
+  const minTileX = Math.floor(Math.min(...worldCorners.map((point) => point.x)) / arcgisTileSize());
+  const maxTileX = Math.floor(Math.max(...worldCorners.map((point) => point.x)) / arcgisTileSize());
+  const minTileY = Math.floor(Math.min(...worldCorners.map((point) => point.y)) / arcgisTileSize());
+  const maxTileY = Math.floor(Math.max(...worldCorners.map((point) => point.y)) / arcgisTileSize());
   const tiles = [];
   for (let x = minTileX; x <= maxTileX; x += 1) {
     for (let y = minTileY; y <= maxTileY; y += 1) {
       const origin = satelliteWorldToTarget({
-        x: x * AZURE_MAPS_TILE_SIZE,
-        y: y * AZURE_MAPS_TILE_SIZE
+        x: x * arcgisTileSize(),
+        y: y * arcgisTileSize()
       }, transform, marker, ratio);
       tiles.push({
         x,
         y,
         left: Number(origin.x.toFixed(4)),
         top: Number(origin.y.toFixed(4)),
-        width: Number((AZURE_MAPS_TILE_SIZE * transform.scale + 0.12).toFixed(4)),
-        height: Number(((AZURE_MAPS_TILE_SIZE * transform.scale + 0.12) / ratio).toFixed(4)),
+        width: Number((arcgisTileSize() * transform.scale + 0.12).toFixed(4)),
+        height: Number(((arcgisTileSize() * transform.scale + 0.12) / ratio).toFixed(4)),
         rotation: Number(transform.rotation.toFixed(4))
       });
     }
   }
-  return { zoom, tiles, attribution: "Imagery: Azure Maps" };
+  return { zoom, tiles, attribution: SATELLITE_ATTRIBUTION };
 }
 
 function satelliteExportImage(worldCorners, transform, marker, panelRatio = SATELLITE_PANEL_RATIO) {
@@ -1700,8 +1731,8 @@ function satelliteExportImage(worldCorners, transform, marker, panelRatio = SATE
   const imageScale = Math.min(2.5, maxImageEdge / Math.max(width, height));
   const imageWidth = Math.max(256, Math.round(width * imageScale));
   const imageHeight = Math.max(256, Math.round(height * imageScale));
-  const mercatorTopLeft = worldPixelToWebMercator({ x: left, y: top }, AZURE_MAPS_ZOOM);
-  const mercatorBottomRight = worldPixelToWebMercator({ x: right, y: bottom }, AZURE_MAPS_ZOOM);
+  const mercatorTopLeft = worldPixelToWebMercator({ x: left, y: top }, ARCGIS_MAPS_ZOOM);
+  const mercatorBottomRight = worldPixelToWebMercator({ x: right, y: bottom }, ARCGIS_MAPS_ZOOM);
   const bounds = {
     imageWidth,
     imageHeight,
@@ -1778,7 +1809,7 @@ function azureEventToPosition(panel, anchors, marker, event) {
   return azureTargetPointToGeo(anchors, point, marker, rect.height / rect.width);
 }
 
-function geoToWorldPixel(position, zoom, tileSize = AZURE_MAPS_TILE_SIZE) {
+function geoToWorldPixel(position, zoom, tileSize = arcgisTileSize()) {
   const lat = clamp(Number(position.lat), -85.05112878, 85.05112878);
   const lng = Number(position.lng);
   const scale = tileSize * 2 ** zoom;
@@ -1789,7 +1820,7 @@ function geoToWorldPixel(position, zoom, tileSize = AZURE_MAPS_TILE_SIZE) {
   };
 }
 
-function worldPixelToGeo(pixel, zoom, tileSize = AZURE_MAPS_TILE_SIZE) {
+function worldPixelToGeo(pixel, zoom, tileSize = arcgisTileSize()) {
   const scale = tileSize * 2 ** zoom;
   const lng = (pixel.x / scale) * 360 - 180;
   const n = Math.PI - (2 * Math.PI * pixel.y) / scale;
@@ -1798,7 +1829,7 @@ function worldPixelToGeo(pixel, zoom, tileSize = AZURE_MAPS_TILE_SIZE) {
 }
 
 function worldPixelToWebMercator(pixel, zoom) {
-  const scale = AZURE_MAPS_TILE_SIZE * 2 ** zoom;
+  const scale = arcgisTileSize() * 2 ** zoom;
   const originShift = Math.PI * 6378137;
   return {
     x: (pixel.x / scale) * (originShift * 2) - originShift,
@@ -1891,10 +1922,10 @@ function snapshotGeoToImagePoint(snapshot, position) {
   if (!normalized || !validGeoPoint(position)) {
     return null;
   }
-  const centerWorld = geoToWorldPixel(normalized.center, normalized.zoom, AZURE_MAPS_STATIC_TILE_SIZE);
-  const pointWorld = geoToWorldPixel(position, normalized.zoom, AZURE_MAPS_STATIC_TILE_SIZE);
+  const centerWorld = geoToWorldPixel(normalized.center, normalized.zoom, 512);
+  const pointWorld = geoToWorldPixel(position, normalized.zoom, 512);
   let dx = pointWorld.x - centerWorld.x;
-  const worldSize = AZURE_MAPS_STATIC_TILE_SIZE * 2 ** normalized.zoom;
+  const worldSize = 512 * 2 ** normalized.zoom;
   if (Math.abs(dx) > worldSize / 2) {
     dx += dx > 0 ? -worldSize : worldSize;
   }
@@ -1913,12 +1944,12 @@ function snapshotTargetPointToGeo(snapshot, point, transform = null) {
   if (!imagePoint) {
     return null;
   }
-  const centerWorld = geoToWorldPixel(normalized.center, normalized.zoom, AZURE_MAPS_STATIC_TILE_SIZE);
+  const centerWorld = geoToWorldPixel(normalized.center, normalized.zoom, 512);
   const world = {
     x: centerWorld.x + ((Number(imagePoint.x) - 50) / 100) * normalized.width,
     y: centerWorld.y + ((Number(imagePoint.y) - 50) / 100) * normalized.height
   };
-  return worldPixelToGeo(world, normalized.zoom, AZURE_MAPS_STATIC_TILE_SIZE);
+  return worldPixelToGeo(world, normalized.zoom, 512);
 }
 
 function snapshotGeometrySignature(courseId, hole) {
@@ -2208,7 +2239,6 @@ function applySatelliteAnchorEditToHole(courseId, holeNumber) {
   if (!course || !hole || !validGeoPoint(edited?.tee) || !validGeoPoint(edited?.green)) {
     return false;
   }
-  const currentSignature = snapshotGeometrySignature(course.id, hole);
   hole.tee = edited.tee;
   hole.greenCenter = edited.green;
   const estimated = estimateGreenFrontBackFromPolygon(
@@ -2225,9 +2255,6 @@ function applySatelliteAnchorEditToHole(courseId, holeNumber) {
     source: "PinScope satellite alignment",
     updatedAt: new Date().toISOString()
   });
-  if (hole.snapshot && currentSignature !== snapshotGeometrySignature(course.id, hole)) {
-    hole.snapshot = null;
-  }
   saveState(state);
   return true;
 }
@@ -3064,11 +3091,13 @@ function renderRoundRow(round) {
         }).join(" - ")}</p>
       </div>
       ${renderRoundShotLog(round)}
+      <button class="round-delete-button" type="button" data-action="delete-round" data-round-id="${escapeAttribute(round.id)}">Remove round</button>
     </article>
   `;
 }
 
 function renderRoundShotLog(round) {
+  const course = getCourse(state, round.courseId);
   const holes = (round.entries || [])
     .map((entry) => ({
       holeNumber: entry.holeNumber,
@@ -3083,6 +3112,7 @@ function renderRoundShotLog(round) {
       ${holes.map((entry) => `
         <details>
           <summary>Hole ${entry.holeNumber} - ${entry.shots.length} shot${entry.shots.length === 1 ? "" : "s"}</summary>
+          ${renderSavedRoundHoleMap(round, course, entry.holeNumber)}
           <div class="round-shot-list">
             ${entry.shots.map((shot) => `
               <div>
@@ -3096,6 +3126,44 @@ function renderRoundShotLog(round) {
       `).join("")}
     </div>
   `;
+}
+
+function renderSavedRoundHoleMap(round, course, holeNumber) {
+  const hole = course?.holes?.find((item) => Number(item.number) === Number(holeNumber));
+  const anchors = hole ? azureHoleAnchors(hole, course) : null;
+  const marker = hole ? photoTargetMarkers(hole.par) : null;
+  const panelRatio = satellitePanelRatio();
+  const map = anchors && marker ? azureMapViewForHole(anchors, marker, panelRatio) : null;
+  if (!hole || !map) {
+    return `<p class="round-map-unavailable">Satellite view is unavailable for this hole.</p>`;
+  }
+  ensureSatelliteSessionRender();
+  return `
+    <div class="round-satellite-map" style="--satellite-panel-ratio:${panelRatio};" aria-label="Satellite shot map for hole ${hole.number}">
+      <div class="azure-tile-layer" data-azure-tile-layer>
+        ${renderAzureTiles(map, false)}
+        <div class="azure-map-status" data-azure-map-status>${escapeHtml(arcgisStatusLabel())}</div>
+      </div>
+      <svg class="photo-hole-overlay" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+        ${renderTrackedShotOverlay(hole, anchors, marker, panelRatio, round)}
+      </svg>
+      <div class="satellite-attribution">${escapeHtml(map.attribution || SATELLITE_ATTRIBUTION)}</div>
+    </div>
+  `;
+}
+
+function ensureSatelliteSessionRender() {
+  const status = arcgisBasemapStatus();
+  if ((status.phase !== "idle" && status.phase !== "expired") || ensureSatelliteSessionRender.pending) {
+    return;
+  }
+  ensureSatelliteSessionRender.pending = true;
+  ensureArcgisBasemap()
+    .then(() => render())
+    .catch(() => render())
+    .finally(() => {
+      ensureSatelliteSessionRender.pending = false;
+    });
 }
 
 function formatShotLanding(point) {
@@ -3133,6 +3201,24 @@ function handleClick(event) {
     startGps();
   }
 
+  if (action === "open-account") {
+    accountOpen = true;
+    render();
+  }
+
+  if (action === "close-account") {
+    accountOpen = false;
+    render();
+  }
+
+  if (action === "sync-account") {
+    syncAccountNow().catch(() => {});
+  }
+
+  if (action === "sign-out") {
+    signOutAccount().catch(() => {});
+  }
+
   if (action === "track-shot") {
     trackShot();
   }
@@ -3141,13 +3227,13 @@ function handleClick(event) {
     setGpsTestPosition(button);
   }
 
-  if (action === "toggle-azure-maps") {
+  if (action === "toggle-arcgis-maps") {
     azureMapsEnabled = !azureMapsEnabled;
     saveAzureMapsEnabled();
     render();
   }
 
-  if (action === "clear-azure-shot-plan") {
+  if (action === "clear-satellite-shot-plan") {
     clearAzureShotPlan(button.dataset.courseId, button.dataset.hole);
   }
 
@@ -3208,6 +3294,10 @@ function handleClick(event) {
 
   if (action === "finish-round") {
     finishRound();
+  }
+
+  if (action === "delete-round") {
+    deleteSavedRound(button.dataset.roundId);
   }
 
   if (action === "open-score-card") {
@@ -3293,6 +3383,10 @@ function handleSubmit(event) {
       carryYards: clamp(Number(data.get(club.id) || club.carryYards), 0, 400)
     }));
     persist("Bag saved.");
+  }
+
+  if (form.dataset.form === "account-sign-in") {
+    sendAccountMagicLink(String(data.get("email") || "")).catch(() => {});
   }
 
 }
@@ -3382,7 +3476,7 @@ function updateAzureTileStatus(layer) {
   layer.classList.toggle("loaded", complete);
   layer.classList.toggle("failed", allFinished && failed > 0);
   if (status) {
-    status.textContent = complete ? "Satellite ready" : allFinished && failed > 0 ? "Satellite incomplete" : "Loading satellite";
+    status.textContent = complete ? "Satellite ready" : allFinished && failed > 0 ? "ArcGIS imagery incomplete" : "Loading satellite";
   }
 }
 
@@ -3408,9 +3502,7 @@ function handleAzurePlanningClick(event) {
   if (!hole || !anchors) {
     return;
   }
-  const point = panel.dataset.snapshotHole
-    ? snapshotEventToPosition(panel, hole, event)
-    : azureEventToPosition(panel, anchors, photoTargetMarkers(hole.par), event);
+  const point = azureEventToPosition(panel, anchors, photoTargetMarkers(hole.par), event);
   if (!point) {
     return;
   }
@@ -4267,7 +4359,22 @@ function updateEntryStep(button) {
   const min = Number(button.dataset.min);
   const max = Number(button.dataset.max);
   playerEntry[field] = clamp(Number(playerEntry[field] || 0) + delta, min, max);
+  if (field === "penalties") {
+    syncTrackedGir(round, Number(button.dataset.hole), playerEntry);
+  }
   persistScoreEntry();
+}
+
+function syncTrackedGir(round, holeNumber, playerEntry) {
+  const entry = trackedRoundEntry(round, holeNumber);
+  if (!entry?.greenDetectedAt || !playerEntry) {
+    return;
+  }
+  const course = getCourse(state, round.courseId);
+  const hole = course?.holes?.find((item) => Number(item.number) === Number(holeNumber));
+  if (hole) {
+    playerEntry.gir = trackedShots(entry).length + Number(playerEntry.penalties || 0) <= Number(hole.par) - 2;
+  }
 }
 
 function updateEntryValue(button) {
@@ -4339,7 +4446,7 @@ function exportCoursePackJson() {
     courses: defaults
   };
   downloadTextFile("pinscope-course-pack.json", JSON.stringify(payload, null, 2), "application/json");
-  flash(`Exported course pack JSON for ${defaults.length} course${defaults.length === 1 ? "" : "s"}. Put it in data/course-pack, then run the snapshot builder.`);
+  flash(`Exported course pack JSON for ${defaults.length} course${defaults.length === 1 ? "" : "s"}. Put it in data/course-pack; ArcGIS imagery loads live at runtime.`);
 }
 
 function courseToSharedDefault(course) {
@@ -4410,30 +4517,12 @@ function holeToSharedDefault(hole, course = null) {
       satelliteAligned: Boolean(anchors?.edited)
     }),
     osm: hole.osm || null,
-    snapshot: normalizeExportSnapshot(hole.snapshot),
     visual: sanitizeVisualCoordinates(hole.visual)
   });
 }
 
-function normalizeExportSnapshot(snapshot) {
-  const normalized = normalizeHoleSnapshot(snapshot);
-  if (!normalized) {
-    return null;
-  }
-  return pruneEmpty({
-    imageUrl: normalized.imageUrl,
-    storageKey: normalized.storageKey || "",
-    width: normalized.width,
-    height: normalized.height,
-    center: normalized.center,
-    zoom: normalized.zoom,
-    provider: normalized.provider || "azure-maps",
-    tileset: normalized.tileset || "microsoft.imagery",
-    attribution: normalized.attribution || "Imagery: Azure Maps",
-    generatedAt: normalized.generatedAt || "",
-    fingerprint: normalized.fingerprint || "",
-    geometrySignature: normalized.geometrySignature || ""
-  });
+function normalizeExportSnapshot() {
+  return null;
 }
 
 function normalizeExportGeometry(geometry, fallbackGreenPolygon) {
@@ -4531,6 +4620,20 @@ function finishRound() {
   persist("Round saved.");
 }
 
+function deleteSavedRound(roundId) {
+  const round = state.rounds.find((item) => item.id === roundId && item.status === "complete");
+  if (!round) {
+    return;
+  }
+  const course = getCourse(state, round.courseId);
+  if (!window.confirm(`Remove this saved round at ${course?.name || "this course"}? This cannot be undone.`)) {
+    return;
+  }
+  queueCloudRoundDeletion(roundId);
+  state.rounds = state.rounds.filter((item) => item.id !== roundId);
+  persist("Round removed.");
+}
+
 async function importNearbyCourses() {
   if (!navigator.geolocation) {
     flash("GPS is not available in this browser.");
@@ -4600,7 +4703,7 @@ async function refreshCourseLayout(courseId) {
     applyCourseGeometry(course.id, layout, {
       source: "OpenStreetMap",
       message: layout.mappedCount || layout.greenShapeCount
-        ? `Mapped ${layout.mappedCount || 0} tee/green hole${(layout.mappedCount || 0) === 1 ? "" : "s"} and ${layout.greenShapeCount || 0} green shape${(layout.greenShapeCount || 0) === 1 ? "" : "s"} from course-locked OSM${layout.courseArea ? " boundary" : " area"}${layout.counts ? ` (${layout.counts.holeLines} hole lines, ${layout.counts.greens} greens, ${layout.counts.tees} tees found inside the course)` : ""}. Export the course pack, then run the snapshot builder.`
+        ? `Mapped ${layout.mappedCount || 0} tee/green hole${(layout.mappedCount || 0) === 1 ? "" : "s"} and ${layout.greenShapeCount || 0} green shape${(layout.greenShapeCount || 0) === 1 ? "" : "s"} from course-locked OSM${layout.courseArea ? " boundary" : " area"}${layout.counts ? ` (${layout.counts.holeLines} hole lines, ${layout.counts.greens} greens, ${layout.counts.tees} tees found inside the course)` : ""}. Export the course pack; ArcGIS imagery loads live at runtime.`
         : "No OSM hole geometry found for this course."
     });
   } catch (error) {
@@ -4613,7 +4716,7 @@ async function importCourseGeometryFile(file, courseId) {
     const payload = JSON.parse(await file.text());
     applyCourseGeometry(courseId, payload, {
       source: payload.source || payload.schema || "PinScope Green Mapper",
-      message: "Imported mapper geometry. Export the course pack, then run the snapshot builder."
+      message: "Imported mapper geometry. Export the course pack; ArcGIS imagery loads live at runtime."
     });
   } catch (error) {
     flash(error.message || "Could not import that geometry JSON.");
@@ -4649,7 +4752,6 @@ function applyCourseGeometry(courseId, payload, options = {}) {
     return {
       ...cleaned,
       name: update.name || cleaned.name,
-      snapshot: null,
       tee: update.tee || cleaned.tee || null,
       greenCenter: update.greenCenter || cleaned.greenCenter || null,
       greenFront: update.greenFront || cleaned.greenFront || null,
@@ -4919,6 +5021,7 @@ function applyGpsPosition(position, accuracy = 0, spoofed = false, sourcePoint =
     sourceCourseId,
     sourceHoleNumber
   };
+  completeTrackedShotOnGreen(gps.position);
   render();
 }
 
@@ -5627,7 +5730,9 @@ function imageFileToDataUrl(file, maxEdge, quality) {
 }
 
 function persist(message = "") {
+  touchActiveRound();
   saveState(state);
+  scheduleAccountSync();
   if (message) {
     flash(message);
   } else {
@@ -5637,7 +5742,9 @@ function persist(message = "") {
 
 function persistScoreEntry() {
   const scrollTop = document.querySelector(".score-card-players")?.scrollTop ?? null;
+  touchActiveRound();
   saveState(state);
+  scheduleAccountSync();
   render();
   if (scrollTop === null) {
     return;
@@ -5648,6 +5755,13 @@ function persistScoreEntry() {
       players.scrollTop = scrollTop;
     }
   });
+}
+
+function touchActiveRound() {
+  const round = getActiveRound(state);
+  if (round) {
+    round.updatedAt = new Date().toISOString();
+  }
 }
 
 function flash(message) {
