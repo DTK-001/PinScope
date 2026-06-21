@@ -1,0 +1,77 @@
+[
+  {
+    "id": "verified-carnoustie-championship",
+    "geometrySource": "OpenStreetMap golf=hole ways tagged for The Carnoustie Championship, fetched and checked 2026-06-21.",
+    "attribution": "Hole geometry from OpenStreetMap contributors under ODbL.",
+    "holes": [
+      { "number": 1, "tee": { "lat": 56.4968428, "lng": -2.7169771 }, "greenCenter": { "lat": 56.4943258, "lng": -2.720303 } },
+      { "number": 2, "tee": { "lat": 56.4940776, "lng": -2.7191243 }, "greenCenter": { "lat": 56.4908319, "lng": -2.7180595 } },
+      { "number": 3, "tee": { "lat": 56.4906144, "lng": -2.7186621 }, "greenCenter": { "lat": 56.4933389, "lng": -2.7196384 } },
+      { "number": 4, "tee": { "lat": 56.4934532, "lng": -2.7200979 }, "greenCenter": { "lat": 56.4913061, "lng": -2.7245075 } },
+      { "number": 5, "tee": { "lat": 56.4908442, "lng": -2.7249359 }, "greenCenter": { "lat": 56.4907909, "lng": -2.7194963 } },
+      { "number": 6, "tee": { "lat": 56.4905834, "lng": -2.7189969 }, "greenCenter": { "lat": 56.4903317, "lng": -2.7274673 } },
+      { "number": 7, "tee": { "lat": 56.4900094, "lng": -2.7270625 }, "greenCenter": { "lat": 56.4897754, "lng": -2.733001 } },
+      { "number": 8, "tee": { "lat": 56.4896887, "lng": -2.733575 }, "greenCenter": { "lat": 56.4908704, "lng": -2.734444 } },
+      { "number": 9, "tee": { "lat": 56.4908923, "lng": -2.7337517 }, "greenCenter": { "lat": 56.4942564, "lng": -2.7370133 } },
+      { "number": 10, "tee": { "lat": 56.4945318, "lng": -2.7369369 }, "greenCenter": { "lat": 56.4940224, "lng": -2.7304084 } },
+      { "number": 11, "tee": { "lat": 56.4938826, "lng": -2.7298387 }, "greenCenter": { "lat": 56.493816, "lng": -2.7352594 } },
+      { "number": 12, "tee": { "lat": 56.4940667, "lng": -2.7361195 }, "greenCenter": { "lat": 56.4905663, "lng": -2.7326058 } },
+      { "number": 13, "tee": { "lat": 56.4900434, "lng": -2.7331437 }, "greenCenter": { "lat": 56.4908271, "lng": -2.7314509 } },
+      { "number": 14, "tee": { "lat": 56.4912124, "lng": -2.7324739 }, "greenCenter": { "lat": 56.4912332, "lng": -2.7249959 } },
+      { "number": 15, "tee": { "lat": 56.4915371, "lng": -2.7258748 }, "greenCenter": { "lat": 56.4937315, "lng": -2.7204246 } },
+      { "number": 16, "tee": { "lat": 56.4943845, "lng": -2.72122 }, "greenCenter": { "lat": 56.4960635, "lng": -2.7194873 } },
+      { "number": 17, "tee": { "lat": 56.4964492, "lng": -2.7190674 }, "greenCenter": { "lat": 56.495093, "lng": -2.7253921 } },
+      { "number": 18, "tee": { "lat": 56.495693, "lng": -2.7245438 }, "greenCenter": { "lat": 56.4970581, "lng": -2.7177417 } }
+    ]
+  },
+  {
+    "id": "verified-carnoustie-burnside",
+    "geometrySource": "OpenStreetMap golf=hole ways tagged for The Carnoustie Burnside Course, fetched and checked 2026-06-21.",
+    "attribution": "Hole geometry from OpenStreetMap contributors under ODbL.",
+    "holes": [
+      { "number": 1, "tee": { "lat": 56.4973994, "lng": -2.7217679 }, "greenCenter": { "lat": 56.4959959, "lng": -2.7254317 } },
+      { "number": 2, "tee": { "lat": 56.4959248, "lng": -2.7262847 }, "greenCenter": { "lat": 56.4953267, "lng": -2.7328132 } },
+      { "number": 3, "tee": { "lat": 56.4953059, "lng": -2.7334086 }, "greenCenter": { "lat": 56.494767, "lng": -2.7355598 } },
+      { "number": 4, "tee": { "lat": 56.4946634, "lng": -2.7346907 }, "greenCenter": { "lat": 56.4952911, "lng": -2.7279906 } },
+      { "number": 5, "tee": { "lat": 56.4950604, "lng": -2.7277587 }, "greenCenter": { "lat": 56.4941091, "lng": -2.7291562 } },
+      { "number": 6, "tee": { "lat": 56.4937837, "lng": -2.7292782 }, "greenCenter": { "lat": 56.4932152, "lng": -2.7338648 } },
+      { "number": 7, "tee": { "lat": 56.493418, "lng": -2.7348237 }, "greenCenter": { "lat": 56.4916234, "lng": -2.7308325 } },
+      { "number": 8, "tee": { "lat": 56.4913813, "lng": -2.7310063 }, "greenCenter": { "lat": 56.4924889, "lng": -2.725261 } },
+      { "number": 9, "tee": { "lat": 56.4921265, "lng": -2.7249512 }, "greenCenter": { "lat": 56.4931008, "lng": -2.7233633 } },
+      { "number": 10, "tee": { "lat": 56.4926706, "lng": -2.7232265 }, "greenCenter": { "lat": 56.4951077, "lng": -2.7216145 } },
+      { "number": 11, "tee": { "lat": 56.4953513, "lng": -2.7218787 }, "greenCenter": { "lat": 56.492778, "lng": -2.7246629 } },
+      { "number": 12, "tee": { "lat": 56.4932538, "lng": -2.7246474 }, "greenCenter": { "lat": 56.4918383, "lng": -2.7296471 } },
+      { "number": 13, "tee": { "lat": 56.4921966, "lng": -2.7296765 }, "greenCenter": { "lat": 56.4936699, "lng": -2.7247319 } },
+      { "number": 14, "tee": { "lat": 56.4938328, "lng": -2.7255849 }, "greenCenter": { "lat": 56.4950084, "lng": -2.7232138 } },
+      { "number": 15, "tee": { "lat": 56.4949159, "lng": -2.7245884 }, "greenCenter": { "lat": 56.4922743, "lng": -2.730095 } },
+      { "number": 16, "tee": { "lat": 56.4916932, "lng": -2.730209 }, "greenCenter": { "lat": 56.4926535, "lng": -2.7314227 } },
+      { "number": 17, "tee": { "lat": 56.492626, "lng": -2.730201 }, "greenCenter": { "lat": 56.4953467, "lng": -2.7258196 } },
+      { "number": 18, "tee": { "lat": 56.4956784, "lng": -2.7251785 }, "greenCenter": { "lat": 56.4968628, "lng": -2.721638 } }
+    ]
+  },
+  {
+    "id": "verified-carnoustie-buddon",
+    "geometrySource": "OpenStreetMap golf=hole ways tagged for The Carnoustie Buddon Course, fetched and checked 2026-06-21.",
+    "attribution": "Hole geometry from OpenStreetMap contributors under ODbL.",
+    "holes": [
+      { "number": 1, "tee": { "lat": 56.4943475, "lng": -2.7174614 }, "greenCenter": { "lat": 56.4910278, "lng": -2.7170484 } },
+      { "number": 2, "tee": { "lat": 56.4905831, "lng": -2.7165098 }, "greenCenter": { "lat": 56.4901766, "lng": -2.7189076 } },
+      { "number": 3, "tee": { "lat": 56.4902251, "lng": -2.7197836 }, "greenCenter": { "lat": 56.4898046, "lng": -2.7250139 } },
+      { "number": 4, "tee": { "lat": 56.4899642, "lng": -2.7253555 }, "greenCenter": { "lat": 56.4895525, "lng": -2.7277051 } },
+      { "number": 5, "tee": { "lat": 56.4895392, "lng": -2.728444 }, "greenCenter": { "lat": 56.489172, "lng": -2.7330682 } },
+      { "number": 6, "tee": { "lat": 56.4895889, "lng": -2.7341559 }, "greenCenter": { "lat": 56.4924912, "lng": -2.7366021 } },
+      { "number": 7, "tee": { "lat": 56.4923374, "lng": -2.7372162 }, "greenCenter": { "lat": 56.4935811, "lng": -2.7380262 } },
+      { "number": 8, "tee": { "lat": 56.4931024, "lng": -2.7381814 }, "greenCenter": { "lat": 56.4892347, "lng": -2.735247 } },
+      { "number": 9, "tee": { "lat": 56.4895243, "lng": -2.7362461 }, "greenCenter": { "lat": 56.4919243, "lng": -2.738753 } },
+      { "number": 10, "tee": { "lat": 56.4919317, "lng": -2.7396204 }, "greenCenter": { "lat": 56.4890329, "lng": -2.737243 } },
+      { "number": 11, "tee": { "lat": 56.4887817, "lng": -2.7375611 }, "greenCenter": { "lat": 56.4899575, "lng": -2.7436927 } },
+      { "number": 12, "tee": { "lat": 56.4894499, "lng": -2.7441419 }, "greenCenter": { "lat": 56.4883748, "lng": -2.7388097 } },
+      { "number": 13, "tee": { "lat": 56.4883384, "lng": -2.7375289 }, "greenCenter": { "lat": 56.4888685, "lng": -2.7352329 } },
+      { "number": 14, "tee": { "lat": 56.4887077, "lng": -2.7345143 }, "greenCenter": { "lat": 56.4891312, "lng": -2.7287904 } },
+      { "number": 15, "tee": { "lat": 56.4887824, "lng": -2.7283599 }, "greenCenter": { "lat": 56.4893748, "lng": -2.7262893 } },
+      { "number": 16, "tee": { "lat": 56.4888742, "lng": -2.7264515 }, "greenCenter": { "lat": 56.4897716, "lng": -2.7193115 } },
+      { "number": 17, "tee": { "lat": 56.4894417, "lng": -2.7193469 }, "greenCenter": { "lat": 56.490034, "lng": -2.7174157 } },
+      { "number": 18, "tee": { "lat": 56.4904084, "lng": -2.7163488 }, "greenCenter": { "lat": 56.4937963, "lng": -2.7155603 } }
+    ]
+  }
+]

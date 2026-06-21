@@ -79,6 +79,16 @@ function mergeSharedHoleDefault(baseHole, sharedHole) {
     }
   });
 
+  if (validGeoPoint(next.tee) && validGeoPoint(next.greenCenter)) {
+    const edges = greenEdgesAlongHole(next.tee, next.greenCenter);
+    if (!validGeoPoint(next.greenFront)) {
+      next.greenFront = edges.front;
+    }
+    if (!validGeoPoint(next.greenBack)) {
+      next.greenBack = edges.back;
+    }
+  }
+
   next.geometry = mergeGeometry(baseHole.geometry, sharedHole.geometry);
   delete next["snap" + "shot"];
 
@@ -397,6 +407,20 @@ function validGeoPoint(point) {
 
 function roundGeoPoint(point) {
   return { lat: Number(Number(point.lat).toFixed(6)), lng: Number(Number(point.lng).toFixed(6)) };
+}
+
+function greenEdgesAlongHole(tee, center, edgeDistanceMeters = 8) {
+  const latitudeScale = 111320;
+  const longitudeScale = latitudeScale * Math.cos(Number(center.lat) * Math.PI / 180);
+  const northMeters = (Number(center.lat) - Number(tee.lat)) * latitudeScale;
+  const eastMeters = (Number(center.lng) - Number(tee.lng)) * longitudeScale;
+  const lengthMeters = Math.hypot(northMeters, eastMeters) || 1;
+  const latOffset = (northMeters / lengthMeters) * edgeDistanceMeters / latitudeScale;
+  const lngOffset = (eastMeters / lengthMeters) * edgeDistanceMeters / longitudeScale;
+  return {
+    front: roundGeoPoint({ lat: Number(center.lat) - latOffset, lng: Number(center.lng) - lngOffset }),
+    back: roundGeoPoint({ lat: Number(center.lat) + latOffset, lng: Number(center.lng) + lngOffset })
+  };
 }
 
 function mergeAttribution(primary = "", extra = "") {

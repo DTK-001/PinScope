@@ -36,6 +36,14 @@ const LANGDON_HILLS_HORNDON_LANGDON_COURSE_ID = "verified-langdon-hills-horndon-
 const DARTFORD_COURSE_ID = "verified-dartford";
 const FAWKHAM_COURSE_ID = "verified-corinthian-fawkham-valley";
 const BARNEHURST_COURSE_ID = "verified-barnehurst";
+const CARNOUSTIE_CHAMPIONSHIP_COURSE_ID = "verified-carnoustie-championship";
+const CARNOUSTIE_BURNSIDE_COURSE_ID = "verified-carnoustie-burnside";
+const CARNOUSTIE_BUDDON_COURSE_ID = "verified-carnoustie-buddon";
+const ROYAL_ST_GEORGES_COURSE_ID = "verified-royal-st-georges";
+const SUNNINGDALE_NEW_COURSE_ID = "verified-sunningdale-new";
+const MUIRFIELD_COURSE_ID = "verified-muirfield";
+const NORTH_BERWICK_WEST_LINKS_COURSE_ID = "verified-north-berwick-west-links";
+const ROYAL_DORNOCH_CHAMPIONSHIP_COURSE_ID = "verified-royal-dornoch-championship";
 
 const SNAPSHOT_VERIFIED_COURSE_IDS = new Set([
   "osm-way-23454278",
@@ -56,7 +64,15 @@ const SNAPSHOT_VERIFIED_COURSE_IDS = new Set([
   LANGDON_HILLS_LANGDON_HORNDON_COURSE_ID,
   LANGDON_HILLS_BULPHAN_HORNDON_COURSE_ID,
   LANGDON_HILLS_HORNDON_BULPHAN_COURSE_ID,
-  LANGDON_HILLS_HORNDON_LANGDON_COURSE_ID
+  LANGDON_HILLS_HORNDON_LANGDON_COURSE_ID,
+  CARNOUSTIE_CHAMPIONSHIP_COURSE_ID,
+  CARNOUSTIE_BURNSIDE_COURSE_ID,
+  CARNOUSTIE_BUDDON_COURSE_ID,
+  ROYAL_ST_GEORGES_COURSE_ID,
+  SUNNINGDALE_NEW_COURSE_ID,
+  MUIRFIELD_COURSE_ID,
+  NORTH_BERWICK_WEST_LINKS_COURSE_ID,
+  ROYAL_DORNOCH_CHAMPIONSHIP_COURSE_ID
 ]);
 
 const BELHUS_SCORECARD = {
@@ -194,6 +210,71 @@ const BARNEHURST_SCORECARD = {
   yellow: [223, 453, 135, 126, 232, 240, 333, 405, 225]
 };
 
+const CARNOUSTIE_CHAMPIONSHIP_SCORECARD = {
+  par: [4, 4, 4, 4, 4, 5, 4, 3, 4, 4, 4, 4, 3, 4, 4, 3, 4, 4],
+  strokeIndex: [10, 4, 14, 16, 12, 2, 8, 18, 6, 3, 15, 9, 17, 1, 7, 13, 5, 11],
+  yellow: [389, 407, 325, 364, 369, 500, 373, 157, 416, 417, 351, 407, 141, 459, 437, 235, 421, 421],
+  green: [364, 382, 310, 358, 350, 485, 350, 133, 402, 332, 330, 395, 121, 440, 418, 212, 374, 383],
+  black: [364, 303, 290, 305, 298, 485, 295, 133, 343, 332, 292, 330, 121, 375, 384, 212, 374, 374]
+};
+
+const CARNOUSTIE_BURNSIDE_SCORECARD = {
+  par: [4, 4, 3, 4, 3, 4, 4, 4, 3, 4, 4, 4, 4, 3, 5, 3, 4, 4],
+  strokeIndex: [18, 4, 16, 2, 10, 14, 12, 6, 8, 15, 7, 13, 5, 1, 11, 9, 3, 17],
+  white: [319, 456, 172, 457, 158, 335, 362, 424, 163, 330, 372, 383, 379, 228, 490, 151, 461, 303],
+  yellow: [309, 441, 161, 445, 146, 335, 345, 414, 151, 318, 355, 363, 364, 212, 490, 151, 441, 290],
+  green: [301, 437, 156, 435, 139, 295, 337, 366, 127, 282, 351, 347, 346, 168, 455, 141, 436, 281]
+};
+
+const CARNOUSTIE_BUDDON_SCORECARD = {
+  par: [4, 3, 4, 3, 4, 4, 3, 5, 4, 4, 4, 4, 3, 4, 3, 5, 3, 4],
+  strokeIndex: [6, 16, 8, 18, 14, 4, 12, 2, 10, 1, 7, 9, 13, 3, 17, 11, 15, 5],
+  white: [423, 171, 364, 164, 323, 401, 193, 517, 358, 395, 411, 398, 170, 399, 165, 493, 159, 417],
+  yellow: [413, 151, 354, 149, 313, 389, 178, 485, 348, 385, 400, 361, 150, 389, 155, 483, 149, 400]
+};
+
+const CARNOUSTIE_HOLE_NAMES = {
+  championship: ["Cup", "Gulley", "Jockie's Burn", "Hillocks", "Brae", "Hogan's Alley", "Plantation", "Short", "Railway", "South America", "John Philp", "Southward Ho", "Whins", "Spectacles", "Lucky Slap", "Barry Burn", "Island", "Home"],
+  burnside: ["Peninsula", "Ravensby", "Fence", "South America", "Burn", "Camp", "Shelter", "Battery", "Grog", "Kopje", "Deil's Ha'", "Heather", "Punchbowl", "Scoop", "Sou'western", "Whins", "Sinkies", "Lismore"],
+  buddon: ["Alma", "Corunna", "Wadi Akarit", "Ypres", "Kohima", "Vimy", "Mareth", "El Alamein", "Caen", "Somme", "The Hook", "St Valery", "Marne", "Waterloo", "Falaise", "Cassino", "Tobruk", "Rhine"]
+};
+
+const ROYAL_ST_GEORGES_SCORECARD = {
+  par: [4, 4, 3, 4, 4, 3, 5, 4, 4, 4, 3, 4, 4, 5, 4, 3, 4, 4],
+  strokeIndex: [10, 6, 16, 2, 8, 18, 14, 4, 12, 9, 3, 15, 7, 13, 1, 17, 5, 11],
+  championship: [442, 426, 239, 496, 416, 176, 573, 457, 410, 412, 242, 379, 457, 545, 493, 161, 424, 456],
+  medal: [411, 385, 195, 415, 416, 152, 490, 419, 373, 371, 215, 361, 442, 533, 436, 161, 418, 437],
+  weekday: [399, 350, 180, 412, 406, 142, 464, 395, 366, 351, 202, 340, 420, 507, 435, 150, 392, 429]
+};
+
+const SUNNINGDALE_NEW_SCORECARD = {
+  par: [4, 3, 4, 4, 3, 5, 4, 4, 4, 3, 4, 4, 5, 3, 4, 4, 3, 5],
+  strokeIndex: [8, 16, 10, 4, 12, 2, 18, 14, 6, 9, 1, 15, 5, 11, 3, 13, 17, 7],
+  white: [440, 161, 395, 430, 164, 476, 367, 391, 425, 204, 436, 388, 543, 178, 402, 380, 168, 469],
+  yellow: [416, 148, 359, 427, 159, 435, 357, 366, 402, 179, 426, 347, 517, 156, 385, 353, 154, 463],
+  blue: [460, 164, 409, 455, 182, 517, 377, 399, 458, 215, 442, 398, 560, 189, 437, 396, 170, 488]
+};
+
+const MUIRFIELD_SCORECARD = {
+  par: [4, 4, 4, 3, 5, 4, 3, 4, 5, 4, 4, 4, 3, 4, 4, 3, 5, 4],
+  strokeIndex: [5, 17, 11, 13, 7, 3, 15, 1, 9, 4, 18, 16, 14, 2, 8, 12, 10, 6],
+  yellowRed: [446, 365, 377, 182, 510, 440, 147, 443, 505, 470, 354, 380, 156, 449, 394, 186, 506, 418]
+};
+
+const NORTH_BERWICK_SCORECARD = {
+  par: [4, 4, 4, 3, 4, 3, 4, 5, 5, 3, 5, 4, 4, 4, 3, 4, 4, 4],
+  strokeIndex: [9, 11, 1, 15, 5, 17, 3, 13, 7, 18, 2, 8, 12, 6, 14, 4, 10, 16],
+  white: [342, 433, 459, 177, 372, 161, 366, 509, 522, 172, 549, 402, 388, 375, 189, 378, 426, 277],
+  blue: [322, 419, 444, 168, 360, 139, 345, 489, 504, 153, 526, 366, 363, 359, 178, 359, 405, 269]
+};
+
+const ROYAL_DORNOCH_SCORECARD = {
+  par: [4, 3, 4, 4, 4, 3, 4, 4, 5, 3, 4, 5, 3, 4, 4, 4, 4, 4],
+  strokeIndex: [13, 5, 11, 3, 15, 9, 1, 7, 17, 14, 4, 16, 12, 2, 18, 8, 10, 6],
+  blue: [331, 184, 413, 422, 353, 161, 479, 434, 529, 174, 449, 535, 180, 445, 360, 401, 405, 456],
+  white: [331, 177, 413, 422, 353, 161, 479, 434, 529, 146, 446, 535, 171, 445, 322, 401, 405, 456]
+};
+
 const SCORECARD_COURSE_LABELS = {
   [BASILDON_COURSE_ID]: "Basildon",
   [CANVEY_COURSE_ID]: "Canvey",
@@ -217,7 +298,15 @@ const SCORECARD_COURSE_LABELS = {
   [LANGDON_HILLS_HORNDON_LANGDON_COURSE_ID]: "Langdon Hills",
   [DARTFORD_COURSE_ID]: "Dartford",
   [FAWKHAM_COURSE_ID]: "Corinthian Fawkham Valley",
-  [BARNEHURST_COURSE_ID]: "Barnehurst"
+  [BARNEHURST_COURSE_ID]: "Barnehurst",
+  [CARNOUSTIE_CHAMPIONSHIP_COURSE_ID]: "Carnoustie Championship",
+  [CARNOUSTIE_BURNSIDE_COURSE_ID]: "Carnoustie Burnside",
+  [CARNOUSTIE_BUDDON_COURSE_ID]: "Carnoustie Buddon",
+  [ROYAL_ST_GEORGES_COURSE_ID]: "Royal St George's",
+  [SUNNINGDALE_NEW_COURSE_ID]: "Sunningdale New",
+  [MUIRFIELD_COURSE_ID]: "Muirfield",
+  [NORTH_BERWICK_WEST_LINKS_COURSE_ID]: "North Berwick West Links",
+  [ROYAL_DORNOCH_CHAMPIONSHIP_COURSE_ID]: "Royal Dornoch Championship"
 };
 
 const CRANHAM_COORDS = [
@@ -687,6 +776,166 @@ export const verifiedCourses = [
     loopIds: ["horndon", "langdon"],
     sourceUrl: "https://www.golfpass.com/travel-advisor/courses/33453-langdon-hills-golf-country-club-horndon-course"
   }),
+  makeMappedVerifiedCourse({
+    id: ROYAL_ST_GEORGES_COURSE_ID,
+    name: "Royal St George's Golf Club",
+    town: "Sandwich",
+    postcode: "CT13 9PB",
+    country: "England",
+    par: "70",
+    website: "https://www.royalstgeorges.com/the-course/",
+    phone: "+44 1304 613090",
+    location: { lat: 51.274, lng: 1.367 },
+    scorecard: ROYAL_ST_GEORGES_SCORECARD,
+    tees: [
+      { id: "championship", name: "Championship", color: "#27272a", rating: "", slope: "", totalYards: 7204 },
+      { id: "medal", name: "Medal", color: "#f8f7f1", rating: "", slope: "", totalYards: 6630 },
+      { id: "weekday", name: "Weekday", color: "#d7a44d", rating: "", slope: "", totalYards: 6340 }
+    ],
+    confidence: "The official club hole pages provide Championship, Medal, and Weekday yardages, par, and stroke index for all 18 holes. The selected OSM routing is the only complete nearby 18-hole set whose par sequence and measured lengths agree with that card.",
+    sources: [
+      { label: "Official course page", url: "https://www.royalstgeorges.com/the-course/" },
+      { label: "Official first-hole card", url: "https://www.royalstgeorges.com/the-course/01st/" },
+      { label: "OpenStreetMap", url: "https://www.openstreetmap.org/#map=15/51.2740/1.3670" }
+    ]
+  }),
+  makeMappedVerifiedCourse({
+    id: SUNNINGDALE_NEW_COURSE_ID,
+    venueId: "venue-sunningdale",
+    venueName: "Sunningdale Golf Club",
+    layoutName: "New Course",
+    name: "Sunningdale Golf Club - New Course",
+    town: "Sunningdale",
+    postcode: "SL5 9RR",
+    country: "England",
+    par: "70",
+    website: "https://www.sunningdalegolfclub.co.uk/new_course",
+    phone: "+44 1344 621681",
+    location: { lat: 51.373, lng: -0.638 },
+    scorecard: SUNNINGDALE_NEW_SCORECARD,
+    tees: [
+      { id: "white", name: "White", color: "#f8f7f1", rating: "", slope: "", totalYards: 6417 },
+      { id: "yellow", name: "Yellow", color: "#d7a44d", rating: "", slope: "", totalYards: 6049 },
+      { id: "blue", name: "Blue", color: "#4f8fd9", rating: "", slope: "", totalYards: 6716 }
+    ],
+    confidence: "Sunningdale's published scorecard is headed New Course and provides complete white, yellow, and blue cards. Its public URL is incorrectly named old_course_scorecard; the heading, totals, and par sequence identify the New Course, and that sequence uniquely selects the matching OSM routing.",
+    sources: [
+      { label: "Official New Course page", url: "https://www.sunningdalegolfclub.co.uk/new_course" },
+      { label: "Official scorecard", url: "https://www.sunningdalegolfclub.co.uk/old_course_scorecard" },
+      { label: "Official contact page", url: "https://www.sunningdalegolfclub.co.uk/contact_us" },
+      { label: "OpenStreetMap", url: "https://www.openstreetmap.org/#map=15/51.3730/-0.6380" }
+    ]
+  }),
+  makeMappedVerifiedCourse({
+    id: MUIRFIELD_COURSE_ID,
+    name: "Muirfield",
+    town: "Gullane",
+    postcode: "EH31 2EG",
+    country: "Scotland",
+    par: "71",
+    website: "https://www.muirfield.org.uk/the-course/",
+    phone: "+44 1620 842123",
+    location: { lat: 56.043, lng: -2.821 },
+    scorecard: MUIRFIELD_SCORECARD,
+    tees: [
+      { id: "yellowRed", name: "Yellow / Red", color: "#d7a44d", rating: "", slope: "", totalYards: 6728 }
+    ],
+    confidence: "Muirfield's official strokesaver supplies the complete 6,728-yard yellow/red card. OSM explicitly tags one complete set of 18 hole ways as Muirfield, preventing contamination from the neighbouring Gullane courses.",
+    sources: [
+      { label: "Official course page", url: "https://www.muirfield.org.uk/the-course/" },
+      { label: "Official scorecard", url: "https://www.muirfield.org.uk/strokesaver" },
+      { label: "OpenStreetMap", url: "https://www.openstreetmap.org/#map=15/56.0430/-2.8210" }
+    ]
+  }),
+  makeMappedVerifiedCourse({
+    id: NORTH_BERWICK_WEST_LINKS_COURSE_ID,
+    name: "North Berwick Golf Club - West Links",
+    town: "North Berwick",
+    postcode: "EH39 4BB",
+    country: "Scotland",
+    par: "71",
+    website: "https://www.northberwickgolfclub.com/the_west_links",
+    phone: "+44 1620 895040",
+    location: { lat: 56.058, lng: -2.716 },
+    scorecard: NORTH_BERWICK_SCORECARD,
+    tees: [
+      { id: "white", name: "White", color: "#f8f7f1", rating: "", slope: "", totalYards: 6497 },
+      { id: "blue", name: "Blue", color: "#4f8fd9", rating: "", slope: "", totalYards: 6168 }
+    ],
+    confidence: "The official club hole pages publish white and blue yardages, par, and stroke index for every hole. The selected OSM set is the complete West Links routing; the separate nine-hole Children's Course is excluded by way identity and length.",
+    sources: [
+      { label: "Official West Links page", url: "https://www.northberwickgolfclub.com/the_west_links" },
+      { label: "Official hole-by-hole overview", url: "https://www.northberwickgolfclub.com/hole_by_hole" },
+      { label: "Official first-hole card", url: "https://www.northberwickgolfclub.com/hole_1" },
+      { label: "OpenStreetMap", url: "https://www.openstreetmap.org/#map=15/56.0580/-2.7160" }
+    ]
+  }),
+  makeMappedVerifiedCourse({
+    id: ROYAL_DORNOCH_CHAMPIONSHIP_COURSE_ID,
+    venueId: "venue-royal-dornoch",
+    venueName: "Royal Dornoch Golf Club",
+    layoutName: "Championship Course",
+    name: "Royal Dornoch Golf Club - Championship Course",
+    town: "Dornoch",
+    postcode: "IV25 3LW",
+    country: "Scotland",
+    par: "70",
+    website: "https://royaldornoch.com/",
+    phone: "+44 1862 810219",
+    location: { lat: 57.88, lng: -4.03 },
+    scorecard: ROYAL_DORNOCH_SCORECARD,
+    tees: [
+      { id: "blue", name: "Blue", color: "#4f8fd9", rating: "", slope: "", totalYards: 6711 },
+      { id: "white", name: "White", color: "#f8f7f1", rating: "70.0", slope: "", totalYards: 6626 }
+    ],
+    confidence: "Golfify provides the full current Championship card and venue contact details. OSM explicitly labels a complete 18-hole set as Championship Course; the neighbouring Struie routing is separately tagged and excluded. The club website was temporarily returning 502 responses during the 2026-06-21 verification.",
+    sources: [
+      { label: "Official club site", url: "https://royaldornoch.com/" },
+      { label: "Golfify Championship scorecard", url: "https://www.golfify.io/courses/royal-dornoch-golf-club-championship" },
+      { label: "OpenStreetMap", url: "https://www.openstreetmap.org/#map=15/57.8800/-4.0300" }
+    ]
+  }),
+  makeCarnoustieCourse({
+    id: CARNOUSTIE_CHAMPIONSHIP_COURSE_ID,
+    layoutId: "championship",
+    layoutName: "Championship Course",
+    par: "70",
+    location: { lat: 56.493734, lng: -2.726024 },
+    scorecard: CARNOUSTIE_CHAMPIONSHIP_SCORECARD,
+    scorecardUrl: "https://www.carnoustiegolflinks.com/wp-content/uploads/2025/02/carnoustie_championship_2022_scorecard_coverless-copy.pdf",
+    tees: [
+      { id: "yellow", name: "Yellow", color: "#d7a44d", rating: "73.6", slope: "135", totalYards: 6589 },
+      { id: "green", name: "Green", color: "#73b94e", rating: "71.5", slope: "130", totalYards: 6139 },
+      { id: "black", name: "Black", color: "#27272a", rating: "69.1", slope: "126", totalYards: 5610 }
+    ]
+  }),
+  makeCarnoustieCourse({
+    id: CARNOUSTIE_BURNSIDE_COURSE_ID,
+    layoutId: "burnside",
+    layoutName: "Burnside Course",
+    par: "68",
+    location: { lat: 56.493824, lng: -2.728002 },
+    scorecard: CARNOUSTIE_BURNSIDE_SCORECARD,
+    scorecardUrl: "https://www.carnoustiegolflinks.com/wp-content/uploads/2025/02/carnoustie_burnside_2022_scorecard_coverless-copy.pdf",
+    tees: [
+      { id: "white", name: "White", color: "#f8f7f1", rating: "69.5", slope: "125", totalYards: 5943 },
+      { id: "yellow", name: "Yellow", color: "#d7a44d", rating: "68.3", slope: "122", totalYards: 5731 },
+      { id: "green", name: "Green", color: "#73b94e", rating: "66.5", slope: "122", totalYards: 5400 }
+    ]
+  }),
+  makeCarnoustieCourse({
+    id: CARNOUSTIE_BUDDON_COURSE_ID,
+    layoutId: "buddon",
+    layoutName: "Buddon Course",
+    par: "68",
+    location: { lat: 56.491151, lng: -2.730347 },
+    scorecard: CARNOUSTIE_BUDDON_SCORECARD,
+    scorecardUrl: "https://www.carnoustiegolflinks.com/wp-content/uploads/2025/02/carnoustie_buddon_2022_scorecard_coverless-copy.pdf",
+    tees: [
+      { id: "white", name: "White", color: "#f8f7f1", rating: "69.0", slope: "120", totalYards: 5921 },
+      { id: "yellow", name: "Yellow", color: "#d7a44d", rating: "67.7", slope: "117", totalYards: 5652 }
+    ]
+  }),
   {
     id: BARNEHURST_COURSE_ID,
     source: "verified",
@@ -717,6 +966,90 @@ export const verifiedCourses = [
     holes: Array.from({ length: 9 }, (_, index) => makeScorecardOnlyHole(index, BARNEHURST_SCORECARD, BARNEHURST_COURSE_ID))
   }
 ].filter((course) => SNAPSHOT_VERIFIED_COURSE_IDS.has(course.id));
+
+function makeMappedVerifiedCourse({
+  id,
+  venueId,
+  venueName,
+  layoutName,
+  name,
+  town,
+  postcode,
+  country,
+  par,
+  website,
+  phone,
+  location,
+  scorecard,
+  tees,
+  confidence,
+  sources
+}) {
+  return {
+    id,
+    source: "verified",
+    homeAreaId: homeArea.id,
+    ...(venueId ? { venueId } : {}),
+    ...(venueName ? { venueName } : {}),
+    ...(layoutName ? { layoutName } : {}),
+    name,
+    town,
+    postcode,
+    country,
+    holesCount: 18,
+    par,
+    website,
+    phone,
+    location,
+    attribution: "Scorecard from the cited club or scorecard source. Hole routing from OpenStreetMap contributors under ODbL.",
+    verification: {
+      status: "verified",
+      updated: "2026-06-21",
+      confidence,
+      sources
+    },
+    tees,
+    holes: Array.from({ length: 18 }, (_, index) => makeScorecardOnlyHole(index, scorecard, id))
+  };
+}
+
+function makeCarnoustieCourse({ id, layoutId, layoutName, par, location, scorecard, scorecardUrl, tees }) {
+  const courseUrl = `https://www.carnoustiegolflinks.com/course/${layoutId === "championship" ? "championship-course" : layoutId === "buddon" ? "buddon-links-course" : "burnside-course"}/`;
+  return {
+    id,
+    source: "verified",
+    homeAreaId: homeArea.id,
+    venueId: "venue-carnoustie-golf-links",
+    venueName: "Carnoustie Golf Links",
+    layoutName,
+    name: `Carnoustie Golf Links - ${layoutName}`,
+    town: "Carnoustie",
+    postcode: "DD7 7JE",
+    country: "Scotland",
+    holesCount: 18,
+    par,
+    website: courseUrl,
+    phone: "+44 1241 802270",
+    location,
+    attribution: "Identity and scorecard from Carnoustie Golf Links. Hole routing from OpenStreetMap contributors under ODbL.",
+    verification: {
+      status: "verified",
+      updated: "2026-06-21",
+      confidence: `Carnoustie Golf Links publishes the official ${layoutName} scorecard with hole-by-hole yardages, par, stroke indexes, course ratings, and slopes. OpenStreetMap identifies all 18 hole ways by both number and the ${layoutName} course name. Only tees sharing this record's par are included until PinScope supports tee-specific par.`,
+      sources: [
+        { label: "Official course page", url: courseUrl },
+        { label: "Official scorecard", url: scorecardUrl },
+        { label: "Official contact page", url: "https://www.carnoustiegolflinks.com/contact-us/" },
+        { label: "OpenStreetMap hole geometry", url: "https://www.openstreetmap.org/#map=15/56.4930/-2.7270" }
+      ]
+    },
+    tees,
+    holes: Array.from({ length: 18 }, (_, index) => ({
+      ...makeScorecardOnlyHole(index, scorecard, id),
+      name: CARNOUSTIE_HOLE_NAMES[layoutId][index]
+    }))
+  };
+}
 
 function sliceScorecard(scorecard, start, end) {
   return Object.fromEntries(
