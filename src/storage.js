@@ -1,4 +1,4 @@
-import { defaultBags, defaultClubs, seedCourses } from "./course-data.js";
+import { defaultBags, defaultClubs, seedCourses, yardsBetween } from "./course-data.js";
 import { verifiedCourses } from "./verified-courses.js";
 import { verifiedGreenDefaults } from "./verified-green-defaults.js";
 import { sharedCourseDefaults } from "./shared-course-defaults.js";
@@ -8,6 +8,9 @@ const LAST_ACCOUNT_KEY = "pinscope:last-account-id:v1";
 let activeAccountId = readLastAccountId();
 const REMOVED_BUILT_IN_COURSE_IDS = new Set(["demo-starter-nine", "osm-way-262444890"]);
 const GPS_FIELDS = ["tee", "greenFront", "greenCenter", "greenBack"];
+const MIN_PLAUSIBLE_GPS_YARDAGE_RATIO = 0.45;
+const MAX_PLAUSIBLE_GPS_YARDAGE_RATIO = 1.65;
+const MAX_PLAUSIBLE_GPS_YARDAGE_DIFF = 250;
 
 const builtInCourses = applyVerifiedGreenDefaults(buildBuiltInCourses());
 
@@ -103,7 +106,7 @@ function mergeSharedHoleDefault(baseHole, sharedHole) {
     next.tees = sharedHole.tees;
   }
 
-  return next;
+  return sanitizePlayableHoleAnchors(next);
 }
 
 const baseState = {
@@ -336,7 +339,7 @@ function mergeBuiltInHole(defaultHole, storedHole) {
     next.tees = storedHole.tees;
   }
 
-  return next;
+  return sanitizePlayableHoleAnchors(next);
 }
 
 function applyVerifiedGreenDefaults(courses) {
@@ -378,7 +381,49 @@ function applyHoleGreenDefault(hole, defaults) {
     next.mapping = { ...(next.mapping || {}), ...defaults.mapping };
   }
 
+  return sanitizePlayableHoleAnchors(next);
+}
+
+function sanitizePlayableHoleAnchors(hole) {
+  if (!implausibleHoleAnchors(hole)) {
+    return hole;
+  }
+
+  const next = { ...hole };
+  GPS_FIELDS.forEach((key) => {
+    next[key] = null;
+  });
+
+  if (next.geometry && typeof next.geometry === "object") {
+    const { greenPolygon, holePath, tees, detection, osmGreen, osmTee, osmHole, ...geometry } = next.geometry;
+    next.geometry = Object.keys(geometry).length ? geometry : undefined;
+  }
+
   return next;
+}
+
+function implausibleHoleAnchors(hole) {
+  const cardYards = maxHoleYardage(hole);
+  if (!cardYards || !validGeoPoint(hole?.tee) || !validGeoPoint(hole?.greenCenter)) {
+    return false;
+  }
+
+  const gpsYards = yardsBetween(hole.tee, hole.greenCenter);
+  if (!Number.isFinite(gpsYards) || gpsYards <= 0) {
+    return true;
+  }
+
+  const ratio = gpsYards / cardYards;
+  const diff = Math.abs(gpsYards - cardYards);
+  return ratio < MIN_PLAUSIBLE_GPS_YARDAGE_RATIO ||
+    ratio > MAX_PLAUSIBLE_GPS_YARDAGE_RATIO ||
+    diff > MAX_PLAUSIBLE_GPS_YARDAGE_DIFF;
+}
+
+function maxHoleYardage(hole) {
+  return Math.max(0, ...Object.values(hole?.yards || {})
+    .map(Number)
+    .filter((value) => Number.isFinite(value) && value > 0));
 }
 
 function mergeGeometry(localGeometry, defaultGeometry) {
