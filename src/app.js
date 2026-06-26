@@ -614,8 +614,8 @@ function renderCourses() {
       </form>
     </details>
 
-    <section class="course-list">
-      ${filteredCourses.length ? filteredCourses.map(renderCourseCard).join("") : `<p class="empty-copy">No courses match that search.</p>`}
+    <section class="course-list" data-course-list>
+      ${renderCourseSearchResults(filteredCourses)}
     </section>
     <p class="source-note">OpenStreetMap imports require ODbL attribution. Export the mapped course pack, put it in data/course-pack, then run the build script to bake geometry into the downloadable app.</p>
   `;
@@ -634,6 +634,20 @@ function filteredCourseList() {
     course.source
   ].some((value) => String(value || "").toLowerCase().includes(query)));
   return groupedVenueCourseList(matches);
+}
+
+function renderCourseSearchResults(courses = filteredCourseList()) {
+  return courses.length
+    ? courses.map(renderCourseCard).join("")
+    : `<p class="empty-copy">No courses match that search.</p>`;
+}
+
+function updateCourseSearchResults() {
+  const courseList = document.querySelector("[data-course-list]");
+  if (!courseList) {
+    return;
+  }
+  courseList.innerHTML = renderCourseSearchResults();
 }
 
 function groupedVenueCourseList(courses) {
@@ -832,7 +846,7 @@ function renderMiniCourseSignal(course) {
 function renderCourseCard(course) {
   const isSelected = isCourseSelected(course);
   const selected = isSelected ? "selected" : "";
-  const source = course.source === "verified" ? "Verified" : course.source === "shared" ? "Shared" : course.source === "osm" ? "OSM" : course.source === "manual" ? "Manual" : "Demo";
+  const source = course.source === "verified" ? "Verified" : course.source === "shared" ? "Shared" : course.source === "scraper" ? "Imported" : course.source === "osm" ? "OSM" : course.source === "manual" ? "Manual" : "Demo";
   const loopCount = venueLoopCount(course);
   return `
     <article class="course-card ${selected}">
@@ -5086,16 +5100,8 @@ function syncBagEditorDraft() {
 
 function handleInput(event) {
   if (event.target.matches("[data-action='course-search']")) {
-    const cursor = event.target.selectionStart;
     courseSearchQuery = event.target.value;
-    render();
-    window.requestAnimationFrame(() => {
-      const input = document.querySelector("[data-action='course-search']");
-      input?.focus();
-      if (typeof cursor === "number") {
-        input?.setSelectionRange(cursor, cursor);
-      }
-    });
+    updateCourseSearchResults();
     return;
   }
   if (event.target.matches("[data-action='club-select']")) {
