@@ -1,4 +1,4 @@
-const CACHE_NAME = "local-loop-golf-v130-imported-course-safety";
+const CACHE_NAME = "local-loop-golf-v132-arcgis-api-refresh";
 
 const APP_SHELL = [
   "./",

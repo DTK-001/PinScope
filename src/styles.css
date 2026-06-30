@@ -1234,12 +1234,17 @@ p {
   font-weight: 900;
 }
 
+.previous-shot-map-shell {
+  display: grid;
+  gap: 6px;
+  margin-top: 10px;
+}
+
 .previous-shot-map {
   position: relative;
   overflow: hidden;
   aspect-ratio: 9 / 13;
   max-height: 420px;
-  margin-top: 10px;
   border: 1px solid rgba(53, 240, 193, 0.24);
   border-radius: var(--radius);
   background:
@@ -1263,6 +1268,14 @@ p {
 
 .previous-shot-overlay {
   z-index: 2;
+}
+
+.previous-shot-attribution {
+  color: rgba(248, 243, 255, 0.48);
+  font-size: 0.62rem;
+  font-weight: 700;
+  line-height: 1.2;
+  text-align: right;
 }
 
 .round-delete-button {

@@ -69,6 +69,7 @@ const SATELLITE_PRELOAD_CONCURRENCY = 2;
 const SATELLITE_PANEL_RATIO = 13 / 9;
 const GPS_JITTER_YARDS = 2;
 const GPS_DISTANCE_UPDATE_YARDS = 2;
+const COURSE_DUPLICATE_MATCH_DISTANCE_YARDS = 1760;
 const GREEN_ARRIVAL_RADIUS_YARDS = 18;
 const HANDICAP_MIN_HOLES = 54;
 const HANDICAP_SCORE_TABLE = [
@@ -135,6 +136,7 @@ let roundScorecardOpen = false;
 let finishRoundPrompt = null;
 let roundSetupPlayerCount = 1;
 let previousRoundOpenIds = new Set();
+let previousRoundShotOpenIds = new Set();
 let accountOpen = false;
 
 render();
@@ -848,6 +850,8 @@ function renderCourseCard(course) {
   const selected = isSelected ? "selected" : "";
   const source = course.source === "verified" ? "Verified" : course.source === "shared" ? "Shared" : course.source === "scraper" ? "Imported" : course.source === "osm" ? "OSM" : course.source === "manual" ? "Manual" : "Demo";
   const loopCount = venueLoopCount(course);
+  const verified = isVerifiedCourse(course);
+  const importedScorecard = course.source === "scraper" && course.verification;
   return `
     <article class="course-card ${selected}">
       <div class="course-main">
@@ -861,15 +865,20 @@ function renderCourseCard(course) {
         </button>
       </div>
       <div class="course-meta">
-        ${course.verification ? `<span class="verified-chip">Scorecard checked</span>` : ""}
+        ${verified ? `<span class="verified-chip">Verified course</span>` : ""}
+        ${importedScorecard ? `<span class="verified-chip">Imported scorecard</span>` : ""}
         ${loopCount ? `<span>${loopCount} nine-hole loops</span>` : ""}
         ${course.website ? `<a href="${escapeAttribute(course.website)}" target="_blank" rel="noreferrer">Website</a>` : "<span>Website pending</span>"}
         ${course.phone ? `<a href="tel:${escapeAttribute(course.phone)}">Call</a>` : "<span>Phone pending</span>"}
       </div>
-      ${course.verification ? renderTeeSummary(course) : ""}
+      ${Array.isArray(course.tees) && course.tees.length ? renderTeeSummary(course) : ""}
       ${isSelected ? renderSelectedCourseActions(course) : ""}
     </article>
   `;
+}
+
+function isVerifiedCourse(course) {
+  return Boolean(course?.verification && String(course.verification.status || "").toLowerCase() === "verified");
 }
 
 function isCourseSelected(course) {
@@ -2616,14 +2625,12 @@ function requestArcgisImageryLayer() {
             scheduleCourseSatellitePreload(course, round.currentHole || 1);
           }
         }
-        render();
       }
+      render();
     })
     .catch(() => {
       arcgisImageryRetryAt = Date.now() + 30000;
-      if (view === "play") {
-        render();
-      }
+      render();
     });
 }
 
@@ -3776,13 +3783,13 @@ function pointsToSvg(points) {
 }
 
 function renderVerificationPanel(course) {
-  if (!course.verification) {
+  if (!isVerifiedCourse(course)) {
     return "";
   }
   return `
     <section class="verification-panel">
       <div>
-        <p class="eyebrow">Verified Pack</p>
+        <p class="eyebrow">Verified Course</p>
         <h3>${escapeHtml(courseDisplayName(course))}</h3>
         <p>${escapeHtml(course.verification.confidence)}</p>
       </div>
@@ -4533,7 +4540,7 @@ function renderRoundShotMaps(round, course) {
   return `
     <div class="round-shot-gallery">
       ${holes.map((entry) => `
-        <details>
+        <details data-previous-round-shot-key="${escapeAttribute(previousRoundShotKey(round.id, entry.holeNumber))}" ${previousRoundShotOpenIds.has(previousRoundShotKey(round.id, entry.holeNumber)) ? "open" : ""}>
           <summary>Hole ${entry.holeNumber} - ${entry.shots.length} tracked shot${entry.shots.length === 1 ? "" : "s"}</summary>
           ${renderRoundShotMap(course, entry.hole, entry.shots)}
           ${renderRoundShotList(entry.shots)}
@@ -4541,6 +4548,10 @@ function renderRoundShotMaps(round, course) {
       `).join("")}
     </div>
   `;
+}
+
+function previousRoundShotKey(roundId, holeNumber) {
+  return `${roundId || ""}:${Number(holeNumber) || holeNumber || ""}`;
 }
 
 function renderRoundShotList(shots) {
@@ -4581,31 +4592,44 @@ function renderRoundShotMap(course, hole, shots) {
     scheduleArcgisImageryLayerRequest();
   }
   return `
-    <div class="previous-shot-map" style="--satellite-panel-ratio:${panelRatio};">
-      ${map ? `
-        <div class="arcgis-tile-layer${getArcgisImageryLayer() ? "" : " loading"}" data-arcgis-tile-layer>
-          ${renderArcgisTiles(map, false)}
-          <div class="arcgis-map-status" data-arcgis-map-status>${escapeHtml(arcgisImageryStatusText())}</div>
-        </div>
-      ` : ""}
-      <svg class="previous-shot-overlay" viewBox="0 0 100 100" preserveAspectRatio="none" aria-label="Tracked shot map for hole ${hole.number}">
-        <defs>
-          <linearGradient id="${gradientId}" x1="0" y1="1" x2="0" y2="0">
-            <stop offset="0%" stop-color="#35f0c1"></stop>
-            <stop offset="100%" stop-color="#ff4fd8"></stop>
-          </linearGradient>
-        </defs>
-        ${tee ? `<ellipse class="previous-shot-tee" cx="${tee.x}" cy="${tee.y}" rx="1.7" ry="${Number((1.7 / panelRatio).toFixed(3))}"></ellipse>` : ""}
-        ${green ? `<ellipse class="previous-shot-green" cx="${green.x}" cy="${green.y}" rx="2.2" ry="${Number((2.2 / panelRatio).toFixed(3))}"></ellipse>` : ""}
-        ${mapped.map(({ shot, start, end }) => `
-          <line class="tracked-shot-route" x1="${start.x}" y1="${start.y}" x2="${end.x}" y2="${end.y}" stroke="url(#${gradientId})"></line>
-          <ellipse class="tracked-shot-landing" cx="${end.x}" cy="${end.y}" rx="1.7" ry="${Number((1.7 / panelRatio).toFixed(3))}"></ellipse>
-          <text class="tracked-shot-label" x="${clamp(end.x + 2, 4, 94)}" y="${clamp(end.y - 2, 6, 96)}">${shot.number}</text>
-        `).join("")}
-      </svg>
-      ${map ? `<div class="satellite-attribution">${escapeHtml(map.attribution || arcgisImageryAttribution())}</div>` : ""}
+    <div class="previous-shot-map-shell">
+      <div class="previous-shot-map" style="--satellite-panel-ratio:${panelRatio};">
+        ${map ? `
+          <div class="arcgis-tile-layer${getArcgisImageryLayer() ? "" : " loading"}" data-arcgis-tile-layer>
+            ${renderArcgisTiles(map, false)}
+            <div class="arcgis-map-status" data-arcgis-map-status>${escapeHtml(arcgisImageryStatusText())}</div>
+          </div>
+        ` : ""}
+        <svg class="previous-shot-overlay" viewBox="0 0 100 100" preserveAspectRatio="none" aria-label="Tracked shot map for hole ${hole.number}">
+          <defs>
+            <linearGradient id="${gradientId}" x1="0" y1="1" x2="0" y2="0">
+              <stop offset="0%" stop-color="#35f0c1"></stop>
+              <stop offset="100%" stop-color="#ff4fd8"></stop>
+            </linearGradient>
+          </defs>
+          ${tee ? `<ellipse class="previous-shot-tee" cx="${tee.x}" cy="${tee.y}" rx="1.7" ry="${Number((1.7 / panelRatio).toFixed(3))}"></ellipse>` : ""}
+          ${green ? `<ellipse class="previous-shot-green" cx="${green.x}" cy="${green.y}" rx="2.2" ry="${Number((2.2 / panelRatio).toFixed(3))}"></ellipse>` : ""}
+          ${mapped.map(({ shot, start, end }) => `
+            <line class="tracked-shot-route" x1="${start.x}" y1="${start.y}" x2="${end.x}" y2="${end.y}" stroke="url(#${gradientId})"></line>
+            <ellipse class="tracked-shot-landing" cx="${end.x}" cy="${end.y}" rx="1.7" ry="${Number((1.7 / panelRatio).toFixed(3))}"></ellipse>
+            <text class="tracked-shot-label" x="${clamp(end.x + 2, 4, 94)}" y="${clamp(end.y - 2, 6, 96)}">${shot.number}</text>
+          `).join("")}
+        </svg>
+      </div>
+      ${map ? `<p class="previous-shot-attribution">${escapeHtml(compactSatelliteAttribution(map.attribution || arcgisImageryAttribution()))}</p>` : ""}
     </div>
   `;
+}
+
+function compactSatelliteAttribution(value) {
+  const text = String(value || "").replace(/\s+/g, " ").trim();
+  if (!text) {
+    return "";
+  }
+  if (/imagery/i.test(text)) {
+    return text.length > 96 ? `${text.slice(0, 93).trim()}...` : text;
+  }
+  return text.length > 88 ? `Imagery: ${text.slice(0, 76).trim()}...` : `Imagery: ${text}`;
 }
 
 function validGeoPointLike(point) {
@@ -5141,8 +5165,23 @@ function handleChange(event) {
 }
 
 function handleToggle(event) {
-  const details = event.target.closest("details[data-previous-round-id]");
-  if (!details) {
+  const details = event.target;
+  if (!details?.matches?.("details")) {
+    return;
+  }
+  const shotKey = details.matches("details[data-previous-round-shot-key]")
+    ? details.dataset.previousRoundShotKey
+    : "";
+  if (shotKey) {
+    if (details.open) {
+      previousRoundShotOpenIds.add(shotKey);
+    } else {
+      previousRoundShotOpenIds.delete(shotKey);
+    }
+    return;
+  }
+
+  if (!details.matches("details[data-previous-round-id]")) {
     return;
   }
   const roundId = details.dataset.previousRoundId;
@@ -6671,6 +6710,8 @@ function deleteSavedRound(roundId) {
   }
   queueCloudRoundDeletion(roundId);
   previousRoundOpenIds.delete(roundId);
+  const shotKeyPrefix = `${roundId}:`;
+  previousRoundShotOpenIds = new Set([...previousRoundShotOpenIds].filter((key) => !key.startsWith(shotKeyPrefix)));
   state.rounds = state.rounds.filter((item) => item.id !== roundId);
   persist("Round removed.");
 }
@@ -6808,7 +6849,10 @@ function slugifyLocalArea(value) {
 function mergeImportedCourses(courses, label) {
   const namedCourses = courses.filter((course) => course.name !== "Unnamed golf course");
   const knownIds = new Set(state.courses.map((course) => course.id));
-  const fresh = namedCourses.filter((course) => !knownIds.has(course.id));
+  const fresh = namedCourses.filter((course) =>
+    !knownIds.has(course.id) &&
+    !verifiedCourseDuplicateForImport(course)
+  );
   const updates = new Map(namedCourses.map((course) => [course.id, course]));
   state.courses = [
     ...fresh,
@@ -6822,6 +6866,9 @@ function mergeImportedCourses(courses, label) {
 }
 
 function mergeCourseShell(existing, incoming) {
+  if (isVerifiedCourse(existing) && !isVerifiedCourse(incoming)) {
+    return mergeVerifiedCourseShell(existing, incoming);
+  }
   const existingMapped = courseMappedHoleCount(existing);
   return {
     ...existing,
@@ -6829,6 +6876,124 @@ function mergeCourseShell(existing, incoming) {
     holes: existingMapped ? existing.holes : incoming.holes,
     geometrySource: existing.geometrySource || incoming.geometrySource || ""
   };
+}
+
+function mergeVerifiedCourseShell(existing, incoming) {
+  return {
+    ...existing,
+    distanceMiles: Number.isFinite(Number(incoming.distanceMiles)) ? incoming.distanceMiles : existing.distanceMiles,
+    homeAreaId: existing.homeAreaId || incoming.homeAreaId,
+    location: validGeoPoint(existing.location) ? existing.location : incoming.location,
+    osm: existing.osm || incoming.osm
+  };
+}
+
+function verifiedCourseDuplicateForImport(course) {
+  if (!course || isVerifiedCourse(course)) {
+    return null;
+  }
+  let best = null;
+  let bestScore = 0;
+  state.courses.filter(isVerifiedCourse).forEach((candidate) => {
+    const score = duplicateCourseMatchScore(course, candidate);
+    if (score > bestScore) {
+      best = candidate;
+      bestScore = score;
+    }
+  });
+  return bestScore >= 7 ? best : null;
+}
+
+function duplicateCourseMatchScore(course, candidate) {
+  const courseNames = normalizedCourseNames(course);
+  const candidateNames = normalizedCourseNames(candidate);
+  const nameExact = courseNames.some((name) => candidateNames.includes(name));
+  const nameLoose = !nameExact && courseNames.some((name) =>
+    candidateNames.some((candidateName) => coursesOverlap(name, candidateName))
+  );
+  const postcodeExact = normalizePostcode(course.postcode) &&
+    normalizePostcode(course.postcode) === normalizePostcode(candidate.postcode);
+  const townExact = normalizeCourseText(course.town) &&
+    normalizeCourseText(course.town) === normalizeCourseText(candidate.town);
+  const distance = validGeoPoint(course.location) && validGeoPoint(candidate.location)
+    ? yardsBetween(course.location, candidate.location)
+    : null;
+  const closeLocation = Number.isFinite(distance) && distance <= COURSE_DUPLICATE_MATCH_DISTANCE_YARDS;
+  const sameHoles = importCourseHoleCount(course) && importCourseHoleCount(course) === importCourseHoleCount(candidate);
+
+  let score = 0;
+  if (postcodeExact) {
+    score += 8;
+  }
+  if (nameExact) {
+    score += 6;
+  } else if (nameLoose) {
+    score += 3;
+  }
+  if (townExact) {
+    score += 2;
+  }
+  if (closeLocation) {
+    score += distance <= COURSE_DUPLICATE_MATCH_DISTANCE_YARDS / 2 ? 3 : 2;
+  }
+  if (sameHoles) {
+    score += 1;
+  }
+  if (Array.isArray(candidate.loopIds) && candidate.loopIds.length === 2) {
+    score += 0.25;
+  }
+  return score;
+}
+
+function normalizedCourseNames(course) {
+  return [
+    course?.name,
+    course?.venueName,
+    String(course?.name || "").split(/\s+-\s+/)[0]
+  ]
+    .map(normalizeCourseName)
+    .filter(Boolean)
+    .filter((value, index, list) => list.indexOf(value) === index);
+}
+
+function normalizeCourseName(value) {
+  return normalizeCourseText(value)
+    .replace(/\b(golf|club|course|links|country|resort|hotel|the)\b/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function normalizeCourseText(value) {
+  return String(value || "")
+    .toLowerCase()
+    .replace(/&/g, " and ")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim()
+    .replace(/\s+/g, " ");
+}
+
+function normalizePostcode(value) {
+  return String(value || "").toUpperCase().replace(/\s+/g, "");
+}
+
+function coursesOverlap(a, b) {
+  if (!a || !b) {
+    return false;
+  }
+  if (a.length >= 8 && b.length >= 8 && (a.includes(b) || b.includes(a))) {
+    return true;
+  }
+  const aTokens = new Set(a.split(" ").filter((token) => token.length > 2));
+  const bTokens = b.split(" ").filter((token) => token.length > 2);
+  if (!aTokens.size || !bTokens.length) {
+    return false;
+  }
+  const shared = bTokens.filter((token) => aTokens.has(token)).length;
+  return shared >= Math.min(2, aTokens.size, bTokens.length);
+}
+
+function importCourseHoleCount(course) {
+  return Number(course?.holesCount) || (Array.isArray(course?.holes) ? course.holes.length : 0);
 }
 
 async function refreshCourseLayout(courseId) {

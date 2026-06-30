@@ -59550,13 +59550,13 @@ export const sharedCourseDefaults = [
       "lat": 53.8718289,
       "lng": -1.457387
     },
-    "geometrySource": "OpenStreetMap golf geometry fetched 2026-06-26.",
+    "geometrySource": "GPS geometry pending verification.",
     "scorecardSource": "https://www.scarcroftgolfclub.co.uk/the-course/course-tour/hole-1/",
-    "attribution": "Identity and scorecard candidates from https://www.scarcroftgolfclub.co.uk/. Hole routing and green geometry from OpenStreetMap contributors under ODbL.",
+    "attribution": "Identity and scorecard candidates from https://www.scarcroftgolfclub.co.uk/. GPS geometry pending manual verification.",
     "verification": {
-      "status": "scraper-confirmed",
+      "status": "imported-scorecard",
       "updated": "2026-06-26",
-      "confidence": "Scraper confirmed: identity, scorecard, tee sets, geometry, and source proof passed."
+      "confidence": "Imported scorecard and tee data are available, but tee and green GPS geometry is pending manual verification."
     },
     "tees": [
       {
@@ -59632,41 +59632,7 @@ export const sharedCourseDefaults = [
           "yellow": 336,
           "red": 331
         },
-        "tee": {
-          "lat": 53.8744805,
-          "lng": -1.4999943
-        },
-        "greenCenter": {
-          "lat": 53.8718263,
-          "lng": -1.4943645
-        },
-        "greenFront": {
-          "lat": 53.8718828,
-          "lng": -1.4944843
-        },
-        "greenBack": {
-          "lat": 53.8717698,
-          "lng": -1.4942447
-        },
         "hazards": [],
-        "geometry": {
-          "holePath": [
-            {
-              "lat": 53.8745001,
-              "lng": -1.4986486
-            },
-            {
-              "lat": 53.8741335,
-              "lng": -1.5029988
-            },
-            {
-              "lat": 53.8746616,
-              "lng": -1.5060495
-            }
-          ],
-          "osmHole": "way/145577544",
-          "osmTee": "node/1589690353"
-        },
         "notes": "Scraper warning: OSM tee-to-green distance 517 yd differs from scorecard median 344 yd."
       },
       {
@@ -59862,135 +59828,7 @@ export const sharedCourseDefaults = [
           "yellow": 326,
           "red": 288
         },
-        "tee": {
-          "lat": 53.871813,
-          "lng": -1.5052441
-        },
-        "greenCenter": {
-          "lat": 53.8727521,
-          "lng": -1.4984963
-        },
-        "greenFront": {
-          "lat": 53.8727342,
-          "lng": -1.4987763
-        },
-        "greenBack": {
-          "lat": 53.872737,
-          "lng": -1.498281
-        },
         "hazards": [],
-        "geometry": {
-          "greenPolygon": [
-            {
-              "lat": 53.8726516,
-              "lng": -1.4984721
-            },
-            {
-              "lat": 53.8726824,
-              "lng": -1.4985736
-            },
-            {
-              "lat": 53.8726886,
-              "lng": -1.4986975
-            },
-            {
-              "lat": 53.872699,
-              "lng": -1.4987375
-            },
-            {
-              "lat": 53.8727131,
-              "lng": -1.4987584
-            },
-            {
-              "lat": 53.8727342,
-              "lng": -1.4987763
-            },
-            {
-              "lat": 53.8727589,
-              "lng": -1.4987823
-            },
-            {
-              "lat": 53.8728021,
-              "lng": -1.4987468
-            },
-            {
-              "lat": 53.8728839,
-              "lng": -1.4985438
-            },
-            {
-              "lat": 53.8728883,
-              "lng": -1.4985005
-            },
-            {
-              "lat": 53.8728804,
-              "lng": -1.4984646
-            },
-            {
-              "lat": 53.8728681,
-              "lng": -1.4984318
-            },
-            {
-              "lat": 53.8728514,
-              "lng": -1.4984049
-            },
-            {
-              "lat": 53.8727871,
-              "lng": -1.4983646
-            },
-            {
-              "lat": 53.8727775,
-              "lng": -1.4983497
-            },
-            {
-              "lat": 53.8727563,
-              "lng": -1.498296
-            },
-            {
-              "lat": 53.872737,
-              "lng": -1.498281
-            },
-            {
-              "lat": 53.872715,
-              "lng": -1.4982781
-            },
-            {
-              "lat": 53.8726921,
-              "lng": -1.4982945
-            },
-            {
-              "lat": 53.8726771,
-              "lng": -1.4983184
-            },
-            {
-              "lat": 53.8726534,
-              "lng": -1.4984034
-            },
-            {
-              "lat": 53.8726498,
-              "lng": -1.4984438
-            },
-            {
-              "lat": 53.8726516,
-              "lng": -1.4984721
-            }
-          ],
-          "holePath": [
-            {
-              "lat": 53.871813,
-              "lng": -1.5052441
-            },
-            {
-              "lat": 53.8721258,
-              "lng": -1.5005193
-            },
-            {
-              "lat": 53.8727598,
-              "lng": -1.4985336
-            }
-          ],
-          "osmHole": "way/145577533",
-          "osmGreen": "way/145565524"
-        },
         "notes": "Scraper warning: OSM tee-to-green distance 497 yd differs from scorecard median 340 yd."
       },
       {

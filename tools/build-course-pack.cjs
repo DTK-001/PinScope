@@ -14,6 +14,9 @@ const METERS_TO_YARDS = 1.0936132983;
 const MIN_PLAUSIBLE_GPS_YARDAGE_RATIO = 0.45;
 const MAX_PLAUSIBLE_GPS_YARDAGE_RATIO = 1.65;
 const MAX_PLAUSIBLE_GPS_YARDAGE_DIFF = 250;
+const UNTRUSTED_SCRAPER_GEOMETRY_COURSE_IDS = new Set([
+  "scraped-scarcroft-golf-course-relation-3622129"
+]);
 
 main().catch((error) => {
   console.error(error.message || error);
@@ -183,10 +186,36 @@ function sanitizePlayableCourse(course) {
   if (!course || typeof course !== "object" || !Array.isArray(course.holes)) {
     return course;
   }
+  const trustGeometry = !UNTRUSTED_SCRAPER_GEOMETRY_COURSE_IDS.has(course.id);
+  const next = trustGeometry
+    ? course
+    : {
+        ...course,
+        geometrySource: "GPS geometry pending verification.",
+        attribution: downgradeGeometryAttribution(course.attribution),
+        verification: downgradeScraperVerification(course.verification)
+      };
   return {
-    ...course,
-    holes: course.holes.map(sanitizePlayableHole)
+    ...next,
+    holes: next.holes.map((hole) => sanitizePlayableHole(hole, { forceStripAnchors: !trustGeometry }))
   };
+}
+
+function downgradeScraperVerification(verification) {
+  return {
+    ...(verification && typeof verification === "object" ? verification : {}),
+    status: "imported-scorecard",
+    confidence: "Imported scorecard and tee data are available, but tee and green GPS geometry is pending manual verification."
+  };
+}
+
+function downgradeGeometryAttribution(value = "") {
+  const text = String(value || "").trim();
+  const withoutGeometry = text
+    .replace(/\s*Hole routing and green geometry from OpenStreetMap contributors under ODbL\.?/g, "")
+    .replace(/\s*Course identity from OpenStreetMap contributors under ODbL\.?/g, "")
+    .trim();
+  return `${withoutGeometry || "Imported scorecard data."} GPS geometry pending manual verification.`;
 }
 
 function unusableScraperCourse(course) {
@@ -215,8 +244,8 @@ function unusableScraperCourse(course) {
   return false;
 }
 
-function sanitizePlayableHole(hole) {
-  if (!hole || typeof hole !== "object" || !implausibleHoleAnchors(hole)) {
+function sanitizePlayableHole(hole, options = {}) {
+  if (!hole || typeof hole !== "object" || (!options.forceStripAnchors && !implausibleHoleAnchors(hole))) {
     return hole;
   }
   const next = { ...hole };

@@ -12,6 +12,7 @@ import {
 const SUPABASE_SDK_URL = "https://esm.sh/@supabase/supabase-js@2.108.2?bundle";
 const DELETE_QUEUE_PREFIX = "pinscope:cloud-round-deletions:v1:";
 const SYNC_DELAY_MS = 1200;
+const LOOPBACK_HOSTS = new Set(["localhost", "127.0.0.1", "0.0.0.0", "::1", "[::1]"]);
 
 let client = null;
 let currentUser = null;
@@ -66,7 +67,7 @@ export async function sendAccountMagicLink(email) {
     throw new Error(client ? "Enter your email address." : "Account service is still loading.");
   }
   setStatus({ phase: "sending", email: normalized, message: "Sending sign-in email..." });
-  const redirectTo = `${window.location.origin}${window.location.pathname}`;
+  const redirectTo = accountEmailRedirectUrl();
   const { error } = await client.auth.signInWithOtp({
     email: normalized,
     options: { emailRedirectTo: redirectTo, shouldCreateUser: true }
@@ -80,6 +81,31 @@ export async function sendAccountMagicLink(email) {
     email: normalized,
     message: "Check your email and open the PinScope sign-in link."
   });
+}
+
+function accountEmailRedirectUrl() {
+  const configured = normalizeRedirectUrl(supabaseConfig.authRedirectUrl);
+  const current = normalizeRedirectUrl(`${window.location.origin}${window.location.pathname}`);
+  if (configured && isLocalAuthHost(window.location.hostname)) {
+    return configured;
+  }
+  return current || configured || window.location.href.split(/[?#]/)[0];
+}
+
+function normalizeRedirectUrl(value) {
+  try {
+    const url = new URL(String(value || ""), window.location.href);
+    url.search = "";
+    url.hash = "";
+    return url.toString();
+  } catch {
+    return "";
+  }
+}
+
+function isLocalAuthHost(hostname) {
+  const host = String(hostname || "").toLowerCase();
+  return LOOPBACK_HOSTS.has(host) || host.endsWith(".localhost");
 }
 
 export async function signOutAccount() {

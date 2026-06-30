@@ -11,6 +11,7 @@ const GPS_FIELDS = ["tee", "greenFront", "greenCenter", "greenBack"];
 const MIN_PLAUSIBLE_GPS_YARDAGE_RATIO = 0.45;
 const MAX_PLAUSIBLE_GPS_YARDAGE_RATIO = 1.65;
 const MAX_PLAUSIBLE_GPS_YARDAGE_DIFF = 250;
+const DUPLICATE_COURSE_MATCH_DISTANCE_YARDS = 1760;
 
 const builtInCourses = applyVerifiedGreenDefaults(buildBuiltInCourses());
 
@@ -131,7 +132,9 @@ const baseState = {
 export function loadState() {
   const stored = readStoredState();
   const merged = mergeState(baseState, stored || {});
-  merged.courses = ensureBuiltInCourses(merged.courses);
+  const duplicateCourseReplacements = duplicateBuiltInCourseReplacements(merged.courses);
+  remapDuplicateCourseReferences(merged, duplicateCourseReplacements);
+  merged.courses = ensureBuiltInCourses(merged.courses, duplicateCourseReplacements);
   if (merged.selectedCourseId && !merged.courses.some((course) => course.id === merged.selectedCourseId)) {
     merged.selectedCourseId = merged.courses[0]?.id || "";
   }
@@ -271,12 +274,177 @@ function clampYards(value) {
   return Math.min(400, Math.max(0, Math.round(yards)));
 }
 
-function ensureBuiltInCourses(courses) {
+function ensureBuiltInCourses(courses, duplicateCourseReplacements = new Map()) {
   const builtInIds = new Set(builtInCourses.map((course) => course.id));
   const byId = new Map(courses.map((course) => [course.id, course]));
   const mergedBuiltIns = builtInCourses.map((course) => mergeBuiltInCourse(course, byId.get(course.id)));
-  const userCourses = courses.filter((course) => !builtInIds.has(course.id) && !REMOVED_BUILT_IN_COURSE_IDS.has(course.id));
+  const userCourses = courses.filter((course) =>
+    !builtInIds.has(course.id) &&
+    !REMOVED_BUILT_IN_COURSE_IDS.has(course.id) &&
+    !duplicateCourseReplacements.has(course.id)
+  );
   return [...mergedBuiltIns, ...userCourses];
+}
+
+function duplicateBuiltInCourseReplacements(courses = []) {
+  const builtInIds = new Set(builtInCourses.map((course) => course.id));
+  const verifiedBuiltIns = builtInCourses.filter(isVerifiedCourse);
+  const replacements = new Map();
+  courses.forEach((course) => {
+    if (!course?.id || builtInIds.has(course.id) || REMOVED_BUILT_IN_COURSE_IDS.has(course.id)) {
+      return;
+    }
+    if (!isUnbackedCourseDuplicate(course)) {
+      return;
+    }
+    const verifiedCourse = bestVerifiedCourseMatch(course, verifiedBuiltIns);
+    if (verifiedCourse?.id) {
+      replacements.set(course.id, verifiedCourse.id);
+    }
+  });
+  return replacements;
+}
+
+function remapDuplicateCourseReferences(state, replacements) {
+  if (!replacements?.size) {
+    return;
+  }
+  if (state.selectedCourseId && replacements.has(state.selectedCourseId)) {
+    state.selectedCourseId = replacements.get(state.selectedCourseId);
+  }
+  if (Array.isArray(state.rounds)) {
+    state.rounds = state.rounds.map((round) => (
+      round?.courseId && replacements.has(round.courseId)
+        ? { ...round, courseId: replacements.get(round.courseId) }
+        : round
+    ));
+  }
+}
+
+function isUnbackedCourseDuplicate(course) {
+  if (!course || isVerifiedCourse(course) || String(course.source || "").toLowerCase() === "verified") {
+    return false;
+  }
+  if (Array.isArray(course.verification?.sources) && course.verification.sources.length) {
+    return false;
+  }
+  const source = String(course.source || "").toLowerCase();
+  return !source ||
+    ["manual", "osm", "scraper", "shared", "demo"].includes(source) ||
+    String(course.id || "").startsWith("manual-") ||
+    String(course.id || "").startsWith("osm-");
+}
+
+function bestVerifiedCourseMatch(course, verifiedCourses) {
+  let best = null;
+  let bestScore = 0;
+  verifiedCourses.forEach((candidate) => {
+    if (candidate.id === course.id) {
+      return;
+    }
+    const score = duplicateCourseMatchScore(course, candidate);
+    if (score > bestScore) {
+      best = candidate;
+      bestScore = score;
+    }
+  });
+  return bestScore >= 7 ? best : null;
+}
+
+function duplicateCourseMatchScore(course, candidate) {
+  const courseNames = normalizedCourseNames(course);
+  const candidateNames = normalizedCourseNames(candidate);
+  const nameExact = courseNames.some((name) => candidateNames.includes(name));
+  const nameLoose = !nameExact && courseNames.some((name) =>
+    candidateNames.some((candidateName) => coursesOverlap(name, candidateName))
+  );
+  const postcodeExact = normalizePostcode(course.postcode) &&
+    normalizePostcode(course.postcode) === normalizePostcode(candidate.postcode);
+  const townExact = normalizeCourseText(course.town) &&
+    normalizeCourseText(course.town) === normalizeCourseText(candidate.town);
+  const distance = validGeoPoint(course.location) && validGeoPoint(candidate.location)
+    ? yardsBetween(course.location, candidate.location)
+    : null;
+  const closeLocation = Number.isFinite(distance) && distance <= DUPLICATE_COURSE_MATCH_DISTANCE_YARDS;
+  const sameHoles = courseHoleCount(course) && courseHoleCount(course) === courseHoleCount(candidate);
+
+  let score = 0;
+  if (postcodeExact) {
+    score += 8;
+  }
+  if (nameExact) {
+    score += 6;
+  } else if (nameLoose) {
+    score += 3;
+  }
+  if (townExact) {
+    score += 2;
+  }
+  if (closeLocation) {
+    score += distance <= DUPLICATE_COURSE_MATCH_DISTANCE_YARDS / 2 ? 3 : 2;
+  }
+  if (sameHoles) {
+    score += 1;
+  }
+  if (Array.isArray(candidate.loopIds) && candidate.loopIds.length === 2) {
+    score += 0.25;
+  }
+  return score;
+}
+
+function normalizedCourseNames(course) {
+  return [
+    course?.name,
+    course?.venueName,
+    String(course?.name || "").split(/\s+-\s+/)[0]
+  ]
+    .map(normalizeCourseName)
+    .filter(Boolean)
+    .filter((value, index, list) => list.indexOf(value) === index);
+}
+
+function normalizeCourseName(value) {
+  return normalizeCourseText(value)
+    .replace(/\b(golf|club|course|links|country|resort|hotel|the)\b/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function normalizeCourseText(value) {
+  return String(value || "")
+    .toLowerCase()
+    .replace(/&/g, " and ")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim()
+    .replace(/\s+/g, " ");
+}
+
+function normalizePostcode(value) {
+  return String(value || "").toUpperCase().replace(/\s+/g, "");
+}
+
+function coursesOverlap(a, b) {
+  if (!a || !b) {
+    return false;
+  }
+  if (a.length >= 8 && b.length >= 8 && (a.includes(b) || b.includes(a))) {
+    return true;
+  }
+  const aTokens = new Set(a.split(" ").filter((token) => token.length > 2));
+  const bTokens = b.split(" ").filter((token) => token.length > 2);
+  if (!aTokens.size || !bTokens.length) {
+    return false;
+  }
+  const shared = bTokens.filter((token) => aTokens.has(token)).length;
+  return shared >= Math.min(2, aTokens.size, bTokens.length);
+}
+
+function courseHoleCount(course) {
+  return Number(course?.holesCount) || (Array.isArray(course?.holes) ? course.holes.length : 0);
+}
+
+function isVerifiedCourse(course) {
+  return Boolean(course?.verification && String(course.verification.status || "").toLowerCase() === "verified");
 }
 
 function mergeBuiltInCourse(defaultCourse, storedCourse) {

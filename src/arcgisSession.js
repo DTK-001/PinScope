@@ -2,7 +2,7 @@
 // This lets the GitHub Pages build test ArcGIS imagery without a backend route.
 // WARNING: anything in frontend JavaScript is public. Replace this with
 // /api/arcgis/session before production and regenerate this key after testing.
-const TEMP_FRONTEND_ARCGIS_API_KEY = "AAPTaL65zGJBCcGliaz22f3lI7w..jrLzRb-aFvdTScUEocynWzKQB3p1SDpAle9rRMj8zybXpdvVK-ksU38Wn2nrGsWUyDigJMIdXLnr39P-LM7-Q2Sxj4cc-s-YDFuBCTAJ4shk2DFNO_ygd5HnZmsT2Y1EC3zlnK1pe6ov3p2MEP9Ez2YBErsu3VQL4Jh-mdFFF4xVqhAHJZgf7MFyroH9mXK0tPLJ-bbk_yryg1CUEhqFiE351teaWwRdPp413z2yPwzFo8o.AT1_0aUFy9y6";
+const TEMP_FRONTEND_ARCGIS_API_KEY = "AAPTagtxg_0TLeB5URMbeqx-_Yw..P3Pi9fVkaWA4d6Biz2EvU0Pn0tqx0JroHvuT2ESQpgS9obHcjM-RS4Z7GgAzt62AwI7iEXqTir08SlUzUo7p7N5du7brVpX0syjw1ulrf0__o97a91ZIVoWDkc7uY0b-7Vaz2jmdlLnErzw7M3x5Td8HRn44gvxNk67pTwt1TXnWeqmUuj2YkqIt4Elt5sHCDziqdUz-Ul9wnoYkSk0aXRPRTotl3XjthsO3khdT_KltUMs.AT1_0aUFy9y6";
 const ARCGIS_SESSION_START_URL = "https://basemapstyles-api.arcgis.com/arcgis/rest/services/styles/v2/sessions/start";
 const SESSION_REFRESH_WINDOW_MS = 60 * 1000;
 const SESSION_REQUEST_TIMEOUT_MS = 10000;
