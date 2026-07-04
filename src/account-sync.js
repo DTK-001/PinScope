@@ -13,7 +13,6 @@ const DELETE_QUEUE_PREFIX = "pinscope:cloud-round-deletions:v1:";
 const AUTH_SESSION_KEY = "pinscope:supabase-auth-session:v1";
 const SYNC_DELAY_MS = 1200;
 const AUTH_REFRESH_LEEWAY_MS = 60000;
-const LOOPBACK_HOSTS = new Set(["localhost", "127.0.0.1", "0.0.0.0", "::1", "[::1]"]);
 
 let client = null;
 let currentUser = null;
@@ -80,7 +79,7 @@ export async function sendAccountMagicLink(email) {
 function accountEmailRedirectUrl() {
   const configured = normalizeRedirectUrl(supabaseConfig.authRedirectUrl);
   const current = normalizeRedirectUrl(`${window.location.origin}${window.location.pathname}`);
-  if (configured && isLocalAuthHost(window.location.hostname)) {
+  if (configured) {
     return configured;
   }
   return current || configured || window.location.href.split(/[?#]/)[0];
@@ -95,11 +94,6 @@ function normalizeRedirectUrl(value) {
   } catch {
     return "";
   }
-}
-
-function isLocalAuthHost(hostname) {
-  const host = String(hostname || "").toLowerCase();
-  return LOOPBACK_HOSTS.has(host) || host.endsWith(".localhost");
 }
 
 function createSupabaseRestClient() {

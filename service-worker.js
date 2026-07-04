@@ -1,4 +1,4 @@
-const CACHE_NAME = "local-loop-golf-v133-account-sign-in";
+const CACHE_NAME = "local-loop-golf-v134-account-redirect";
 
 const APP_SHELL = [
   "./",
