@@ -9,9 +9,10 @@ import {
   useStateAccount
 } from "./storage.js";
 
-const SUPABASE_SDK_URL = "https://esm.sh/@supabase/supabase-js@2.108.2?bundle";
 const DELETE_QUEUE_PREFIX = "pinscope:cloud-round-deletions:v1:";
+const AUTH_SESSION_KEY = "pinscope:supabase-auth-session:v1";
 const SYNC_DELAY_MS = 1200;
+const AUTH_REFRESH_LEEWAY_MS = 60000;
 const LOOPBACK_HOSTS = new Set(["localhost", "127.0.0.1", "0.0.0.0", "::1", "[::1]"]);
 
 let client = null;
@@ -40,14 +41,7 @@ export async function initializeAccountSync(options = {}) {
   callbacks = { ...callbacks, ...options };
   setStatus({ phase: "loading", message: "Connecting account..." });
   try {
-    const module = await import(SUPABASE_SDK_URL);
-    client = module.createClient(supabaseConfig.url, supabaseConfig.publishableKey, {
-      auth: {
-        persistSession: true,
-        autoRefreshToken: true,
-        detectSessionInUrl: true
-      }
-    });
+    client = createSupabaseRestClient();
     client.auth.onAuthStateChange((_event, session) => {
       window.setTimeout(() => handleSession(session).catch(handleAccountError), 0);
     });
@@ -106,6 +100,289 @@ function normalizeRedirectUrl(value) {
 function isLocalAuthHost(hostname) {
   const host = String(hostname || "").toLowerCase();
   return LOOPBACK_HOSTS.has(host) || host.endsWith(".localhost");
+}
+
+function createSupabaseRestClient() {
+  const listeners = new Set();
+  let session = null;
+
+  const notify = (event, nextSession) => {
+    listeners.forEach((listener) => listener(event, nextSession));
+  };
+
+  const setSession = (nextSession, event = "SIGNED_IN") => {
+    session = nextSession;
+    if (session) {
+      writeAuthSession(session);
+    } else {
+      clearAuthSession();
+    }
+    notify(event, session);
+  };
+
+  const auth = {
+    onAuthStateChange(listener) {
+      listeners.add(listener);
+      return {
+        data: {
+          subscription: {
+            unsubscribe: () => listeners.delete(listener)
+          }
+        }
+      };
+    },
+    async getSession() {
+      try {
+        const redirectSession = readAuthRedirectSession();
+        if (redirectSession) {
+          session = await completeAuthSession(redirectSession);
+          writeAuthSession(session);
+          return { data: { session }, error: null };
+        }
+
+        session = readAuthSession();
+        if (session?.refresh_token && authSessionNeedsRefresh(session)) {
+          session = await refreshAuthSession(session.refresh_token);
+          writeAuthSession(session);
+        } else if (session?.access_token && !session.user) {
+          session = await completeAuthSession(session);
+          writeAuthSession(session);
+        }
+        return { data: { session }, error: null };
+      } catch (error) {
+        clearAuthSession();
+        session = null;
+        return { data: { session: null }, error };
+      }
+    },
+    async signInWithOtp({ email, options = {} }) {
+      try {
+        await authRequest("otp", {
+          method: "POST",
+          query: options.emailRedirectTo ? { redirect_to: options.emailRedirectTo } : null,
+          body: {
+            email,
+            create_user: options.shouldCreateUser !== false
+          }
+        });
+        return { data: {}, error: null };
+      } catch (error) {
+        return { data: null, error };
+      }
+    },
+    async signOut() {
+      try {
+        if (session?.access_token) {
+          await authRequest("logout", {
+            method: "POST",
+            token: session.access_token
+          });
+        }
+        setSession(null, "SIGNED_OUT");
+        return { error: null };
+      } catch (error) {
+        return { error };
+      }
+    }
+  };
+
+  return {
+    auth,
+    from(table) {
+      return createRestTableClient(table, () => session);
+    }
+  };
+}
+
+function createRestTableClient(table, getSession) {
+  return {
+    select(columns = "*") {
+      return createRestQuery(table, getSession, {
+        method: "GET",
+        query: { select: columns }
+      });
+    },
+    upsert(body, options = {}) {
+      const query = options.onConflict ? { on_conflict: options.onConflict } : {};
+      return restRequest(table, getSession, {
+        method: "POST",
+        query,
+        body,
+        prefer: "resolution=merge-duplicates"
+      });
+    },
+    delete() {
+      return createRestQuery(table, getSession, { method: "DELETE" });
+    }
+  };
+}
+
+function createRestQuery(table, getSession, options) {
+  const query = { ...(options.query || {}) };
+  const api = {
+    eq(column, value) {
+      query[column] = `eq.${value}`;
+      return api;
+    },
+    in(column, values) {
+      query[column] = `in.(${(values || []).map(restFilterValue).join(",")})`;
+      return api;
+    },
+    maybeSingle() {
+      return restRequest(table, getSession, { ...options, query })
+        .then((result) => ({
+          ...result,
+          data: Array.isArray(result.data) ? result.data[0] || null : result.data || null
+        }));
+    },
+    then(resolve, reject) {
+      return restRequest(table, getSession, { ...options, query }).then(resolve, reject);
+    },
+    catch(reject) {
+      return restRequest(table, getSession, { ...options, query }).catch(reject);
+    }
+  };
+  return api;
+}
+
+async function restRequest(table, getSession, { method, query = {}, body, prefer = "" }) {
+  try {
+    const session = getSession();
+    const url = supabaseUrl(`rest/v1/${table}`, query);
+    const response = await fetch(url, {
+      method,
+      headers: supabaseHeaders(session?.access_token, {
+        Prefer: prefer,
+        ...(method === "GET" ? {} : { "Content-Type": "application/json" })
+      }),
+      body: body === undefined ? undefined : JSON.stringify(body)
+    });
+    const data = await readSupabaseResponse(response);
+    return { data, error: null };
+  } catch (error) {
+    return { data: null, error };
+  }
+}
+
+async function authRequest(path, { method = "GET", query = null, body, token = "" } = {}) {
+  const response = await fetch(supabaseUrl(`auth/v1/${path}`, query), {
+    method,
+    headers: supabaseHeaders(token, method === "GET" ? {} : { "Content-Type": "application/json" }),
+    body: body === undefined ? undefined : JSON.stringify(body)
+  });
+  return readSupabaseResponse(response);
+}
+
+async function readSupabaseResponse(response) {
+  let payload = null;
+  const text = await response.text().catch(() => "");
+  if (text) {
+    try {
+      payload = JSON.parse(text);
+    } catch {
+      payload = text;
+    }
+  }
+  if (!response.ok) {
+    const message = typeof payload === "string"
+      ? payload
+      : payload?.msg || payload?.message || payload?.error_description || payload?.error || `Account request failed (${response.status}).`;
+    throw new Error(message);
+  }
+  return payload;
+}
+
+function supabaseUrl(path, query = null) {
+  const url = new URL(path, `${supabaseConfig.url.replace(/\/+$/, "")}/`);
+  Object.entries(query || {}).forEach(([key, value]) => {
+    if (value !== null && value !== undefined && value !== "") {
+      url.searchParams.set(key, value);
+    }
+  });
+  return url.toString();
+}
+
+function supabaseHeaders(token = "", extra = {}) {
+  const headers = {
+    apikey: supabaseConfig.publishableKey,
+    Authorization: `Bearer ${token || supabaseConfig.publishableKey}`
+  };
+  Object.entries(extra).forEach(([key, value]) => {
+    if (value) {
+      headers[key] = value;
+    }
+  });
+  return headers;
+}
+
+function readAuthRedirectSession() {
+  const hash = window.location.hash.startsWith("#") ? window.location.hash.slice(1) : "";
+  const params = new URLSearchParams(hash);
+  if (params.get("error") || params.get("error_description")) {
+    clearAuthRedirectHash();
+    throw new Error(params.get("error_description") || params.get("error") || "Sign-in link could not be used.");
+  }
+  const accessToken = params.get("access_token");
+  const refreshToken = params.get("refresh_token");
+  if (!accessToken || !refreshToken) {
+    return null;
+  }
+  const expiresIn = Number(params.get("expires_in") || 3600);
+  clearAuthRedirectHash();
+  return {
+    access_token: accessToken,
+    refresh_token: refreshToken,
+    token_type: params.get("token_type") || "bearer",
+    expires_at: Math.floor(Date.now() / 1000) + (Number.isFinite(expiresIn) ? expiresIn : 3600)
+  };
+}
+
+function clearAuthRedirectHash() {
+  window.history.replaceState(null, "", `${window.location.origin}${window.location.pathname}${window.location.search}`);
+}
+
+async function completeAuthSession(value) {
+  const user = await authRequest("user", { token: value.access_token });
+  return {
+    ...value,
+    user,
+    expires_at: Number(value.expires_at) || Math.floor(Date.now() / 1000) + 3600
+  };
+}
+
+async function refreshAuthSession(refreshToken) {
+  const session = await authRequest("token", {
+    method: "POST",
+    query: { grant_type: "refresh_token" },
+    body: { refresh_token: refreshToken }
+  });
+  return completeAuthSession(session);
+}
+
+function authSessionNeedsRefresh(session) {
+  const expiresAt = Number(session?.expires_at || 0) * 1000;
+  return expiresAt > 0 && expiresAt - Date.now() <= AUTH_REFRESH_LEEWAY_MS;
+}
+
+function readAuthSession() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(AUTH_SESSION_KEY) || "null");
+    return parsed?.access_token && parsed?.refresh_token ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeAuthSession(session) {
+  localStorage.setItem(AUTH_SESSION_KEY, JSON.stringify(session));
+}
+
+function clearAuthSession() {
+  localStorage.removeItem(AUTH_SESSION_KEY);
+}
+
+function restFilterValue(value) {
+  return String(value ?? "").replaceAll('"', '\\"');
 }
 
 export async function signOutAccount() {
@@ -390,9 +667,11 @@ function writeDeleteQueue(userId, queue) {
 
 function handleAccountError(error) {
   const raw = String(error?.message || error || "Account sync failed.");
-  const message = /user_settings|user_rounds|relation .* does not exist/i.test(raw)
-    ? "Account database is not ready. Run supabase/schema.sql in the Supabase SQL Editor."
-    : raw;
+  const message = /failed to fetch|networkerror|load failed/i.test(raw)
+    ? "Could not reach the PinScope account service. Check your connection and try again."
+    : /user_settings|user_rounds|relation .* does not exist/i.test(raw)
+      ? "Account database is not ready. Run supabase/schema.sql in the Supabase SQL Editor."
+      : raw;
   setStatus({ phase: "error", message });
 }
 

@@ -226,6 +226,7 @@ function render() {
   const scrollPositions = captureScorecardScrollPositions();
   const activeRoundView = isActiveRoundView();
   document.body.classList.toggle("score-card-open", scoreCardOpen);
+  document.body.classList.toggle("account-open", accountOpen);
   document.body.classList.toggle("active-round-view", activeRoundView);
   app.innerHTML = `
     <header class="topbar">
