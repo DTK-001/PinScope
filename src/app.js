@@ -177,7 +177,7 @@ function handleWindowResize() {
     return;
   }
 
-  if (view === "play" && getActiveRound(state)) {
+  if (view === "play" && getPlayableActiveRound()) {
     window.clearTimeout(handleWindowResize.pending);
     handleWindowResize.pending = window.setTimeout(render, 90);
   }
@@ -335,7 +335,7 @@ function restoreScorecardScrollPositions(positions) {
 }
 
 function isActiveRoundView() {
-  return view === "play" && Boolean(getActiveRound(state));
+  return view === "play" && Boolean(getPlayableActiveRound());
 }
 
 function pageTitle() {
@@ -343,7 +343,7 @@ function pageTitle() {
     return "Home";
   }
   if (view === "play") {
-    const round = getActiveRound(state);
+    const round = getPlayableActiveRound();
     return round ? "Active Round" : "Start Round";
   }
   if (view === "stats") {
@@ -392,7 +392,7 @@ function scrollToTop() {
 }
 
 function renderHome() {
-  const activeRound = getActiveRound(state);
+  const activeRound = getPlayableActiveRound();
   const selectedCourse = getCourse(state, state.selectedCourseId);
   const bag = activeBag();
   const handicap = handicapProfile();
@@ -575,14 +575,17 @@ function renderLocalAreaSection() {
 
 function renderCourses() {
   const filteredCourses = filteredCourseList();
-  const savedCourseCount = groupedVenueCourseList(state.courses).length;
+  const localArea = activeLocalArea();
+  const savedCourseCount = groupedVenueCourseList(courseLibraryForActiveArea(localArea)).length;
   return `
     ${renderPlayedCoursesSection()}
 
     <section class="action-band">
       <div>
         <h2>Local Course Library</h2>
-        <p>${savedCourseCount} saved ${savedCourseCount === 1 ? "course" : "courses"}</p>
+        <p>${localArea
+          ? `${savedCourseCount} near ${escapeHtml(localArea.label)}`
+          : `${savedCourseCount} saved ${savedCourseCount === 1 ? "course" : "courses"}`}</p>
       </div>
       <button class="primary-action" type="button" data-action="find-nearby">Find Near Me</button>
     </section>
@@ -625,7 +628,7 @@ function renderCourses() {
 
 function filteredCourseList() {
   const query = courseSearchQuery.trim().toLowerCase();
-  const matches = state.courses.filter((course) => !query || [
+  const matches = courseLibraryForActiveArea().filter((course) => !query || [
     course.name,
     course.venueName,
     course.layoutName,
@@ -635,13 +638,13 @@ function filteredCourseList() {
     course.country,
     course.source
   ].some((value) => String(value || "").toLowerCase().includes(query)));
-  return groupedVenueCourseList(matches);
+  return groupedVenueCourseList(matches).sort(compareCourses);
 }
 
 function renderCourseSearchResults(courses = filteredCourseList()) {
   return courses.length
     ? courses.map(renderCourseCard).join("")
-    : `<p class="empty-copy">No courses match that search.</p>`;
+    : `<p class="empty-copy">${activeLocalArea() ? "No courses found for this area yet." : "No courses match that search."}</p>`;
 }
 
 function updateCourseSearchResults() {
@@ -748,7 +751,8 @@ function playedCourseSummaries() {
 function renderPlayedCourseCard(summary) {
   const { course, round, roundCount, leadTotals } = summary;
   const selected = isCourseSelected(course);
-  const activeRound = getActiveRound(state);
+  const activeRound = getPlayableActiveRound();
+  const playable = isCoursePlayable(course);
   const playedLabel = round.status === "active"
     ? "Round in progress"
     : `Last played ${formatShortDate(round.completedAt || round.startedAt)}`;
@@ -767,7 +771,9 @@ function renderPlayedCourseCard(summary) {
         <span>${scoreLabel}</span>
       </div>
       <div class="played-course-actions">
-        <button class="primary-action" type="button" data-action="quick-start" data-course-id="${course.id}">${activeRound ? "Continue" : "Play"}</button>
+        ${playable
+          ? `<button class="primary-action" type="button" data-action="quick-start" data-course-id="${course.id}">${activeRound ? "Continue" : "Play"}</button>`
+          : `<button class="secondary-action" type="button" disabled>Coming soon</button>`}
         <button class="secondary-action" type="button" data-action="select-course" data-course-id="${course.id}">${selected ? "Selected" : "Select"}</button>
       </div>
     </article>
@@ -784,7 +790,8 @@ function formatShortDate(value) {
 
 function renderFeaturedCourse(course) {
   const selected = isCourseSelected(course);
-  const activeRound = getActiveRound(state);
+  const activeRound = getPlayableActiveRound();
+  const playable = isCoursePlayable(course);
   const title = courseDisplayName(course);
   return `
     <section class="course-hero">
@@ -797,7 +804,8 @@ function renderFeaturedCourse(course) {
         <p>${courseLocationLine(course)}</p>
       </div>
       <div class="hero-actions">
-        ${selected ? `<button class="primary-action" type="button" data-action="quick-start" data-course-id="${course.id}">${activeRound ? "Continue Round" : "Setup Round"}</button>` : ""}
+        ${selected && playable ? `<button class="primary-action" type="button" data-action="quick-start" data-course-id="${course.id}">${activeRound ? "Continue Round" : "Setup Round"}</button>` : ""}
+        ${selected && !playable ? `<button class="secondary-action" type="button" disabled>Coming soon</button>` : ""}
         <button class="secondary-action" type="button" data-action="select-course" data-course-id="${course.id}">Select</button>
       </div>
       ${courseHasPhotoVisual(course) ? renderPhotoSourceControl(course, "hero") : ""}
@@ -851,6 +859,7 @@ function renderCourseCard(course) {
   const source = course.source === "verified" ? "Verified" : course.source === "shared" ? "Shared" : course.source === "scraper" ? "Imported" : course.source === "osm" ? "OSM" : course.source === "manual" ? "Manual" : "Demo";
   const loopCount = venueLoopCount(course);
   const verified = isVerifiedCourse(course);
+  const playable = isCoursePlayable(course);
   const importedScorecard = course.source === "scraper" && course.verification;
   return `
     <article class="course-card ${selected}">
@@ -866,6 +875,7 @@ function renderCourseCard(course) {
       </div>
       <div class="course-meta">
         ${verified ? `<span class="verified-chip">Verified course</span>` : ""}
+        ${playable ? "" : `<span class="coming-soon-chip">Coming soon</span>`}
         ${importedScorecard ? `<span class="verified-chip">Imported scorecard</span>` : ""}
         ${loopCount ? `<span>${loopCount} nine-hole loops</span>` : ""}
         ${course.website ? `<a href="${escapeAttribute(course.website)}" target="_blank" rel="noreferrer">Website</a>` : "<span>Website pending</span>"}
@@ -879,6 +889,19 @@ function renderCourseCard(course) {
 
 function isVerifiedCourse(course) {
   return Boolean(course?.verification && String(course.verification.status || "").toLowerCase() === "verified");
+}
+
+function isCoursePlayable(course) {
+  return isVerifiedCourse(course);
+}
+
+function getPlayableActiveRound() {
+  const round = getActiveRound(state);
+  if (!round) {
+    return null;
+  }
+  const course = getCourse(state, round.courseId);
+  return isCoursePlayable(course) ? round : null;
 }
 
 function isCourseSelected(course) {
@@ -910,7 +933,14 @@ function renderCourseGeometryStatus(course) {
 }
 
 function renderSelectedCourseActions(course) {
-  const activeRound = getActiveRound(state);
+  const activeRound = getPlayableActiveRound();
+  if (!isCoursePlayable(course)) {
+    return `
+    <div class="course-actions">
+      <button class="secondary-action" type="button" disabled>Coming soon</button>
+    </div>
+  `;
+  }
   return `
     <div class="course-actions">
       <button class="primary-action" type="button" data-action="quick-start" data-course-id="${course.id}">${activeRound ? "Continue Round" : "Start Round"}</button>
@@ -938,7 +968,7 @@ function renderTeeSummary(course) {
 }
 
 function renderPlay() {
-  const activeRound = getActiveRound(state);
+  const activeRound = getPlayableActiveRound();
   if (!activeRound) {
     return renderStartRound();
   }
@@ -1258,14 +1288,7 @@ function savedHomeCourseCount() {
   if (!localArea) {
     return 0;
   }
-  return groupedVenueCourseList(state.courses).filter((course) => {
-    if (course.homeAreaId === localArea.id) {
-      return true;
-    }
-    return validGeoPoint(course.location)
-      ? yardsBetween(localArea.center, course.location) / 1760 <= localArea.radiusMiles
-      : false;
-  }).length;
+  return groupedVenueCourseList(state.courses.filter((course) => courseInLocalArea(course, localArea))).length;
 }
 
 function activeLocalArea() {
@@ -1304,8 +1327,35 @@ function setActiveLocalArea(area) {
   return activeLocalArea();
 }
 
+function courseLibraryForActiveArea(localArea = activeLocalArea()) {
+  if (!localArea) {
+    return state.courses;
+  }
+  return state.courses.filter((course) => courseInLocalArea(course, localArea));
+}
+
+function courseInLocalArea(course, localArea = activeLocalArea()) {
+  if (!course || !localArea?.center) {
+    return false;
+  }
+  if (course.homeAreaId === localArea.id) {
+    return true;
+  }
+  const distanceMiles = courseDistanceMiles(course, localArea);
+  return Number.isFinite(distanceMiles) && distanceMiles <= localArea.radiusMiles;
+}
+
+function courseDistanceMiles(course, localArea = activeLocalArea()) {
+  if (localArea?.center && validGeoPoint(course?.location)) {
+    return Number((yardsBetween(localArea.center, course.location) / 1760).toFixed(1));
+  }
+  const storedDistance = Number(course?.distanceMiles);
+  return Number.isFinite(storedDistance) ? storedDistance : null;
+}
+
 function courseLocationLine(course) {
   const bits = [];
+  const distanceMiles = courseDistanceMiles(course);
   bits.push(escapeHtml(course.town || course.postcode || "Area pending"));
   if (course.layoutName && !course.venueName) {
     bits.push(escapeHtml(course.layoutName));
@@ -1314,8 +1364,8 @@ function courseLocationLine(course) {
   if (course.par) {
     bits.push(`Par ${escapeHtml(course.par)}`);
   }
-  if (typeof course.distanceMiles === "number") {
-    bits.push(`${course.distanceMiles} mi`);
+  if (typeof distanceMiles === "number") {
+    bits.push(`${distanceMiles} mi`);
   }
   return bits.join(" - ");
 }
@@ -1326,6 +1376,9 @@ function courseDisplayName(course) {
 
 function renderStartRound() {
   const selected = getCourse(state, state.selectedCourseId) || state.courses[0];
+  if (selected && !isCoursePlayable(selected)) {
+    return renderCourseComingSoon(selected);
+  }
   const routingOptions = roundRoutingOptions(selected);
   return `
     <section class="setup-panel round-setup-panel">
@@ -1346,12 +1399,30 @@ function renderStartRound() {
   `;
 }
 
+function renderCourseComingSoon(course) {
+  return `
+    <section class="setup-panel round-setup-panel coming-soon-panel">
+      <div class="round-setup-hero">
+        <p class="eyebrow">Round Setup</p>
+        <h2>Coming soon</h2>
+        <p>${escapeHtml(courseDisplayName(course))} is not verified yet.</p>
+      </div>
+      <a class="secondary-action full" href="#courses">Choose a verified course</a>
+    </section>
+  `;
+}
+
 function roundRoutingOptions(course) {
   if (!course?.venueId) {
     return [];
   }
 
-  const venueCourses = state.courses.filter((item) => item.venueId === course.venueId && Array.isArray(item.loopIds) && item.loopIds.length);
+  const venueCourses = state.courses.filter((item) =>
+    item.venueId === course.venueId &&
+    Array.isArray(item.loopIds) &&
+    item.loopIds.length &&
+    isCoursePlayable(item)
+  );
   const loopCount = new Set(venueCourses.flatMap((item) => item.loopIds)).size;
   const hasLargerVenue = loopCount > 2 || venueCourses.some((item) => Number(item.holesCount || item.holes?.length || 0) > 18);
   if (!hasLargerVenue) {
@@ -4954,6 +5025,7 @@ function handleSubmit(event) {
       flash("Add an area first.");
       return;
     }
+    courseSearchQuery = "";
     form.reset();
     importCoursesForAreaQuery(query);
   }
@@ -4977,6 +5049,11 @@ function handleSubmit(event) {
   if (form.dataset.form === "start-round") {
     const courseId = resolveRoundCourseId(data, String(data.get("courseId") || state.selectedCourseId));
     if (!courseId) {
+      return;
+    }
+    const course = getCourse(state, courseId);
+    if (!isCoursePlayable(course)) {
+      flash("Coming soon.");
       return;
     }
     const players = [0, 1, 2, 3]
@@ -6232,7 +6309,7 @@ function eventToPanelPercent(panel, event) {
 }
 
 function startRound(courseId, teeId = "") {
-  const activeRound = getActiveRound(state);
+  const activeRound = getPlayableActiveRound();
   if (activeRound) {
     resumeActiveRound(activeRound, "Round already in progress.");
     return;
@@ -6240,6 +6317,11 @@ function startRound(courseId, teeId = "") {
   const course = getCourse(state, courseId);
   if (!course) {
     flash("Select a course first.");
+    return;
+  }
+  if (!isCoursePlayable(course)) {
+    state.selectedCourseId = course.id;
+    flash("Coming soon.");
     return;
   }
   if (!Array.isArray(course.holes) || course.holes.length === 0) {
@@ -6259,11 +6341,14 @@ function startRound(courseId, teeId = "") {
   persist("Round started.");
 }
 
-function resumeActiveRound(round = getActiveRound(state), message = "Continuing round.") {
+function resumeActiveRound(round = getPlayableActiveRound(), message = "Continuing round.") {
   if (!round) {
     return false;
   }
   const course = getCourse(state, round.courseId);
+  if (!isCoursePlayable(course)) {
+    return false;
+  }
   state.activeRoundId = round.id;
   if (course) {
     state.selectedCourseId = course.id;
@@ -6278,7 +6363,7 @@ function resumeActiveRound(round = getActiveRound(state), message = "Continuing 
 }
 
 function openRoundSetup(courseId) {
-  if (resumeActiveRound(getActiveRound(state))) {
+  if (resumeActiveRound(getPlayableActiveRound())) {
     return;
   }
   const course = getCourse(state, courseId);
@@ -6291,9 +6376,11 @@ function openRoundSetup(courseId) {
   roundSetupPlayerCount = 1;
   view = "play";
   window.location.hash = "play";
-  scheduleCourseSatellitePreload(course, 1);
+  if (isCoursePlayable(course)) {
+    scheduleCourseSatellitePreload(course, 1);
+  }
   scrollToTop();
-  persist("Course ready.");
+  persist(isCoursePlayable(course) ? "Course ready." : "Coming soon.");
 }
 
 function updateEntryStep(button) {
@@ -6858,11 +6945,29 @@ function mergeImportedCourses(courses, label) {
     ...fresh,
     ...state.courses.map((course) => (updates.has(course.id) ? mergeCourseShell(course, updates.get(course.id)) : course))
   ].sort(compareCourses);
-  if (fresh[0]) {
-    state.selectedCourseId = fresh[0].id;
-  }
+  ensureLocalAreaCourseSelection();
   const area = label ? `${label}: ` : "";
   persist(fresh.length ? `${area}imported ${fresh.length} courses.` : `${area}no new courses found.`);
+}
+
+function ensureLocalAreaCourseSelection(localArea = activeLocalArea()) {
+  if (!localArea) {
+    return;
+  }
+  const localCourses = groupedVenueCourseList(courseLibraryForActiveArea(localArea)).sort(compareCourses);
+  if (!localCourses.length) {
+    return;
+  }
+  const selected = getCourse(state, state.selectedCourseId);
+  const selectedIsLocal = selected && localCourses.some((course) => (
+    course.id === selected.id ||
+    (course.venueId && selected.venueId && course.venueId === selected.venueId)
+  ));
+  const playableLocal = localCourses.find(isCoursePlayable);
+  if (selectedIsLocal && (isCoursePlayable(selected) || !playableLocal)) {
+    return;
+  }
+  state.selectedCourseId = (playableLocal || localCourses[0]).id;
 }
 
 function mergeCourseShell(existing, incoming) {
@@ -7263,8 +7368,8 @@ function roundGeoPoint(point) {
 }
 
 function compareCourses(a, b) {
-  const aDistance = typeof a.distanceMiles === "number" ? a.distanceMiles : 999;
-  const bDistance = typeof b.distanceMiles === "number" ? b.distanceMiles : 999;
+  const aDistance = courseDistanceMiles(a) ?? 999;
+  const bDistance = courseDistanceMiles(b) ?? 999;
   if (aDistance !== bDistance) {
     return aDistance - bDistance;
   }
