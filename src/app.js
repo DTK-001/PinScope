@@ -110,6 +110,7 @@ let satelliteAnchorEdits = loadSatelliteAnchorEdits();
 let holeSwipe = null;
 let wheelHoleNavigationAt = 0;
 let courseSearchQuery = "";
+let courseLookupLoadingLabel = "";
 let statsFilter = "all";
 let gpsTestMoveMode = false;
 let arcgisImageryEnabled = initArcgisImageryEnabled();
@@ -642,9 +643,24 @@ function filteredCourseList() {
 }
 
 function renderCourseSearchResults(courses = filteredCourseList()) {
+  if (courseLookupLoadingLabel) {
+    return renderCourseLookupLoading(courseLookupLoadingLabel);
+  }
   return courses.length
     ? courses.map(renderCourseCard).join("")
     : `<p class="empty-copy">${activeLocalArea() ? "No courses found for this area yet." : "No courses match that search."}</p>`;
+}
+
+function renderCourseLookupLoading(label) {
+  return `
+    <div class="course-loading" role="status" aria-live="polite">
+      <span class="course-loading-spinner" aria-hidden="true"></span>
+      <div>
+        <strong>Finding local courses</strong>
+        <p>${escapeHtml(label ? `Searching near ${label}...` : "Checking the local area...")}</p>
+      </div>
+    </div>
+  `;
 }
 
 function updateCourseSearchResults() {
@@ -6828,7 +6844,7 @@ async function importCoursesForCurrentLocation() {
     flash("GPS is not available in this browser.");
     return;
   }
-  flash("Finding courses near you...");
+  showCourseLookupLoading("your current location");
   try {
     const position = await getCurrentPosition();
     const localArea = setActiveLocalArea({
@@ -6841,14 +6857,16 @@ async function importCoursesForCurrentLocation() {
     });
     await importCoursesForLocalArea(localArea, "Current Location");
   } catch (error) {
+    clearCourseLookupLoading();
     flash(error.message || "Could not import nearby courses.");
   }
 }
 
 async function importCoursesForAreaQuery(query) {
-  flash(`Finding courses near ${query}...`);
+  showCourseLookupLoading(query);
   try {
     const result = await geocodeLocalArea(query);
+    showCourseLookupLoading(result.label);
     const localArea = setActiveLocalArea({
       id: `area-${slugifyLocalArea(result.label)}`,
       label: result.label,
@@ -6856,6 +6874,7 @@ async function importCoursesForAreaQuery(query) {
     });
     await importCoursesForLocalArea(localArea, result.label);
   } catch (error) {
+    clearCourseLookupLoading();
     flash(error.message || `Could not find courses near ${query}.`);
   }
 }
@@ -6866,10 +6885,11 @@ async function importSelectedLocalAreaCourses() {
     flash("Choose an area first.");
     return;
   }
-  flash(`Refreshing ${localArea.label} courses...`);
+  showCourseLookupLoading(localArea.label);
   try {
     await importCoursesForLocalArea(localArea, localArea.label);
   } catch (error) {
+    clearCourseLookupLoading();
     flash(error.message || `Could not refresh ${localArea.label} courses.`);
   }
 }
@@ -6946,8 +6966,24 @@ function mergeImportedCourses(courses, label) {
     ...state.courses.map((course) => (updates.has(course.id) ? mergeCourseShell(course, updates.get(course.id)) : course))
   ].sort(compareCourses);
   ensureLocalAreaCourseSelection();
+  clearCourseLookupLoading({ renderNow: false });
   const area = label ? `${label}: ` : "";
   persist(fresh.length ? `${area}imported ${fresh.length} courses.` : `${area}no new courses found.`);
+}
+
+function showCourseLookupLoading(label) {
+  courseLookupLoadingLabel = String(label || "").trim() || "this area";
+  render();
+}
+
+function clearCourseLookupLoading({ renderNow = true } = {}) {
+  if (!courseLookupLoadingLabel) {
+    return;
+  }
+  courseLookupLoadingLabel = "";
+  if (renderNow) {
+    render();
+  }
 }
 
 function ensureLocalAreaCourseSelection(localArea = activeLocalArea()) {
