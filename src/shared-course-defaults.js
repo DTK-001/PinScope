@@ -3028,7 +3028,11 @@ export const sharedCourseDefaults = [
         },
         "notes": "Scraper warning: OSM tee-to-green distance 300 yd differs from scorecard median 0 yd."
       }
-    ]
+    ],
+    "osm": {
+      "type": "relation",
+      "id": 3883387
+    }
   },
   {
     "id": "scraped-abbey-hill-golf-centre-relation-3960969",
@@ -5110,7 +5114,11 @@ export const sharedCourseDefaults = [
         },
         "notes": ""
       }
-    ]
+    ],
+    "osm": {
+      "type": "relation",
+      "id": 3960969
+    }
   },
   {
     "id": "scraped-addington-court-golf-club-relation-4034056",
@@ -7268,7 +7276,11 @@ export const sharedCourseDefaults = [
         },
         "notes": "Scraper warning: OSM tee-to-green distance 426 yd differs from scorecard median 299 yd."
       }
-    ]
+    ],
+    "osm": {
+      "type": "relation",
+      "id": 4034056
+    }
   },
   {
     "id": "scraped-alexander-park-resort-way-812909736",
@@ -8365,7 +8377,11 @@ export const sharedCourseDefaults = [
         },
         "notes": ""
       }
-    ]
+    ],
+    "osm": {
+      "type": "way",
+      "id": 812909736
+    }
   },
   {
     "id": "scraped-bigbury-golf-club-relation-3390810",
@@ -10664,7 +10680,11 @@ export const sharedCourseDefaults = [
         },
         "notes": ""
       }
-    ]
+    ],
+    "osm": {
+      "type": "relation",
+      "id": 3390810
+    }
   },
   {
     "id": "scraped-brampton-park-golf-club-relation-3729855",
@@ -15346,7 +15366,11 @@ export const sharedCourseDefaults = [
         },
         "notes": ""
       }
-    ]
+    ],
+    "osm": {
+      "type": "relation",
+      "id": 3729855
+    }
   },
   {
     "id": "scraped-brocket-hall-relation-4254167",
@@ -17986,7 +18010,11 @@ export const sharedCourseDefaults = [
         },
         "notes": ""
       }
-    ]
+    ],
+    "osm": {
+      "type": "relation",
+      "id": 4254167
+    }
   },
   {
     "id": "scraped-hintlesham-golf-club-relation-7492025",
@@ -20238,7 +20266,11 @@ export const sharedCourseDefaults = [
         },
         "notes": ""
       }
-    ]
+    ],
+    "osm": {
+      "type": "relation",
+      "id": 7492025
+    }
   },
   {
     "id": "scraped-liphook-golf-club-relation-4632949",
@@ -21842,7 +21874,11 @@ export const sharedCourseDefaults = [
         },
         "notes": ""
       }
-    ]
+    ],
+    "osm": {
+      "type": "relation",
+      "id": 4632949
+    }
   },
   {
     "id": "scraped-longridge-golf-club-relation-11229252",
@@ -26562,7 +26598,11 @@ export const sharedCourseDefaults = [
         },
         "notes": ""
       }
-    ]
+    ],
+    "osm": {
+      "type": "relation",
+      "id": 11229252
+    }
   },
   {
     "id": "scraped-ludlow-golf-club-relation-3350107",
@@ -29426,7 +29466,11 @@ export const sharedCourseDefaults = [
         },
         "notes": ""
       }
-    ]
+    ],
+    "osm": {
+      "type": "relation",
+      "id": 3350107
+    }
   },
   {
     "id": "scraped-mile-end-golf-club-relation-13719325",
@@ -30907,7 +30951,11 @@ export const sharedCourseDefaults = [
         },
         "notes": ""
       }
-    ]
+    ],
+    "osm": {
+      "type": "relation",
+      "id": 13719325
+    }
   },
   {
     "id": "scraped-north-foreland-golf-club-relation-3349870",
@@ -33493,7 +33541,11 @@ export const sharedCourseDefaults = [
         },
         "notes": ""
       }
-    ]
+    ],
+    "osm": {
+      "type": "relation",
+      "id": 3349870
+    }
   },
   {
     "id": "scraped-oakridge-golf-club-relation-3976905",
@@ -36274,7 +36326,11 @@ export const sharedCourseDefaults = [
         },
         "notes": ""
       }
-    ]
+    ],
+    "osm": {
+      "type": "relation",
+      "id": 3976905
+    }
   },
   {
     "id": "scraped-old-course-relation-19898499",
@@ -38771,7 +38827,11 @@ export const sharedCourseDefaults = [
         },
         "notes": ""
       }
-    ]
+    ],
+    "osm": {
+      "type": "relation",
+      "id": 19898499
+    }
   },
   {
     "id": "scraped-painswick-golf-course-relation-3923273",
@@ -41482,7 +41542,11 @@ export const sharedCourseDefaults = [
         },
         "notes": ""
       }
-    ]
+    ],
+    "osm": {
+      "type": "relation",
+      "id": 3923273
+    }
   },
   {
     "id": "scraped-pannal-golf-club-relation-10808242",
@@ -43926,7 +43990,11 @@ export const sharedCourseDefaults = [
         },
         "notes": ""
       }
-    ]
+    ],
+    "osm": {
+      "type": "relation",
+      "id": 10808242
+    }
   },
   {
     "id": "scraped-porthpean-golf-club-relation-3581426",
@@ -45516,7 +45584,11 @@ export const sharedCourseDefaults = [
         },
         "notes": ""
       }
-    ]
+    ],
+    "osm": {
+      "type": "relation",
+      "id": 3581426
+    }
   },
   {
     "id": "scraped-preston-golf-club-relation-975308",
@@ -48738,7 +48810,11 @@ export const sharedCourseDefaults = [
         },
         "notes": ""
       }
-    ]
+    ],
+    "osm": {
+      "type": "relation",
+      "id": 975308
+    }
   },
   {
     "id": "scraped-pyrford-golf-club-relation-3393965",
@@ -51489,7 +51565,11 @@ export const sharedCourseDefaults = [
         },
         "notes": ""
       }
-    ]
+    ],
+    "osm": {
+      "type": "relation",
+      "id": 3393965
+    }
   },
   {
     "id": "scraped-rothbury-golf-club-relation-18809074",
@@ -54533,7 +54613,11 @@ export const sharedCourseDefaults = [
         },
         "notes": ""
       }
-    ]
+    ],
+    "osm": {
+      "type": "relation",
+      "id": 18809074
+    }
   },
   {
     "id": "scraped-rother-valley-golf-centre-relation-4254388",
@@ -56883,7 +56967,11 @@ export const sharedCourseDefaults = [
         },
         "notes": ""
       }
-    ]
+    ],
+    "osm": {
+      "type": "relation",
+      "id": 4254388
+    }
   },
   {
     "id": "scraped-salisbury-and-south-wilts-golf-course-relation-3588664",
@@ -62563,7 +62651,11 @@ export const sharedCourseDefaults = [
         "hazards": [],
         "notes": ""
       }
-    ]
+    ],
+    "osm": {
+      "type": "relation",
+      "id": 3588664
+    }
   },
   {
     "id": "scraped-scarcroft-golf-course-relation-3622129",
@@ -62875,7 +62967,11 @@ export const sharedCourseDefaults = [
         "hazards": [],
         "notes": "Scraper warning: OSM tee-to-green distance 3267 yd differs from scorecard median 508 yd."
       }
-    ]
+    ],
+    "osm": {
+      "type": "relation",
+      "id": 3622129
+    }
   },
   {
     "id": "scraped-seascale-golf-club-relation-20111657",
@@ -66925,7 +67021,11 @@ export const sharedCourseDefaults = [
         },
         "notes": ""
       }
-    ]
+    ],
+    "osm": {
+      "type": "relation",
+      "id": 20111657
+    }
   },
   {
     "id": "scraped-sherfield-oaks-golf-club-relation-1397034",
@@ -68409,7 +68509,11 @@ export const sharedCourseDefaults = [
         },
         "notes": ""
       }
-    ]
+    ],
+    "osm": {
+      "type": "relation",
+      "id": 1397034
+    }
   },
   {
     "id": "scraped-shrewsbury-golf-club-relation-11051617",
@@ -70241,7 +70345,11 @@ export const sharedCourseDefaults = [
         },
         "notes": ""
       }
-    ]
+    ],
+    "osm": {
+      "type": "relation",
+      "id": 11051617
+    }
   },
   {
     "id": "scraped-stapleford-abbotts-golf-course-relation-3910795",
@@ -73521,7 +73629,11 @@ export const sharedCourseDefaults = [
         },
         "notes": ""
       }
-    ]
+    ],
+    "osm": {
+      "type": "relation",
+      "id": 3910795
+    }
   },
   {
     "id": "scraped-tehidy-park-golf-club-relation-9444530",
@@ -76633,7 +76745,11 @@ export const sharedCourseDefaults = [
         },
         "notes": ""
       }
-    ]
+    ],
+    "osm": {
+      "type": "relation",
+      "id": 9444530
+    }
   },
   {
     "id": "scraped-west-cornwall-golf-club-relation-3390813",
@@ -79881,7 +79997,11 @@ export const sharedCourseDefaults = [
         },
         "notes": ""
       }
-    ]
+    ],
+    "osm": {
+      "type": "relation",
+      "id": 3390813
+    }
   },
   {
     "id": "verified-carnoustie-championship",
@@ -99133,7 +99253,11 @@ export const sharedCourseDefaults = [
           "render": "mapped-osm"
         }
       }
-    ]
+    ],
+    "osm": {
+      "type": "way",
+      "id": 23454278
+    }
   },
   {
     "id": "verified-belhus-park",

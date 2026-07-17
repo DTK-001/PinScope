@@ -126,7 +126,24 @@ function loadCourses(inputDir) {
 }
 
 function sanitizeCourse(course) {
-  return sanitizePlayableCourse(stripRuntimeMetadata(stripLegacyImagery(stripLegacyAttribution(course))));
+  return addEncodedOsmIdentity(sanitizePlayableCourse(stripRuntimeMetadata(stripLegacyImagery(stripLegacyAttribution(course)))));
+}
+
+function addEncodedOsmIdentity(course) {
+  if (!course || typeof course !== "object" || course.osm || !course.id) {
+    return course;
+  }
+  const match = String(course.id).match(/(?:^|[-_])(node|way|relation)[-_](\d+)$/i);
+  if (!match) {
+    return course;
+  }
+  return {
+    ...course,
+    osm: {
+      type: match[1].toLowerCase(),
+      id: Number(match[2])
+    }
+  };
 }
 
 function stripLegacyImagery(value) {

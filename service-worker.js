@@ -1,4 +1,4 @@
-const CACHE_NAME = "local-loop-golf-v137-course-boundary-lock";
+const CACHE_NAME = "local-loop-golf-v138-course-identity";
 
 const APP_SHELL = [
   "./",
