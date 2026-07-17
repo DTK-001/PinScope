@@ -255,8 +255,10 @@ function shouldSkipCourse(tags) {
 
 function layoutFromOsmElements(elements, course, radiusMeters, method = "OpenStreetMap") {
   const parsedAll = parseGolfFeatures(elements);
-  const courseArea = selectCourseArea(elements, course);
-  const parsed = filterParsedFeaturesToCourseArea(parsedAll, courseArea, course?.location);
+  const courseAreaSelection = selectCourseArea(elements, course);
+  const courseArea = courseAreaSelection?.unmatched ? null : courseAreaSelection;
+  const fallbackCenter = courseAreaSelection?.unmatched ? null : course?.location;
+  const parsed = filterParsedFeaturesToCourseArea(parsedAll, courseArea, fallbackCenter);
   const count = Math.max(1, Number(course?.holesCount) || Number(course?.holes?.length) || 18);
   const existingByNumber = new Map((course?.holes || []).map((hole) => [Number(hole.number), hole]));
   const linesByNumber = bestLinesByNumber(parsed.holeLines, parsed.tees, parsed.greens);
@@ -380,24 +382,38 @@ function selectCourseArea(elements, course) {
   if (!boundaries.length) {
     return null;
   }
-  const expectedOsm = course?.osm ? `${course.osm.type}/${course.osm.id}` : "";
+  const expectedOsm = courseOsmRef(course);
   const courseName = normalizeName(course?.name || "");
   const location = normalizePoint(course?.location);
   let best = null;
   let bestScore = -Infinity;
+  let matched = false;
   for (const area of boundaries) {
     const name = normalizeName(area.tags?.name || area.tags?.operator || "");
     const sameOsm = expectedOsm && area.osm === expectedOsm;
     const nameMatch = courseName && name && (name.includes(courseName) || courseName.includes(name));
     const distance = validPoint(location) && validPoint(area.center) ? yardsBetween(location, area.center) : 999999;
     const containsCenter = validPoint(location) && area.polygon?.length ? pointInPolygon(location, area.polygon) : false;
+    if (sameOsm || nameMatch || containsCenter) {
+      matched = true;
+    }
     const score = (sameOsm ? 100000 : 0) + (nameMatch ? 50000 : 0) + (containsCenter ? 12000 : 0) - Math.min(distance, 12000);
     if (score > bestScore) {
       best = area;
       bestScore = score;
     }
   }
-  return best;
+  return matched ? best : { unmatched: true };
+}
+
+function courseOsmRef(course) {
+  const type = String(course?.osm?.type || "").toLowerCase();
+  const id = String(course?.osm?.id || "").trim();
+  if (/^(node|way|relation)$/.test(type) && /^\d+$/.test(id)) {
+    return `${type}/${id}`;
+  }
+  const encoded = String(course?.id || "").match(/(?:^|[-_])(node|way|relation)[-_](\d+)$/i);
+  return encoded ? `${encoded[1].toLowerCase()}/${encoded[2]}` : "";
 }
 
 function courseAreaFromElement(element) {
@@ -477,7 +493,7 @@ function featureBelongsToCourse(feature, courseArea, fallbackCenter, maxFallback
   if (validPoint(courseArea?.center)) {
     return yardsBetween(feature.center, courseArea.center) <= maxFallbackYards;
   }
-  return validPoint(fallbackCenter) ? yardsBetween(feature.center, fallbackCenter) <= maxFallbackYards : true;
+  return validPoint(fallbackCenter) ? yardsBetween(feature.center, fallbackCenter) <= maxFallbackYards : false;
 }
 
 function lineBelongsToCourse(line, courseArea, fallbackCenter, maxFallbackYards) {
@@ -493,7 +509,7 @@ function lineBelongsToCourse(line, courseArea, fallbackCenter, maxFallbackYards)
     return insideCount >= Math.max(1, Math.ceil(points.length * 0.35));
   }
   const center = validPoint(courseArea?.center) ? courseArea.center : fallbackCenter;
-  return validPoint(center) ? points.some((point) => yardsBetween(point, center) <= maxFallbackYards) : true;
+  return validPoint(center) ? points.some((point) => yardsBetween(point, center) <= maxFallbackYards) : false;
 }
 
 function bestGreenForHole({ number, line, seed, existing, greens, used }) {

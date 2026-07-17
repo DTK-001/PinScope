@@ -1,4 +1,4 @@
-const CACHE_NAME = "local-loop-golf-v136-wanstead-verified";
+const CACHE_NAME = "local-loop-golf-v137-course-boundary-lock";
 
 const APP_SHELL = [
   "./",
