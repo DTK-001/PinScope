@@ -19,7 +19,7 @@ export const sharedCourseDefaults = [
     "geometrySource": "Scraper GPS Review + ArcGIS World Imagery",
     "scorecardSource": "http://www.wansteadgolf.org.uk/",
     "verification": {
-      "status": "mapped",
+      "status": "verified",
       "updated": "2026-07-17",
       "confidence": "Scorecard data scraped and hole GPS geometry manually confirmed from satellite imagery."
     },
