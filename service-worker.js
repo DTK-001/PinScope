@@ -1,4 +1,4 @@
-const CACHE_NAME = "local-loop-golf-v134-account-redirect";
+const CACHE_NAME = "local-loop-golf-v135-wanstead-course";
 
 const APP_SHELL = [
   "./",
