@@ -3970,6 +3970,7 @@ function renderStats() {
     </section>
 
     ${renderRecentForm(summary)}
+    ${renderGameStrengths(summary)}
     ${renderGameInsights(summary)}
     ${renderScoringBreakdown(summary)}
     ${renderParSplit(summary)}
@@ -4070,6 +4071,7 @@ function buildGameStats(rounds) {
     recentRounds: rounds.slice(0, 6).slice().reverse(),
     coursePerformance: coursePerformance(rounds),
     hardestHoles: hardestHoles(holes),
+    strengths: gameStrengths(rounds, holes),
     insights: gameInsights(rounds, holes)
   };
 }
@@ -4198,18 +4200,15 @@ function gameInsights(rounds, holes) {
   const girPct = holes.length ? pct(girHoles.length, holes.length) : null;
   const puttsPerHole = holes.length ? holes.reduce((sum, item) => sum + item.putts, 0) / holes.length : null;
   const penaltiesPerRound = rounds.length ? holes.reduce((sum, item) => sum + item.penalties, 0) / rounds.length : null;
-  const penaltyHoles = holes.filter((item) => item.penalties > 0);
   const doubleHoles = holes.filter((item) => item.toPar >= 2);
   const doubleRate = holes.length ? pct(doubleHoles.length, holes.length) : null;
   const threePuttHoles = holes.filter((item) => item.putts >= 3);
   const threePuttRate = holes.length ? pct(threePuttHoles.length, holes.length) : null;
   const bogeyHoles = holes.filter((item) => item.toPar === 1);
   const bogeyRate = holes.length ? pct(bogeyHoles.length, holes.length) : null;
-  const parOrBetterRate = holes.length ? pct(holes.filter((item) => item.toPar <= 0).length, holes.length) : null;
   const parSplitMinimum = Math.min(4, Math.max(2, Math.ceil(holes.length * 0.2)));
   const usableParSplits = parSplits(holes).filter((item) => item.holes >= parSplitMinimum);
   const parSplitLeak = usableParSplits.slice().sort((a, b) => b.averageToPar - a.averageToPar)[0] || null;
-  const parSplitStrength = usableParSplits.slice().sort((a, b) => a.averageToPar - b.averageToPar)[0] || null;
   const hardestHole = hardestHoles(holes)[0] || null;
   const missSide = fairwayMissSide(fairways);
   const trend = roundTrend(rounds);
@@ -4235,15 +4234,6 @@ function gameInsights(rounds, holes) {
       score: 90 + penaltiesPerRound * 10
     });
   }
-  if (penaltiesPerRound !== null && penaltiesPerRound < 0.4 && holes.length >= 18) {
-    insights.push({
-      label: "Strength",
-      title: "You are protecting your score from trouble",
-      value: `${penaltiesPerRound.toFixed(1)} / round`,
-      copy: `${penaltyHoles.length} of ${holes.length} holes included a penalty, keeping the average below 0.4 per round. Keep choosing targets and clubs that make your normal miss playable; this is a major scoring foundation.`,
-      score: 54 + (0.4 - penaltiesPerRound) * 30
-    });
-  }
   if (threePuttRate !== null && threePuttRate >= 18) {
     insights.push({
       label: "Putting",
@@ -4251,15 +4241,6 @@ function gameInsights(rounds, holes) {
       value: `${Math.round(threePuttRate)}% 3-putt`,
       copy: `${threePuttHoles.length} of ${holes.length} holes needed three or more putts. If these follow long first putts, train distance control; if they happen from makeable range, work on start line and face control.`,
       score: 82 + threePuttRate
-    });
-  }
-  if (threePuttRate !== null && threePuttRate < 12 && holes.length >= 18) {
-    insights.push({
-      label: "Putting strength",
-      title: "You are keeping three-putts under control",
-      value: `${Math.round(threePuttRate)}% 3-putt`,
-      copy: `${threePuttHoles.length} of ${holes.length} holes reached three putts or more. Keep the same distance-control routine, especially after long approaches, and look for your next gain in approach position or short-putt conversion.`,
-      score: 52 + (12 - threePuttRate) * 2
     });
   }
   if (puttsPerHole !== null && puttsPerHole >= 2.05) {
@@ -4299,15 +4280,6 @@ function gameInsights(rounds, holes) {
       score: 78 + missSide.rate / 2
     });
   }
-  if (fairwayPct !== null && fairwayPct >= 60 && fairways.length >= 5) {
-    insights.push({
-      label: "Tee strength",
-      title: "Your tee shots are giving you playable holes",
-      value: `${Math.round(fairwayPct)}% hit`,
-      copy: `${fairways.filter((item) => item.fairway === "hit").length} of ${fairways.length} recorded fairway attempts found the short grass. Keep the same pre-shot picture and use that confidence to commit to better approach targets.`,
-      score: 50 + fairwayPct / 5
-    });
-  }
   if (parSplitLeak && parSplitLeak.averageToPar >= 1) {
     insights.push({
       label: `Par ${parSplitLeak.par}`,
@@ -4315,15 +4287,6 @@ function gameInsights(rounds, holes) {
       value: `${formatSignedDecimal(parSplitLeak.averageToPar)} / hole`,
       copy: `${parSplitLeak.holes} played in this sample at ${formatSignedDecimal(parSplitLeak.averageToPar)} per hole. Treat these holes as a strategy problem first: pick a comfortable lay-up or approach number, keep the first shot away from penalty trouble, and make bogey the floor.`,
       score: 66 + parSplitLeak.averageToPar * 12
-    });
-  }
-  if (parSplitStrength && parSplitStrength.averageToPar <= -0.2) {
-    insights.push({
-      label: "Strength",
-      title: `Par ${parSplitStrength.par}s are your best scoring opportunity`,
-      value: `${formatSignedDecimal(parSplitStrength.averageToPar)} / hole`,
-      copy: `You are ${formatSignedDecimal(parSplitStrength.averageToPar)} per ${parSplitStrength.par} hole across ${parSplitStrength.holes} holes. Keep the same target and club-selection routine here, then borrow that decision-making on the par holes that cost you most.`,
-      score: 48 + Math.abs(parSplitStrength.averageToPar) * 10
     });
   }
   if (hardestHole && hardestHole.played >= 2 && hardestHole.averageToPar >= 1.25) {
@@ -4342,42 +4305,6 @@ function gameInsights(rounds, holes) {
       value: `${Math.round(bogeyRate)}% bogey`,
       copy: `${bogeyHoles.length} of ${holes.length} holes were bogey, while double bogeys are not the main pattern. Focus on one better decision per hole - more conservative approach targets, fewer three-putts, or a better recovery choice - to convert the existing bogeys.`,
       score: 58 + bogeyRate / 2
-    });
-  }
-  if (girPct !== null && girPct >= 50 && holes.length >= 9) {
-    insights.push({
-      label: "Approach strength",
-      title: "Approach play is giving you a base to score from",
-      value: `${Math.round(girPct)}% GIR`,
-      copy: `${girHoles.length} of ${holes.length} approaches found the green. Protect that strength by choosing targets that leave a makeable first putt and by prioritizing a clean miss over chasing extra pins.`,
-      score: 46 + girPct / 4
-    });
-  }
-  if (doubleRate !== null && doubleRate < 10 && holes.length >= 18) {
-    insights.push({
-      label: "Scoring strength",
-      title: "You are limiting blow-up holes",
-      value: `${Math.round(doubleRate)}% double+`,
-      copy: `${doubleHoles.length} of ${holes.length} holes were double bogey or worse. Your floor is becoming more reliable; the next step is converting a few bogeys into pars without giving back that damage control.`,
-      score: 52 + (10 - doubleRate) * 2
-    });
-  }
-  if (puttsPerHole !== null && puttsPerHole <= 1.9 && holes.length >= 18) {
-    insights.push({
-      label: "Putting strength",
-      title: "Putting is supporting your scoring",
-      value: `${puttsPerHole.toFixed(1)} / hole`,
-      copy: `At ${puttsPerHole.toFixed(1)} putts per hole, your greens are turning into scores efficiently. Protect that with good lag speed and use practice time on the shot pattern that is still costing the most elsewhere.`,
-      score: 50 + (1.9 - puttsPerHole) * 20
-    });
-  }
-  if (parOrBetterRate !== null && parOrBetterRate >= 45) {
-    insights.push({
-      label: "Strength",
-      title: "You are giving yourself enough chances",
-      value: `${Math.round(parOrBetterRate)}% par+`,
-      copy: `${Math.round(parOrBetterRate)}% of holes are par or better. The scoring base is already there; protect it by making the high-risk holes boring and avoiding the one mistake that creates a double.`,
-      score: 50 + parOrBetterRate / 2
     });
   }
   if (!insights.length && holes.length) {
@@ -4484,6 +4411,142 @@ function renderRecentForm(summary) {
             </div>
           `;
         }).join("")}
+      </div>
+    </section>
+  `;
+}
+
+function gameStrengths(rounds, holes) {
+  if (!rounds.length || !holes.length) {
+    return [];
+  }
+  const strengths = [];
+  const fairways = holes.filter((item) => item.par > 3 && item.fairway !== "unset");
+  const fairwayHits = fairways.filter((item) => item.fairway === "hit");
+  const fairwayPct = fairways.length ? pct(fairwayHits.length, fairways.length) : null;
+  const girHoles = holes.filter((item) => item.gir);
+  const girPct = pct(girHoles.length, holes.length);
+  const putts = holes.reduce((sum, item) => sum + item.putts, 0);
+  const puttsPerHole = putts / holes.length;
+  const penaltyHoles = holes.filter((item) => item.penalties > 0);
+  const penaltiesPerRound = holes.reduce((sum, item) => sum + item.penalties, 0) / rounds.length;
+  const doubleHoles = holes.filter((item) => item.toPar >= 2);
+  const doubleRate = pct(doubleHoles.length, holes.length);
+  const threePuttHoles = holes.filter((item) => item.putts >= 3);
+  const threePuttRate = pct(threePuttHoles.length, holes.length);
+  const parOrBetterHoles = holes.filter((item) => item.toPar <= 0);
+  const parOrBetterRate = pct(parOrBetterHoles.length, holes.length);
+  const parSplitMinimum = Math.min(4, Math.max(2, Math.ceil(holes.length * 0.2)));
+  const parSplitStrength = parSplits(holes)
+    .filter((item) => item.holes >= parSplitMinimum)
+    .sort((a, b) => a.averageToPar - b.averageToPar)[0] || null;
+  const trend = roundTrend(rounds);
+
+  if (trend && trend.label === "Trend") {
+    strengths.push({
+      label: "Progress",
+      title: "Your recent form is moving in the right direction",
+      value: trend.value,
+      copy: `Your last three rounds are better than the prior sample after normalizing for round length. Keep the routines that are producing these scores and use the next focus cards to decide where to practise.`,
+      score: 82
+    });
+  }
+  if (fairwayPct !== null && fairwayPct >= 60 && fairways.length >= 5) {
+    strengths.push({
+      label: "Tee game",
+      title: "You are creating playable holes from the tee",
+      value: `${Math.round(fairwayPct)}% fairways`,
+      copy: `${fairwayHits.length} of ${fairways.length} recorded fairway attempts found the short grass. Your setup, start line, or club selection is giving you a reliable platform for the next shot; keep that pre-shot routine consistent.`,
+      score: 62 + fairwayPct / 5
+    });
+  }
+  if (girPct >= 50 && holes.length >= 9) {
+    strengths.push({
+      label: "Approach play",
+      title: "Your approaches are giving you chances to score",
+      value: `${Math.round(girPct)}% GIR`,
+      copy: `${girHoles.length} of ${holes.length} approaches found the green. That points to a dependable part of your game; protect it by choosing targets that leave a manageable first putt instead of chasing every pin.`,
+      score: 60 + girPct / 4
+    });
+  }
+  if ((threePuttRate < 12 || puttsPerHole <= 1.9) && holes.length >= 18) {
+    strengths.push({
+      label: "Putting",
+      title: "Your putting is helping the scorecard",
+      value: `${puttsPerHole.toFixed(1)} / hole · ${Math.round(threePuttRate)}% 3-putt`,
+      copy: `${puttsPerHole.toFixed(1)} putts per hole and ${threePuttHoles.length} three-putts across ${holes.length} holes show good control. Keep trusting your pace and use practice time on converting more of the good positions into pars and birdies.`,
+      score: 61 + Math.max(1.9 - puttsPerHole, 0) * 12 + Math.max(12 - threePuttRate, 0)
+    });
+  }
+  if (penaltiesPerRound < 0.4 && holes.length >= 18) {
+    strengths.push({
+      label: "Course management",
+      title: "You are keeping trouble from becoming a big number",
+      value: `${penaltiesPerRound.toFixed(1)} penalties / round`,
+      copy: `${penaltyHoles.length} of ${holes.length} holes included a penalty. Your target selection and risk decisions are protecting the card; keep choosing the side and club that leave a playable recovery when the perfect shot is not available.`,
+      score: 59 + (0.4 - penaltiesPerRound) * 24
+    });
+  }
+  if (doubleRate < 10 && holes.length >= 18) {
+    strengths.push({
+      label: "Scoring floor",
+      title: "You are limiting blow-up holes",
+      value: `${Math.round(doubleRate)}% double+`,
+      copy: `${doubleHoles.length} of ${holes.length} holes were double bogey or worse. A reliable scoring floor is a strong sign of better decisions; now you can look for small par-making gains without giving back that control.`,
+      score: 58 + (10 - doubleRate) * 2
+    });
+  }
+  if (parSplitStrength && parSplitStrength.averageToPar <= -0.2) {
+    strengths.push({
+      label: `Par ${parSplitStrength.par} strength`,
+      title: `Par ${parSplitStrength.par}s are a scoring strength`,
+      value: `${formatSignedDecimal(parSplitStrength.averageToPar)} / hole`,
+      copy: `You are ${formatSignedDecimal(parSplitStrength.averageToPar)} per par ${parSplitStrength.par} hole across ${parSplitStrength.holes} holes. Notice what is repeatable here - your target, club choice, tempo, or recovery decisions - and carry that process to the holes that cost you more.`,
+      score: 56 + Math.abs(parSplitStrength.averageToPar) * 10
+    });
+  }
+  if (parOrBetterRate >= 50 && holes.length >= 18) {
+    strengths.push({
+      label: "Scoring",
+      title: "You are giving yourself plenty of par-or-better chances",
+      value: `${Math.round(parOrBetterRate)}% par+`,
+      copy: `${parOrBetterHoles.length} of ${holes.length} holes were par or better. Your good holes are not isolated accidents; protect this scoring base by making the risky holes boring.`,
+      score: 54 + parOrBetterRate / 3
+    });
+  }
+  if (!strengths.length) {
+    strengths.push({
+      label: "Building",
+      title: "Your strengths are coming into focus",
+      value: `${holes.length} holes logged`,
+      copy: "Keep recording fairways, greens, putts, and penalties. As the sample grows, PinScope will separate your repeatable strengths from one-off good holes.",
+      score: 1
+    });
+  }
+  return strengths
+    .sort((a, b) => (b.score || 0) - (a.score || 0))
+    .slice(0, 5)
+    .map(({ score, ...item }) => item);
+}
+
+function renderGameStrengths(summary) {
+  return `
+    <section class="stats-panel strengths-panel">
+      <div class="panel-heading">
+        <div>
+          <p class="eyebrow">Strengths</p>
+          <h2>What you do well</h2>
+        </div>
+      </div>
+      <div class="insight-grid">
+        ${summary.strengths.length ? summary.strengths.map((item) => `
+          <article class="insight-card strength-card">
+            <span>${escapeHtml(item.label)}</span>
+            <strong>${escapeHtml(item.value)}</strong>
+            <h3>${escapeHtml(item.title)}</h3>
+            <p>${escapeHtml(item.copy)}</p>
+          </article>
+        `).join("") : `<p class="empty-copy">Complete a round to start identifying your strongest parts of the game.</p>`}
       </div>
     </section>
   `;
