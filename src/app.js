@@ -4194,16 +4194,23 @@ function gameInsights(rounds, holes) {
   const insights = [];
   const fairways = holes.filter((item) => item.par > 3 && item.fairway !== "unset");
   const fairwayPct = fairways.length ? (fairways.filter((item) => item.fairway === "hit").length / fairways.length) * 100 : null;
-  const girPct = holes.length ? pct(holes.filter((item) => item.gir).length, holes.length) : null;
+  const girHoles = holes.filter((item) => item.gir);
+  const girPct = holes.length ? pct(girHoles.length, holes.length) : null;
   const puttsPerHole = holes.length ? holes.reduce((sum, item) => sum + item.putts, 0) / holes.length : null;
   const penaltiesPerRound = rounds.length ? holes.reduce((sum, item) => sum + item.penalties, 0) / rounds.length : null;
-  const doubleRate = holes.length ? pct(holes.filter((item) => item.toPar >= 2).length, holes.length) : null;
-  const threePuttRate = holes.length ? pct(holes.filter((item) => item.putts >= 3).length, holes.length) : null;
+  const penaltyHoles = holes.filter((item) => item.penalties > 0);
+  const doubleHoles = holes.filter((item) => item.toPar >= 2);
+  const doubleRate = holes.length ? pct(doubleHoles.length, holes.length) : null;
+  const threePuttHoles = holes.filter((item) => item.putts >= 3);
+  const threePuttRate = holes.length ? pct(threePuttHoles.length, holes.length) : null;
+  const bogeyHoles = holes.filter((item) => item.toPar === 1);
+  const bogeyRate = holes.length ? pct(bogeyHoles.length, holes.length) : null;
   const parOrBetterRate = holes.length ? pct(holes.filter((item) => item.toPar <= 0).length, holes.length) : null;
   const parSplitMinimum = Math.min(4, Math.max(2, Math.ceil(holes.length * 0.2)));
-  const parSplitLeak = parSplits(holes)
-    .filter((item) => item.holes >= parSplitMinimum)
-    .sort((a, b) => b.averageToPar - a.averageToPar)[0] || null;
+  const usableParSplits = parSplits(holes).filter((item) => item.holes >= parSplitMinimum);
+  const parSplitLeak = usableParSplits.slice().sort((a, b) => b.averageToPar - a.averageToPar)[0] || null;
+  const parSplitStrength = usableParSplits.slice().sort((a, b) => a.averageToPar - b.averageToPar)[0] || null;
+  const hardestHole = hardestHoles(holes)[0] || null;
   const missSide = fairwayMissSide(fairways);
   const trend = roundTrend(rounds);
 
@@ -4215,7 +4222,7 @@ function gameInsights(rounds, holes) {
       label: "Leak",
       title: "Big numbers are the main damage",
       value: `${Math.round(doubleRate)}% double+`,
-      copy: `${holes.filter((item) => item.toPar >= 2).length} of ${holes.length} holes are double bogey or worse. Play for the boring miss until that drops.`,
+      copy: `${doubleHoles.length} of ${holes.length} holes are double bogey or worse. The quickest scoring gain is usually damage control: choose the side with the most room, take one more club when needed, and accept bogey before a difficult recovery turns into double.`,
       score: 95 + doubleRate
     });
   }
@@ -4224,8 +4231,17 @@ function gameInsights(rounds, holes) {
       label: "Penalty",
       title: "Penalty shots are leaking score",
       value: `${penaltiesPerRound.toFixed(1)} / round`,
-      copy: `That is about ${penaltiesPerRound.toFixed(1)} strokes before putting starts. Pick the safer target when trouble is in play.`,
+      copy: `${penaltyHoles.length} of ${holes.length} holes included a penalty. That is about ${penaltiesPerRound.toFixed(1)} strokes before putting starts; when trouble is in play, aim away from it and choose the club that keeps the miss playable.`,
       score: 90 + penaltiesPerRound * 10
+    });
+  }
+  if (penaltiesPerRound !== null && penaltiesPerRound < 0.4 && holes.length >= 18) {
+    insights.push({
+      label: "Strength",
+      title: "You are protecting your score from trouble",
+      value: `${penaltiesPerRound.toFixed(1)} / round`,
+      copy: `${penaltyHoles.length} of ${holes.length} holes included a penalty, keeping the average below 0.4 per round. Keep choosing targets and clubs that make your normal miss playable; this is a major scoring foundation.`,
+      score: 54 + (0.4 - penaltiesPerRound) * 30
     });
   }
   if (threePuttRate !== null && threePuttRate >= 18) {
@@ -4233,8 +4249,17 @@ function gameInsights(rounds, holes) {
       label: "Putting",
       title: "Three-putts are showing up",
       value: `${Math.round(threePuttRate)}% 3-putt`,
-      copy: `${holes.filter((item) => item.putts >= 3).length} holes needed three or more putts. Lag speed is the quickest practice win here.`,
+      copy: `${threePuttHoles.length} of ${holes.length} holes needed three or more putts. If these follow long first putts, train distance control; if they happen from makeable range, work on start line and face control.`,
       score: 82 + threePuttRate
+    });
+  }
+  if (threePuttRate !== null && threePuttRate < 12 && holes.length >= 18) {
+    insights.push({
+      label: "Putting strength",
+      title: "You are keeping three-putts under control",
+      value: `${Math.round(threePuttRate)}% 3-putt`,
+      copy: `${threePuttHoles.length} of ${holes.length} holes reached three putts or more. Keep the same distance-control routine, especially after long approaches, and look for your next gain in approach position or short-putt conversion.`,
+      score: 52 + (12 - threePuttRate) * 2
     });
   }
   if (puttsPerHole !== null && puttsPerHole >= 2.05) {
@@ -4242,7 +4267,7 @@ function gameInsights(rounds, holes) {
       label: "Putting",
       title: "Putting volume is high",
       value: `${puttsPerHole.toFixed(1)} / hole`,
-      copy: "If first putts are long, this is approach distance. If they are short, it is make-rate practice.",
+      copy: `You are using ${puttsPerHole.toFixed(1)} putts per hole on average. Separate long first-putt problems from missed short putts: the first points to approach distance control, while the second points to start-line and face practice.`,
       score: 72 + puttsPerHole * 10
     });
   }
@@ -4251,19 +4276,36 @@ function gameInsights(rounds, holes) {
       label: "Approach",
       title: "Approaches are not finding enough greens",
       value: `${Math.round(girPct)}% GIR`,
-      copy: `${holes.filter((item) => item.gir).length} greens in regulation from ${holes.length} holes. Club for the middle more often than the pin.`,
+      copy: `${girHoles.length} greens in regulation from ${holes.length} holes. Start with target and distance control: club for the middle, avoid short-siding yourself, and look for a repeatable miss before changing your swing.`,
       score: 70 + (35 - girPct)
     });
   }
   if (fairwayPct !== null && fairwayPct < 45 && fairways.length >= 5) {
     insights.push({
       label: missSide ? "Tee bias" : "Tee",
-      title: "Fairways are under pressure",
+      title: missSide ? `Fairways are under pressure to the ${missSide.direction}` : "Fairways are under pressure",
       value: `${Math.round(fairwayPct)}% hit`,
       copy: missSide
-        ? `${missSide.label} is the common miss (${missSide.count} of ${missSide.total} recorded misses). Aim and club choice should protect that side.`
-        : "A safer tee club may be worth testing on tighter holes.",
+        ? `${missSide.count} of ${missSide.total} recorded misses go ${missSide.direction} (${Math.round(missSide.rate)}% of misses). ${directionalMissCopy(missSide)} A safer tee club or a different start line may be worth testing on tighter holes.`
+        : "A safer tee club may be worth testing on tighter holes. Pair that with a consistent start line and enough room for your normal miss instead of aiming at the center of the trouble.",
       score: 68 + (45 - fairwayPct)
+    });
+  } else if (missSide && fairways.length >= 5) {
+    insights.push({
+      label: "Tee pattern",
+      title: `Your common miss is to the ${missSide.direction}`,
+      value: `${missSide.count}/${missSide.total} misses`,
+      copy: directionalMissCopy(missSide),
+      score: 78 + missSide.rate / 2
+    });
+  }
+  if (fairwayPct !== null && fairwayPct >= 60 && fairways.length >= 5) {
+    insights.push({
+      label: "Tee strength",
+      title: "Your tee shots are giving you playable holes",
+      value: `${Math.round(fairwayPct)}% hit`,
+      copy: `${fairways.filter((item) => item.fairway === "hit").length} of ${fairways.length} recorded fairway attempts found the short grass. Keep the same pre-shot picture and use that confidence to commit to better approach targets.`,
+      score: 50 + fairwayPct / 5
     });
   }
   if (parSplitLeak && parSplitLeak.averageToPar >= 1) {
@@ -4271,8 +4313,62 @@ function gameInsights(rounds, holes) {
       label: `Par ${parSplitLeak.par}`,
       title: `Par ${parSplitLeak.par}s are costing the most`,
       value: `${formatSignedDecimal(parSplitLeak.averageToPar)} / hole`,
-      copy: `${parSplitLeak.holes} played in this sample. Build the strategy around leaving your next shot in a comfortable yardage.`,
+      copy: `${parSplitLeak.holes} played in this sample at ${formatSignedDecimal(parSplitLeak.averageToPar)} per hole. Treat these holes as a strategy problem first: pick a comfortable lay-up or approach number, keep the first shot away from penalty trouble, and make bogey the floor.`,
       score: 66 + parSplitLeak.averageToPar * 12
+    });
+  }
+  if (parSplitStrength && parSplitStrength.averageToPar <= -0.2) {
+    insights.push({
+      label: "Strength",
+      title: `Par ${parSplitStrength.par}s are your best scoring opportunity`,
+      value: `${formatSignedDecimal(parSplitStrength.averageToPar)} / hole`,
+      copy: `You are ${formatSignedDecimal(parSplitStrength.averageToPar)} per ${parSplitStrength.par} hole across ${parSplitStrength.holes} holes. Keep the same target and club-selection routine here, then borrow that decision-making on the par holes that cost you most.`,
+      score: 48 + Math.abs(parSplitStrength.averageToPar) * 10
+    });
+  }
+  if (hardestHole && hardestHole.played >= 2 && hardestHole.averageToPar >= 1.25) {
+    insights.push({
+      label: "Course pattern",
+      title: `Hole ${hardestHole.holeNumber} keeps costing strokes`,
+      value: `${formatSignedDecimal(hardestHole.averageToPar)} / visit`,
+      copy: `${hardestHole.courseName} hole ${hardestHole.holeNumber} is ${formatSignedDecimal(hardestHole.averageToPar)} per visit over ${hardestHole.played} rounds. With ${hardestHole.averagePutts.toFixed(1)} putts and ${hardestHole.penalties} recorded penalties, plan the hole before you play it: identify the safest miss and avoid turning one difficult shot into two.`,
+      score: 74 + hardestHole.averageToPar * 10
+    });
+  }
+  if (bogeyRate !== null && bogeyRate >= 30 && (doubleRate === null || doubleRate < 18)) {
+    insights.push({
+      label: "Scoring",
+      title: "The next gain is turning bogeys into pars",
+      value: `${Math.round(bogeyRate)}% bogey`,
+      copy: `${bogeyHoles.length} of ${holes.length} holes were bogey, while double bogeys are not the main pattern. Focus on one better decision per hole - more conservative approach targets, fewer three-putts, or a better recovery choice - to convert the existing bogeys.`,
+      score: 58 + bogeyRate / 2
+    });
+  }
+  if (girPct !== null && girPct >= 50 && holes.length >= 9) {
+    insights.push({
+      label: "Approach strength",
+      title: "Approach play is giving you a base to score from",
+      value: `${Math.round(girPct)}% GIR`,
+      copy: `${girHoles.length} of ${holes.length} approaches found the green. Protect that strength by choosing targets that leave a makeable first putt and by prioritizing a clean miss over chasing extra pins.`,
+      score: 46 + girPct / 4
+    });
+  }
+  if (doubleRate !== null && doubleRate < 10 && holes.length >= 18) {
+    insights.push({
+      label: "Scoring strength",
+      title: "You are limiting blow-up holes",
+      value: `${Math.round(doubleRate)}% double+`,
+      copy: `${doubleHoles.length} of ${holes.length} holes were double bogey or worse. Your floor is becoming more reliable; the next step is converting a few bogeys into pars without giving back that damage control.`,
+      score: 52 + (10 - doubleRate) * 2
+    });
+  }
+  if (puttsPerHole !== null && puttsPerHole <= 1.9 && holes.length >= 18) {
+    insights.push({
+      label: "Putting strength",
+      title: "Putting is supporting your scoring",
+      value: `${puttsPerHole.toFixed(1)} / hole`,
+      copy: `At ${puttsPerHole.toFixed(1)} putts per hole, your greens are turning into scores efficiently. Protect that with good lag speed and use practice time on the shot pattern that is still costing the most elsewhere.`,
+      score: 50 + (1.9 - puttsPerHole) * 20
     });
   }
   if (parOrBetterRate !== null && parOrBetterRate >= 45) {
@@ -4280,7 +4376,7 @@ function gameInsights(rounds, holes) {
       label: "Strength",
       title: "You are giving yourself enough chances",
       value: `${Math.round(parOrBetterRate)}% par+`,
-      copy: "Keep protecting the blow-up holes; the scoring base is already there.",
+      copy: `${Math.round(parOrBetterRate)}% of holes are par or better. The scoring base is already there; protect it by making the high-risk holes boring and avoiding the one mistake that creates a double.`,
       score: 50 + parOrBetterRate / 2
     });
   }
@@ -4295,7 +4391,7 @@ function gameInsights(rounds, holes) {
   }
   return insights
     .sort((a, b) => (b.score || 0) - (a.score || 0))
-    .slice(0, 3)
+    .slice(0, 5)
     .map(({ score, ...item }) => item);
 }
 
@@ -4340,9 +4436,18 @@ function fairwayMissSide(fairways) {
   }
   return {
     label: left > right ? "Left miss" : "Right miss",
+    direction: left > right ? "left" : "right",
     count,
-    total: misses.length
+    total: misses.length,
+    rate: pct(count, misses.length)
   };
+}
+
+function directionalMissCopy(missSide) {
+  const rightHandedClue = missSide.direction === "left"
+    ? "a closed face, a path moving left, or alignment aimed left"
+    : "an open face, a path moving right, or alignment aimed right";
+  return `For a right-handed golfer, a repeated ${missSide.direction} miss can come from ${rightHandedClue}. If the ball starts ${missSide.direction} and stays there, check face angle and alignment first; if it curves ${missSide.direction}, check the face-to-path relationship and strike location. Test alignment, ball position, and contact point before making a large swing change; left-handed players should reverse the directional interpretation.`;
 }
 
 function average(values) {
